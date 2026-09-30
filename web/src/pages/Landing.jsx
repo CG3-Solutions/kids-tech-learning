@@ -1,0 +1,52 @@
+import { Link } from "react-router-dom";
+import TopBar from "../components/TopBar.jsx";
+import { useApp } from "../lib/AppContext.jsx";
+
+const TILES = [["🔋", "var(--lv1)"], ["💡", "var(--lv1)"], ["⚙️", "var(--lv2)"], ["🧠", "var(--lv4)"], ["🔢", "var(--lv2)"], ["🤖", "var(--lv3)"], ["🔌", "var(--lv0)"], ["🖥️", "var(--lv4)"], ["⭐", "var(--lv3)"]];
+
+export default function Landing() {
+  const { user, published } = useApp();
+  return (
+    <>
+      <TopBar variant="public">
+        {user ? <Link className="btn primary" to="/profiles">Open Spark Lab</Link> : <Link className="btn" to="/login">Parent sign in</Link>}
+      </TopBar>
+      <main className="wrap stack">
+        <section className="hero">
+          <div className="stack" style={{ gap: 18 }}>
+            <div className="eyebrow">For curious kids aged 6–10</div>
+            <h1>How do machines <em>really</em> work?</h1>
+            <p className="lead">Spark Lab teaches electricity, computers, binary and coding with picture cards, real-life examples from home, hands-on games and quizzes. Parents follow each child's progress.</p>
+            <div className="row">
+              <Link className="btn primary big" to={user ? "/profiles" : "/login"}>{user ? "Start learning" : "Get started free"}</Link>
+              <a className="btn big ghost" href="#subjects">See the subjects</a>
+            </div>
+          </div>
+          <div className="hero-board" aria-hidden="true">{TILES.map(([e, c], i) => <div key={i} style={{ "--c": c }}>{e}</div>)}</div>
+        </section>
+
+        <section className="stack" id="subjects" style={{ gap: 14 }}>
+          <h2 className="sec">Subjects</h2>
+          <div className="features">
+            {(published?.modules ?? []).map(m => (
+              <div className="feature" key={m.id} style={{ borderTop: `6px solid var(--${m.color})` }}>
+                <div style={{ fontSize: "2.2rem" }}>{m.emoji}</div><h3>{m.title}</h3><p>{m.tagline}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="stack" style={{ gap: 14 }}>
+          <h2 className="sec">Made for learning together</h2>
+          <div className="features">
+            <div className="feature"><h3>Real life first</h3><p>Every part links to things at home: the fan regulator, the fridge light, the TV remote.</p></div>
+            <div className="feature"><h3>Hands-on games</h3><p>Close a circuit, flip binary cards, and program a robot through a maze.</p></div>
+            <div className="feature"><h3>Read to me</h3><p>Cards read themselves aloud, so early readers can explore on their own.</p></div>
+            <div className="feature"><h3>Progress for parents</h3><p>Stars, badges and a “teach this next” suggestion for each child.</p></div>
+            <div className="feature"><h3>Safe for kids</h3><p>Only parents have accounts. Children get a name and an animal avatar, never an email.</p></div>
+          </div>
+        </section>
+      </main>
+    </>
+  );
+}
