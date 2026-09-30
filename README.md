@@ -12,7 +12,7 @@ Guides and a kid-friendly web app for teaching a 7-year-old (2nd standard) about
 | [app/index.html](app/index.html) | **Spark Lab**, the app to show him (open in any browser, phone or tablet) |
 
 ## Live site (GitHub Pages)
-Once GitHub Pages is on, the app is at `https://chandra-goka.github.io/kids-tech-learning/`, and the docs are at `.../docs/01-learning-roadmap.html` and so on.
+Once GitHub Pages is on, the app is at `https://cg3-solutions.github.io/kids-tech-learning/`, and the docs are at `.../docs/01-learning-roadmap.html` and so on.
 
 To turn it on: repo **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**. It goes live in 1–2 minutes.
 
