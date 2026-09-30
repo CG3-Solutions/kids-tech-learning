@@ -11,6 +11,11 @@ Guides and a kid-friendly web app for teaching a 7-year-old (2nd standard) about
 | [docs/03-activities-and-safety.md](docs/03-activities-and-safety.md) | Treasure hunt, how machines fit together, weekly plan and safety rules |
 | [app/index.html](app/index.html) | **Spark Lab**, the app to show him (open in any browser, phone or tablet) |
 
+## Live site (GitHub Pages)
+Once GitHub Pages is on, the app is at `https://chandra-goka.github.io/kids-tech-learning/`, and the docs are at `.../docs/01-learning-roadmap.html` and so on.
+
+To turn it on: repo **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**. It goes live in 1–2 minutes.
+
 ## Using the app
 Open `app/index.html` in a browser. It works offline, apart from the fonts. It has:
 - **Parts:** picture cards for each component (what it is, what it's like, where to find it at home, its circuit symbol, a "Think!" question, and a "Try it" activity). Tap **Read to me** to hear it read aloud.
