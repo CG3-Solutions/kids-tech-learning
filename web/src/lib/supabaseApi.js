@@ -35,11 +35,11 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
     },
 
     async listChildren() { return ok(await sb.from("children").select("*").order("created_at")); },
-    async addChild({ name, avatar }) {
+    async addChild({ name, avatar, grade = null }) {
       const user = await this.getUser();
-      return ok(await sb.from("children").insert({ parent_id: user.id, name: name.trim(), avatar }).select().single());
+      return ok(await sb.from("children").insert({ parent_id: user.id, name: name.trim(), avatar, ...(grade != null ? { grade } : {}) }).select().single());
     },
-    async updateChild(id, patch) { return ok(await sb.from("children").update({ name: patch.name?.trim(), avatar: patch.avatar }).eq("id", id).select().single()); },
+    async updateChild(id, patch) { return ok(await sb.from("children").update({ name: patch.name?.trim(), avatar: patch.avatar, grade: patch.grade ?? null }).eq("id", id).select().single()); },
     async deleteChild(id) { ok(await sb.from("children").delete().eq("id", id)); },
 
     async loadChild(childId) {

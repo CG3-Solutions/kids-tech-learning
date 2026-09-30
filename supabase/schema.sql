@@ -17,9 +17,12 @@ create table if not exists public.children (
   parent_id   uuid not null references public.profiles (id) on delete cascade,
   name        text not null check (char_length(name) between 1 and 40),
   avatar      text not null default '🦊',
+  grade       smallint check (grade between 1 and 12),  -- school class / standard, optional
   created_at  timestamptz not null default now()
 );
 create index if not exists children_parent_idx on public.children (parent_id);
+-- Added after the first release; safe to re-run.
+alter table public.children add column if not exists grade smallint check (grade between 1 and 12);
 
 -- ───────────────────────── Content (edited by admins) ─────────────────────────
 create table if not exists public.modules (
