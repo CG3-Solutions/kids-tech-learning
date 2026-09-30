@@ -10,6 +10,8 @@ export const GUIDES = [
   { slug: "activities", file: "03-activities-and-safety.md", title: "Activities, machines and safety" },
   { slug: "circuits", file: "04-circuits-and-gates.md", title: "Circuits & gates course (Volt)" },
   { slug: "binary", file: "05-binary-adventure.md", title: "Binary adventure course (Bit)" },
+  { slug: "language", file: "06-language-course.md", title: "Language course (Polly)" },
+  { slug: "maths", file: "07-maths-course.md", title: "Maths course (Ollie)" },
 ];
 
 export default function Guides() {

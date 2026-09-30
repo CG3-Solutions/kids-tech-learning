@@ -53,7 +53,8 @@ function ModuleForm({ module, isNew, onDone }) {
       <div className="form-grid">
         <div className="field"><label htmlFor="m-act">Main activity</label>
           <select id="m-act" value={f.activity ?? ""} onChange={set("activity")}>
-            <option value="">None</option><option value="circuit">Build a circuit</option><option value="binary">Binary cards</option><option value="coding">Robot puzzles</option>
+            <option value="">None</option><option value="circuit">Volt's circuits & gates</option><option value="binary">Bit's binary adventure</option><option value="coding">Robot puzzles</option>
+            <option value="alphabets">Polly: alphabets</option><option value="words">Polly: words</option><option value="sentences">Polly: sentences</option><option value="numbers">Ollie: numbers</option><option value="mathematics">Ollie: mathematics</option>
           </select></div>
       </div>
       <div className="field"><label htmlFor="m-levels">Levels</label>

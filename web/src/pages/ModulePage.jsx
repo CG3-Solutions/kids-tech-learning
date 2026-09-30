@@ -5,6 +5,7 @@ import { areaOf } from "../content/areas.js";
 import CardDetail from "../components/CardDetail.jsx";
 import Quiz from "../components/Quiz.jsx";
 import CircuitJourney from "../activities/circuits/CircuitJourney.jsx";
+import PracticeJourney, { PRACTICE_ACTIVITIES } from "../components/practice/PracticeJourney.jsx";
 import BinaryJourney from "../activities/binary/BinaryJourney.jsx";
 import CodingPuzzles from "../activities/CodingPuzzles.jsx";
 import Hunt from "../activities/Hunt.jsx";
@@ -32,12 +33,13 @@ export default function ModulePage() {
   if (!m || m.coming_soon) return <Navigate to="/learn" replace />;
   const area = areaOf(m.area);
   // Subjects with an adventure (Binary, Electricity) open on its map; others open on their cards.
-  const tab = tabParam ?? (m.activity === "binary" || m.activity === "circuit" ? m.activity : "cards");
+  const hasJourney = m.activity === "binary" || m.activity === "circuit" || PRACTICE_ACTIVITIES.has(m.activity);
+  const tab = tabParam ?? (hasJourney ? m.activity : "cards");
 
   const levels = (m.levels?.length ? m.levels : [...new Set(cards.map(c => c.level))].map(id => ({ id, name: `Level ${id}`, note: "" })))
     .filter(l => cards.some(c => c.level === l.id));
   const color = lv => LV_COLORS[lv % LV_COLORS.length];
-  const tabs = ["cards", ...(m.activity ? [m.activity] : []), ...(EXTRA_ACTIVITIES[m.id] ?? []), ...(quiz.length ? ["quiz"] : [])];
+  const tabs = [...(cards.length ? ["cards"] : []), ...(m.activity ? [m.activity] : []), ...(EXTRA_ACTIVITIES[m.id] ?? []), ...(quiz.length ? ["quiz"] : [])];
   const open = cards.find(c => c.id === openId);
   const openIdx = open ? cards.indexOf(open) : -1;
   const levelOf = lv => levels.find(l => l.id === lv)?.name ?? `Level ${lv}`;
@@ -84,6 +86,7 @@ export default function ModulePage() {
           </div>
         )}
 
+        {PRACTICE_ACTIVITIES.has(tab) && tab === m.activity && <PracticeJourney key={`${tab}-${location.key}`} activity={tab} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "circuit" && <CircuitJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "binary" && <BinaryJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "coding" && <CodingPuzzles solved={done} onSolve={id => markDone(m.id, `puzzle-${id}`)} />}

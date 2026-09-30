@@ -1,8 +1,8 @@
 // Turns raw progress records into readable lines for parents.
-import { CIRCUIT_JOURNEY } from "../content/circuits.js";
-import { BINARY_JOURNEY, PUZZLES } from "../content/subjects.js";
+import { PUZZLES } from "../content/subjects.js";
+import { ALL_STEPS } from "../content/journeys.js";
 
-const STEPS = Object.fromEntries([...CIRCUIT_JOURNEY, ...BINARY_JOURNEY].map(s => [s.id, s]));
+const STEPS = Object.fromEntries(ALL_STEPS.map(s => [s.id, s]));
 
 export function describeItem(itemId, published) {
   if (STEPS[itemId]) return `${STEPS[itemId].emoji} Finished “${STEPS[itemId].title}”`;
