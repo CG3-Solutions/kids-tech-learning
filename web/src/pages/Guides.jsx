@@ -8,6 +8,8 @@ export const GUIDES = [
   { slug: "roadmap", file: "01-learning-roadmap.md", title: "Learning roadmap (age 7 → teens)" },
   { slug: "components", file: "02-electronic-components.md", title: "Electronic parts with real-life examples" },
   { slug: "activities", file: "03-activities-and-safety.md", title: "Activities, machines and safety" },
+  { slug: "circuits", file: "04-circuits-and-gates.md", title: "Circuits & gates course (Volt)" },
+  { slug: "binary", file: "05-binary-adventure.md", title: "Binary adventure course (Bit)" },
 ];
 
 export default function Guides() {

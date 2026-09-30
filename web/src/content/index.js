@@ -17,7 +17,7 @@ export const SEED = {
 };
 
 export const ACTIVITIES = {
-  circuit: { title: "Build a circuit", emoji: "🔌" },
+  circuit: { title: "Circuits & gates", emoji: "🔌" },
   binary: { title: "Bit's adventure", emoji: "🤖" },
   coding: { title: "Robot puzzles", emoji: "🧩" },
   hunt: { title: "Treasure hunt", emoji: "🔎" },

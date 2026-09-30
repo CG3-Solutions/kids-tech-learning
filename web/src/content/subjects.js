@@ -161,15 +161,15 @@ export const BINARY_QUIZ = [
 
 // Bit's binary adventure: the steps shown on the Binary Magic map, in order.
 export const BINARY_JOURNEY = [
-  { id: "binary-step-1", emoji: "💡", title: "Bit's lamp", blurb: "Meet Bit. ON and OFF.", learned: "Computers only know two things: ON and OFF." },
-  { id: "binary-step-2", emoji: "📡", title: "Secret signal", blurb: "One lamp sends a message.", learned: "One lamp can send 2 different messages." },
-  { id: "binary-step-3", emoji: "💡💡", title: "Two lamps", blurb: "Find every pattern.", learned: "Two lamps make 4 patterns, so 4 messages!" },
-  { id: "binary-step-4", emoji: "✨", title: "Magic doubling", blurb: "Add a lamp, double the patterns.", learned: "Every new lamp DOUBLES the number of patterns." },
-  { id: "binary-step-5", emoji: "🍎", title: "Apple cards", blurb: "Count apples with lamps.", learned: "Add up the apples on the ON cards to get the number. ON is 1, OFF is 0." },
-  { id: "binary-step-6", emoji: "🔢", title: "Counting machine", blurb: "Press +1 and watch.", learned: "Binary counting: the last lamp blinks every time." },
-  { id: "binary-step-7", emoji: "🃏", title: "Big cards", blurb: "Make bigger numbers.", learned: "You can make any number with doubling cards. You speak binary!" },
-  { id: "binary-bonus-pixel", emoji: "🖼️", title: "Pixel painter", blurb: "Decode a secret picture.", learned: "Pictures are made of pixels, and pixels are stored as bits.", bonus: true },
-  { id: "binary-bonus-secret", emoji: "🔐", title: "Secret message", blurb: "Decode Bit's secret words.", learned: "Letters are stored as numbers, and numbers as bits.", bonus: true },
+  { id: "binary-step-1", openFrom: 5, parent: "Point at light switches at home. Everything in a computer is made of tiny switches that are ON or OFF.", emoji: "💡", title: "Bit's lamp", blurb: "Meet Bit. ON and OFF.", learned: "Computers only know two things: ON and OFF." },
+  { id: "binary-step-2", openFrom: 5, parent: "Agree a secret signal at home, e.g. porch light ON means “come inside”. One light can only say two things.", emoji: "📡", title: "Secret signal", blurb: "One lamp sends a message.", learned: "One lamp can send 2 different messages." },
+  { id: "binary-step-3", openFrom: 5, parent: "Use two torches or two hands up/down. Ask: how many different signals can we make? (4)", emoji: "💡💡", title: "Two lamps", blurb: "Find every pattern.", learned: "Two lamps make 4 patterns, so 4 messages!" },
+  { id: "binary-step-4", openFrom: 5, parent: "Ask: if one more lamp doubles the patterns, how many would 5 lamps make? (32) Doubling is the heart of binary.", emoji: "✨", title: "Magic doubling", blurb: "Add a lamp, double the patterns.", learned: "Every new lamp DOUBLES the number of patterns." },
+  { id: "binary-step-5", openFrom: 5, parent: "Use real coins or sweets in cups of 1, 2 and 4. Make 1 to 7 by choosing cups; say the lamps as 1s and 0s.", emoji: "🍎", title: "Apple cards", blurb: "Count apples with lamps.", learned: "Add up the apples on the ON cards to get the number. ON is 1, OFF is 0." },
+  { id: "binary-step-6", openFrom: 5, parent: "Count 0–7 on three fingers (thumb = 1, pointer = 2, middle = 4). The thumb flips every time: odd and even!", emoji: "🔢", title: "Counting machine", blurb: "Press +1 and watch.", learned: "Binary counting: the last lamp blinks every time." },
+  { id: "binary-step-7", openFrom: 5, parent: "Try finger binary on one hand: 5 fingers count to 31. Ask your child to show their age.", emoji: "🃏", title: "Big cards", blurb: "Make bigger numbers.", learned: "You can make any number with doubling cards. You speak binary!" },
+  { id: "binary-bonus-pixel", openFrom: 5, parent: "Zoom right into a photo on a phone until you see squares. Each square is a pixel stored as numbers.", emoji: "🖼️", title: "Pixel painter", blurb: "Decode a secret picture.", learned: "Pictures are made of pixels, and pixels are stored as bits.", bonus: true, after: "binary-step-7" },
+  { id: "binary-bonus-secret", openFrom: 5, parent: "Write a secret note with A=1, B=2… and let your child decode it.", emoji: "🔐", title: "Secret message", blurb: "Decode Bit's secret words.", learned: "Letters are stored as numbers, and numbers as bits.", bonus: true, after: "binary-step-7" },
 ];
 
 // ───────────────────────── Coding ─────────────────────────

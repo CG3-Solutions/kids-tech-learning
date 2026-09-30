@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import CardDetail from "../components/CardDetail.jsx";
 import Quiz from "../components/Quiz.jsx";
-import Circuit from "../activities/Circuit.jsx";
+import CircuitJourney from "../activities/circuits/CircuitJourney.jsx";
 import BinaryJourney from "../activities/binary/BinaryJourney.jsx";
 import CodingPuzzles from "../activities/CodingPuzzles.jsx";
 import Hunt from "../activities/Hunt.jsx";
@@ -26,12 +26,11 @@ export default function ModulePage() {
   const cards = useMemo(() => published?.cards.filter(c => c.module_id === moduleId) ?? [], [published, moduleId]);
   const quiz = useMemo(() => published?.quiz.filter(q => q.module_id === moduleId) ?? [], [published, moduleId]);
   const done = useMemo(() => new Set(childData.progress.map(p => p.item_id)), [childData]);
-  const onFirstCircuit = useCallback(() => markDone(moduleId, "activity-circuit"), [markDone, moduleId]);
 
   if (!published) return <TopBar />;
   if (!m) return <Navigate to="/learn" replace />;
-  // Binary Magic opens on Bit's adventure; other subjects open on their cards.
-  const tab = tabParam ?? (m.activity === "binary" ? "binary" : "cards");
+  // Subjects with an adventure (Binary, Electricity) open on its map; others open on their cards.
+  const tab = tabParam ?? (m.activity === "binary" || m.activity === "circuit" ? m.activity : "cards");
 
   const levels = (m.levels?.length ? m.levels : [...new Set(cards.map(c => c.level))].map(id => ({ id, name: `Level ${id}`, note: "" })))
     .filter(l => cards.some(c => c.level === l.id));
@@ -84,7 +83,7 @@ export default function ModulePage() {
           </div>
         )}
 
-        {tab === "circuit" && <Circuit onFirstSuccess={onFirstCircuit} />}
+        {tab === "circuit" && <CircuitJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "binary" && <BinaryJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "coding" && <CodingPuzzles solved={done} onSolve={id => markDone(m.id, `puzzle-${id}`)} />}
         {tab === "hunt" && <Hunt marks={childData.state.hunt ?? {}} onChange={v => setChildState("hunt", v)} />}
