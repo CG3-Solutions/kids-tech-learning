@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
-import TopBar from "../components/TopBar.jsx";
+import { Crumbs } from "./kid/Home.jsx";
+import { areaOf } from "../content/areas.js";
 import CardDetail from "../components/CardDetail.jsx";
 import Quiz from "../components/Quiz.jsx";
 import CircuitJourney from "../activities/circuits/CircuitJourney.jsx";
@@ -27,8 +28,9 @@ export default function ModulePage() {
   const quiz = useMemo(() => published?.quiz.filter(q => q.module_id === moduleId) ?? [], [published, moduleId]);
   const done = useMemo(() => new Set(childData.progress.map(p => p.item_id)), [childData]);
 
-  if (!published) return <TopBar />;
-  if (!m) return <Navigate to="/learn" replace />;
+  if (!published) return null;
+  if (!m || m.coming_soon) return <Navigate to="/learn" replace />;
+  const area = areaOf(m.area);
   // Subjects with an adventure (Binary, Electricity) open on its map; others open on their cards.
   const tab = tabParam ?? (m.activity === "binary" || m.activity === "circuit" ? m.activity : "cards");
 
@@ -42,10 +44,9 @@ export default function ModulePage() {
 
   return (
     <>
-      <TopBar />
-      <main className="wrap stack">
+      <div className="stack page">
+        <Crumbs items={[{ to: "/learn", label: "Home" }, { to: `/learn/area/${area.id}`, label: area.title }, { label: m.title }]} />
         <div className="mod-head">
-          <Link className="btn ghost" to="/learn" aria-label="All subjects">←</Link>
           <span className="em" aria-hidden="true">{m.emoji}</span>
           <div><h1>{m.title}</h1><p className="muted">{m.tagline}</p></div>
         </div>
@@ -89,7 +90,7 @@ export default function ModulePage() {
         {tab === "hunt" && <Hunt marks={childData.state.hunt ?? {}} onChange={v => setChildState("hunt", v)} />}
         {tab === "machines" && <Machines />}
         {tab === "quiz" && <Quiz questions={quiz} onFinish={(score, total) => addAttempt(m.id, score, total)} />}
-      </main>
+      </div>
 
       {open && (
         <CardDetail card={open} levelName={levelOf(open.level)} color={color(open.level)}

@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import TopBar from "../components/TopBar.jsx";
+import ParentLayout from "../layouts/ParentLayout.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { SYMBOLS } from "../content/electricity.js";
+import { AREAS } from "../content/areas.js";
 
 const COLORS = ["lv0", "lv1", "lv2", "lv3", "lv4"];
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "item";
@@ -45,6 +46,8 @@ function ModuleForm({ module, isNew, onDone }) {
         <div className="field"><label htmlFor="m-color">Colour</label>
           <select id="m-color" value={f.color} onChange={set("color")}>{COLORS.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
         <div className="field"><label htmlFor="m-sort">Order</label><input id="m-sort" type="number" value={f.sort} onChange={set("sort")} /></div>
+        <div className="field"><label htmlFor="m-area">Area</label>
+          <select id="m-area" value={f.area ?? "science"} onChange={set("area")}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.title}</option>)}</select></div>
       </div>
       <div className="field"><label htmlFor="m-tag">Tagline</label><input id="m-tag" value={f.tagline} onChange={set("tagline")} /></div>
       <div className="form-grid">
@@ -57,6 +60,7 @@ function ModuleForm({ module, isNew, onDone }) {
         <textarea id="m-levels" value={f.levelsText} onChange={set("levelsText")} placeholder={"Big ideas | Start here\nLevel 1: Starter parts | In every kit"} />
         <small>One per line: name | note. The first line is level 0, the next is level 1, and so on.</small></div>
       <label className="check"><input type="checkbox" checked={f.published !== false} onChange={set("published")} /> Published (visible to kids)</label>
+      <label className="check"><input type="checkbox" checked={!!f.coming_soon} onChange={set("coming_soon")} /> Show as “Coming soon” (kids can see it but not open it)</label>
       <div className="row"><button className="btn primary" disabled={busy}>{isNew ? "Create subject" : "Save subject"}</button>{saved && <span className="learned">{saved}</span>}</div>
     </form>
   );
@@ -171,17 +175,15 @@ export default function Admin() {
   const [confirmDelMod, setConfirmDelMod] = useState(false);
 
   const modules = useMemo(() => [...(content?.modules ?? [])].sort((a, b) => a.sort - b.sort), [content]);
-  if (!content) return <TopBar variant="parent" />;
+  if (!content) return <ParentLayout title="Content editor" />;
   const current = modules.find(m => m.id === (sel ?? modules[0]?.id));
   const cards = content.cards.filter(c => c.module_id === current?.id).sort((a, b) => a.level - b.level || a.sort - b.sort);
   const quiz = content.quiz.filter(q => q.module_id === current?.id).sort((a, b) => a.sort - b.sort);
   const pick = id => { setSel(id); setEditCard(null); setEditQ(null); setConfirmDelMod(false); };
 
   return (
-    <>
-      <TopBar variant="parent"><Link className="btn" to="/parent">← Parent area</Link></TopBar>
-      <main className="wrap stack" style={{ paddingTop: 22 }}>
-        <div><div className="eyebrow">Admin</div><h1 className="sec" style={{ fontSize: "2rem" }}>Content editor</h1></div>
+    <ParentLayout title="Content editor">
+      <div className="stack">
         {content.fromSeed && (
           <div className="note">The database has no lessons yet, so kids see the built-in lessons. Load them into the database to start editing.</div>
         )}
@@ -250,7 +252,7 @@ export default function Admin() {
             )}
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </ParentLayout>
   );
 }

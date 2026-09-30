@@ -2,6 +2,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { SEED } from "../content/index.js";
 
+const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min"];
+const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, k === "name" && typeof obj[k] === "string" ? obj[k].trim() : obj[k]]));
+
 export function createSupabaseApi(url, anonKey, { google = false } = {}) {
   const sb = createClient(url, anonKey, {
     auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -26,20 +29,22 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
 
     async getProfile() {
       const user = await this.getUser();
-      const rows = ok(await sb.from("profiles").select("id, display_name, role").eq("id", user.id));
+      const rows = ok(await sb.from("profiles").select("*").eq("id", user.id));
       return rows[0] ?? { id: user.id, display_name: user.email, role: "parent" };
     },
     async updateProfile(patch) {
       const user = await this.getUser();
-      return ok(await sb.from("profiles").update({ display_name: patch.display_name }).eq("id", user.id).select().single());
+      return ok(await sb.from("profiles").update(pick(patch, ["display_name", "notify_milestones", "notify_daily"])).eq("id", user.id).select().single());
     },
 
     async listChildren() { return ok(await sb.from("children").select("*").order("created_at")); },
-    async addChild({ name, avatar, grade = null }) {
+    async addChild(data) {
       const user = await this.getUser();
-      return ok(await sb.from("children").insert({ parent_id: user.id, name: name.trim(), avatar, ...(grade != null ? { grade } : {}) }).select().single());
+      const fields = pick(data, CHILD_FIELDS);
+      for (const k of Object.keys(fields)) if (fields[k] === null) delete fields[k]; // let the database defaults apply
+      return ok(await sb.from("children").insert({ parent_id: user.id, ...fields }).select().single());
     },
-    async updateChild(id, patch) { return ok(await sb.from("children").update({ name: patch.name?.trim(), avatar: patch.avatar, grade: patch.grade ?? null }).eq("id", id).select().single()); },
+    async updateChild(id, patch) { return ok(await sb.from("children").update(pick(patch, CHILD_FIELDS)).eq("id", id).select().single()); },
     async deleteChild(id) { ok(await sb.from("children").delete().eq("id", id)); },
 
     async loadChild(childId) {
@@ -58,6 +63,17 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
       ok(await sb.from("child_state").upsert({ child_id: childId, key, value, updated_at: new Date().toISOString() }));
     },
 
+    async getUsage(childIds, fromDay) {
+      if (!childIds.length) return [];
+      return ok(await sb.from("child_usage").select("*").in("child_id", childIds).gte("day", fromDay));
+    },
+    async addUsage(childId, day, secs, bonus = 0) { ok(await sb.rpc("add_usage", { cid: childId, d: day, secs, bonus })); },
+
+    async queueNotification({ child_id = null, title, body = "" }) {
+      ok(await sb.from("notifications").insert({ child_id, kind: "milestone", title: title.slice(0, 200), body: body.slice(0, 2000) }));
+    },
+    async listNotifications() { return ok(await sb.from("notifications").select("*").order("created_at", { ascending: false }).limit(50)); },
+
     async getContent() {
       const [modules, cards, quiz] = await Promise.all([
         sb.from("modules").select("*").order("sort"),
@@ -68,7 +84,7 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
       if (!modules.length) return { ...structuredClone(SEED), fromSeed: true };
       return { modules, cards, quiz };
     },
-    async saveModule(m) { const { id, title, tagline, emoji, color, activity, sort, published, levels } = m; ok(await sb.from("modules").upsert({ id, title, tagline, emoji, color, activity, sort, published, levels, updated_at: new Date().toISOString() })); },
+    async saveModule(m) { const { id, title, tagline, emoji, color, activity, sort, published, levels, area = "science", coming_soon = false } = m; ok(await sb.from("modules").upsert({ id, title, tagline, emoji, color, activity, sort, published, levels, area, coming_soon, updated_at: new Date().toISOString() })); },
     async deleteModule(id) { ok(await sb.from("modules").delete().eq("id", id)); },
     async saveCard(c) { const { id, module_id, level, sort, data, published } = c; ok(await sb.from("cards").upsert({ id, module_id, level, sort, data, published, updated_at: new Date().toISOString() })); },
     async deleteCard(id) { ok(await sb.from("cards").delete().eq("id", id)); },

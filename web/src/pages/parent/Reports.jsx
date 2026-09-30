@@ -1,0 +1,99 @@
+import { Link, useParams } from "react-router-dom";
+import ParentLayout from "../../layouts/ParentLayout.jsx";
+import { useApp } from "../../lib/AppContext.jsx";
+import { useFamily, daysBack } from "../../lib/useFamily.js";
+import { badgeState, moduleStats, starCount } from "../../lib/progress.js";
+import { isUnlocked } from "../../components/journey/Journey.jsx";
+import { CIRCUIT_JOURNEY } from "../../content/circuits.js";
+import { BINARY_JOURNEY } from "../../content/subjects.js";
+import { AREAS } from "../../content/areas.js";
+import { timeline, fmtWhen } from "../../lib/activity.js";
+import UsageChart from "./UsageChart.jsx";
+
+const PATHS = [
+  { name: "🔌 Volt's circuits & gates", guide: "circuits", steps: CIRCUIT_JOURNEY },
+  { name: "🔢 Bit's binary adventure", guide: "binary", steps: BINARY_JOURNEY },
+];
+
+export default function Reports() {
+  const { childId } = useParams();
+  const { children, published } = useApp();
+  const { data, loading, minutesOn } = useFamily(7);
+  const child = children.find(c => c.id === childId) ?? children[0];
+  const d = child && data[child.id];
+  if (!children.length) return <ParentLayout title="Progress reports"><p className="muted">Add a child first.</p></ParentLayout>;
+  const week = child ? daysBack(7).reduce((s, day) => s + minutesOn(child.id, day), 0) : 0;
+  const done = d ? new Set(d.progress.map(p => p.item_id)) : new Set();
+  const avg = d?.attempts.length ? Math.round((d.attempts.reduce((s, a) => s + a.score / a.total, 0) / d.attempts.length) * 100) : null;
+  return (
+    <ParentLayout title="Progress reports">
+      <div className="seg" role="tablist" aria-label="Child">
+        {children.map(c => <Link key={c.id} role="tab" aria-selected={c.id === child.id} className={c.id === child.id ? "on" : ""} to={`/parent/reports/${c.id}`}>{c.avatar} {c.name}</Link>)}
+      </div>
+      {(!d || !published || loading) ? <p className="muted">Loading…</p> : (
+        <>
+          <div className="kpis wide">
+            <div className="kpi"><span>This week</span><b>{week} min</b><small>learning time</small></div>
+            <div className="kpi"><span>Stars</span><b>★ {starCount(d)}</b><small>all time</small></div>
+            <div className="kpi"><span>Quiz average</span><b>{avg == null ? "—" : `${avg}%`}</b><small>{d.attempts.length} quizzes</small></div>
+            <div className="kpi"><span>Badges</span><b>{badgeState(d, published.modules).filter(b => b.earned).length}</b><small>earned</small></div>
+          </div>
+
+          <section className="pc-card">
+            <h2>Learning time, last 7 days</h2>
+            <UsageChart childId={child.id} minutesOn={minutesOn} limit={child.daily_limit_min} />
+          </section>
+
+          <section className="pc-card">
+            <h2>Subjects</h2>
+            {AREAS.map(a => {
+              const mods = published.modules.filter(m => m.area === a.id);
+              return (
+                <div key={a.id} className="subj-group">
+                  <h3>{a.emoji} {a.title}</h3>
+                  {mods.map(m => {
+                    if (m.coming_soon) return <div key={m.id} className="modrow soon"><span className="n">{m.emoji} {m.title}</span><span className="muted">Coming soon</span><span /></div>;
+                    const st = moduleStats(m, published.cards, d);
+                    return (
+                      <div key={m.id} className="modrow" style={{ "--c": `var(--${m.color})` }}>
+                        <span className="n">{m.emoji} {m.title}</span>
+                        <div className="bar"><i style={{ width: `${st.pct}%` }} /></div>
+                        <span className="v">{st.done}/{st.total}{st.best ? ` · best quiz ${st.best.score}/${st.best.total}` : ""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="pc-card">
+            <h2>Adventures</h2>
+            {PATHS.map(p => {
+              const main = p.steps.filter(s => !s.bonus);
+              const n = main.filter(s => done.has(s.id)).length;
+              const next = p.steps.find((s, i) => !done.has(s.id) && isUnlocked(p.steps, i, done, child.grade ?? 0));
+              return (
+                <div key={p.name} className="path-row">
+                  <b>{p.name}</b>
+                  <span className="muted">{n} of {main.length} steps{next ? ` · next: ${next.emoji} ${next.title}` : " · all done ⭐"}</span>
+                  <Link to={`/parent/guides/${p.guide}`}>Course guide</Link>
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="pc-card">
+            <h2>Activity</h2>
+            {(() => {
+              const feed = timeline([{ child, data: d }], published, 30);
+              return feed.length
+                ? <ul className="feed">{feed.map((r, i) => <li key={i}><span className="what">{r.text}</span><time>{fmtWhen(r.at)}</time></li>)}</ul>
+                : <p className="muted">No activity yet.</p>;
+            })()}
+          </section>
+        </>
+      )}
+    </ParentLayout>
+  );
+}

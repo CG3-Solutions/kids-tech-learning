@@ -3,12 +3,21 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useApp } from "./lib/AppContext.jsx";
 import TopBar from "./components/TopBar.jsx";
 import ParentGate, { gatePassed } from "./components/ParentGate.jsx";
+import KidLayout from "./layouts/KidLayout.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Profiles from "./pages/Profiles.jsx";
-import KidHome from "./pages/KidHome.jsx";
+import Home from "./pages/kid/Home.jsx";
+import Area from "./pages/kid/Area.jsx";
+import Badges from "./pages/kid/Badges.jsx";
 import ModulePage from "./pages/ModulePage.jsx";
-import Parent from "./pages/Parent.jsx";
+import Overview from "./pages/parent/Overview.jsx";
+import Children from "./pages/parent/Children.jsx";
+import Reports from "./pages/parent/Reports.jsx";
+import ScreenTime from "./pages/parent/ScreenTime.jsx";
+import Notifications from "./pages/parent/Notifications.jsx";
+import VoiceSound from "./pages/parent/VoiceSound.jsx";
+import Account from "./pages/parent/Account.jsx";
 import Guides from "./pages/Guides.jsx";
 import Admin from "./pages/Admin.jsx";
 
@@ -24,25 +33,28 @@ function RequireUser({ children }) {
   return children;
 }
 
-function RequireChild({ children }) {
+// Kid pages: need a chosen child, and run inside the kid shell (navigation, screen time).
+function KidGate({ children }) {
   const { activeChild, profile } = useApp();
   if (!profile) return <Loading />;
   if (!activeChild) return <Navigate to="/profiles" replace />;
-  return children;
+  return <KidLayout>{children}</KidLayout>;
 }
+const Kid = ({ children }) => <RequireUser><KidGate>{children}</KidGate></RequireUser>;
 
-function Gate({ children }) {
+// Parent pages: a grown-up check once per browser session.
+function Parent({ children, admin = false }) {
   const [ok, setOk] = useState(gatePassed());
-  if (ok) return children;
-  return <><TopBar variant="public" /><main className="wrap"><ParentGate onPass={() => setOk(true)} /></main></>;
-}
-
-function RequireAdmin({ children }) {
   const { profile, isAdmin } = useApp();
-  if (!profile) return <Loading />;
-  if (!isAdmin) return <Navigate to="/parent" replace />;
+  if (!ok) return <><TopBar variant="public" /><main className="wrap"><ParentGate onPass={() => setOk(true)} /></main></>;
+  if (admin) {
+    if (!profile) return <Loading />;
+    if (!isAdmin) return <Navigate to="/parent" replace />;
+  }
   return children;
 }
+
+const P = (el, admin) => <RequireUser><Parent admin={admin}>{el}</Parent></RequireUser>;
 
 export default function App() {
   return (
@@ -50,11 +62,19 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/profiles" element={<RequireUser><Profiles /></RequireUser>} />
-      <Route path="/learn" element={<RequireUser><RequireChild><KidHome /></RequireChild></RequireUser>} />
-      <Route path="/learn/:moduleId/:tab?" element={<RequireUser><RequireChild><ModulePage /></RequireChild></RequireUser>} />
-      <Route path="/parent" element={<RequireUser><Gate><Parent /></Gate></RequireUser>} />
-      <Route path="/parent/guides/:slug" element={<RequireUser><Gate><Guides /></Gate></RequireUser>} />
-      <Route path="/admin" element={<RequireUser><Gate><RequireAdmin><Admin /></RequireAdmin></Gate></RequireUser>} />
+      <Route path="/learn" element={<Kid><Home /></Kid>} />
+      <Route path="/learn/area/:areaId" element={<Kid><Area /></Kid>} />
+      <Route path="/learn/badges" element={<Kid><Badges /></Kid>} />
+      <Route path="/learn/:moduleId/:tab?" element={<Kid><ModulePage /></Kid>} />
+      <Route path="/parent" element={P(<Overview />)} />
+      <Route path="/parent/children" element={P(<Children />)} />
+      <Route path="/parent/reports/:childId?" element={P(<Reports />)} />
+      <Route path="/parent/screen-time" element={P(<ScreenTime />)} />
+      <Route path="/parent/notifications" element={P(<Notifications />)} />
+      <Route path="/parent/voice" element={P(<VoiceSound />)} />
+      <Route path="/parent/account" element={P(<Account />)} />
+      <Route path="/parent/guides/:slug" element={P(<Guides />)} />
+      <Route path="/admin" element={P(<Admin />, true)} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

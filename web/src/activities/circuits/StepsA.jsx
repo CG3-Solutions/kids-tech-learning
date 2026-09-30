@@ -44,7 +44,9 @@ const SEGS = [
   [BX, 118, BX, TOP], [BX, TOP, 200, TOP], [200, TOP, LX, TOP], [LX, TOP, LX, 106],
   [LX, 154, LX, BOT], [LX, BOT, 200, BOT], [200, BOT, BX, BOT], [BX, BOT, BX, 142],
 ];
-const pickBroken = prev => { let i; do { i = Math.floor(Math.random() * SEGS.length); } while (i === prev); return i; };
+// Segments 4 and 7 run past the bulb and battery labels, so the gap is never put there.
+const BREAKABLE = [0, 1, 2, 3, 5, 6];
+const pickBroken = prev => { let i; do { i = BREAKABLE[Math.floor(Math.random() * BREAKABLE.length)]; } while (i === prev); return i; };
 export function LoopDetective({ onComplete }) {
   const GAPS = [36, 22, 12];
   const [round, setRound] = useState(0);

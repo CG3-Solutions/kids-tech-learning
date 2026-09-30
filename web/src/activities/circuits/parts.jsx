@@ -23,7 +23,7 @@ export function Battery({ x, y, label = "Battery", big = false }) {
       <line className="plate" x1={x - 13} y1={y + 12} x2={x + 13} y2={y + 12} strokeWidth="10" />
       <text x={x + 28} y={y - 14} fontSize="18" style={{ fill: "var(--plus)" }}>+</text>
       <text x={x + 28} y={y + 24} fontSize="18">–</text>
-      {label && <text x={x} y={y + 50} fontSize="13" textAnchor="middle">{label}</text>}
+      {label && <text x={x + 14} y={y + 52} fontSize="13" textAnchor="start" pointerEvents="none">{label}</text>}
     </g>
   );
 }
@@ -48,7 +48,7 @@ export function Bulb({ x, y, on, level = on ? 3 : 0, label = "Bulb" }) {
     <g>
       <circle className={`bulb-glass lvl${level}`} cx={x} cy={y} r="24" />
       <path d={`M${x - 17} ${y - 17} L${x + 17} ${y + 17} M${x + 17} ${y - 17} L${x - 17} ${y + 17}`} stroke="var(--ink)" strokeWidth="3" />
-      {label && <text x={x} y={y + 46} fontSize="13" textAnchor="middle">{label}</text>}
+      {label && <text x={x - 14} y={y + 46} fontSize="13" textAnchor="end" pointerEvents="none">{label}</text>}
     </g>
   );
 }
@@ -60,7 +60,7 @@ export function Motor({ x, y, on, label = "Motor" }) {
         <path d={`M${x} ${y} L${x} ${y - 20} A9 9 0 0 1 ${x + 11} ${y - 15} Z M${x} ${y} L${x + 18} ${y + 8} A9 9 0 0 1 ${x + 9} ${y + 17} Z M${x} ${y} L${x - 17} ${y + 11} A9 9 0 0 1 ${x - 19} ${y - 2} Z`} fill="var(--wire)" />
       </g>
       <circle cx={x} cy={y} r="4" fill="var(--ink)" />
-      {label && <text x={x} y={y + 46} fontSize="13" textAnchor="middle">{label}</text>}
+      {label && <text x={x - 14} y={y + 46} fontSize="13" textAnchor="end" pointerEvents="none">{label}</text>}
     </g>
   );
 }
@@ -70,7 +70,7 @@ export function Buzzer({ x, y, on, label = "Buzzer" }) {
       <rect x={x - 20} y={y - 20} width="40" height="40" rx="8" fill="var(--surface-2)" stroke="var(--ink)" strokeWidth="3" />
       <circle cx={x} cy={y} r="6" fill="var(--ink)" />
       {on && <g fill="none" stroke="var(--spark)" strokeWidth="3" strokeLinecap="round" className="waves on"><path d={`M${x + 28} ${y - 12} q8 12 0 24`} /><path d={`M${x + 36} ${y - 20} q14 20 0 40`} /></g>}
-      {label && <text x={x} y={y + 46} fontSize="13" textAnchor="middle">{label}</text>}
+      {label && <text x={x - 14} y={y + 46} fontSize="13" textAnchor="end" pointerEvents="none">{label}</text>}
     </g>
   );
 }
@@ -82,7 +82,7 @@ export function Led({ x, y, on, flip, label = "LED" }) {
         <line x1={x - 18} y1={y + 16} x2={x + 18} y2={y + 16} stroke="var(--ink)" strokeWidth="4" />
       </g>
       <path d={`M${x + 24} ${y - 8} l12 -10 m-5 0 h5 v5 M${x + 24} ${y + 6} l12 -10 m-5 0 h5 v5`} stroke="var(--ink)" strokeWidth="2.5" fill="none" />
-      {label && <text x={x} y={y + 46} fontSize="13" textAnchor="middle">{label}</text>}
+      {label && <text x={x - 14} y={y + 46} fontSize="13" textAnchor="end" pointerEvents="none">{label}</text>}
     </g>
   );
 }

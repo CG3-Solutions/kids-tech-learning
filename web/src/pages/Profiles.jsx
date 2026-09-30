@@ -10,10 +10,20 @@ export function ChildForm({ initial, onSave, onCancel, saveLabel = "Add" }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [avatar, setAvatar] = useState(initial?.avatar ?? AVATARS[0]);
   const [grade, setGrade] = useState(initial?.grade ?? "");
+  const [gender, setGender] = useState(initial?.gender ?? "unspecified");
   const [busy, setBusy] = useState(false);
   return (
-    <form className="stack" style={{ gap: 14, textAlign: "left" }} onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave({ name, avatar, grade: grade === "" ? null : Number(grade) }); } finally { setBusy(false); } }}>
+    <form className="stack" style={{ gap: 14, textAlign: "left" }} onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave({ name, avatar, gender, grade: grade === "" ? null : Number(grade) }); } finally { setBusy(false); } }}>
       <div className="field"><label htmlFor="childName">Child's first name</label><input id="childName" maxLength={40} value={name} onChange={e => setName(e.target.value)} required autoFocus /></div>
+      <fieldset className="field seg-field">
+        <legend>Your child is a…</legend>
+        <div className="seg">
+          {[["girl", "👧 Girl"], ["boy", "👦 Boy"], ["unspecified", "🙂 Prefer not to say"]].map(([v, l]) => (
+            <label key={v} className={gender === v ? "on" : ""}><input type="radio" name="gender" value={v} checked={gender === v} onChange={() => setGender(v)} />{l}</label>
+          ))}
+        </div>
+        <small>Sets the default reading voice. You can change it any time in Voice & sound.</small>
+      </fieldset>
       <div className="field">
         <label htmlFor="childGrade">Class (standard)</label>
         <select id="childGrade" value={grade} onChange={e => setGrade(e.target.value)}>
@@ -42,7 +52,7 @@ export default function Profiles() {
 
   return (
     <>
-      <TopBar variant="public"><Link className="btn" to="/parent">Parent area</Link></TopBar>
+      <TopBar variant="public"><Link className="btn" to="/parent">👪 Grown-ups</Link></TopBar>
       <main className="wrap">
         <div className="who">
           <h1>{children.length ? "Who's learning today?" : "Add your first learner"}</h1>

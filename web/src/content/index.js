@@ -7,11 +7,19 @@ import {
 // Built-in content. Used in demo mode, when the database is empty, and by the admin "Load starter content" button.
 export const SEED = {
   modules: [
-    { id: "electricity", title: "Electricity & Parts", tagline: "Batteries, bulbs, motors and sensors", emoji: "⚡", color: "lv1", activity: "circuit", sort: 0, published: true, levels: ELECTRICITY_LEVELS },
-    { id: "computer", title: "Inside a Computer", tagline: "Input, brain, memory and output", emoji: "💻", color: "lv4", activity: null, sort: 1, published: true, levels: COMPUTER_LEVELS },
-    { id: "binary", title: "Binary Magic", tagline: "Count like a computer with 1s and 0s", emoji: "🔢", color: "lv2", activity: "binary", sort: 2, published: true, levels: BINARY_LEVELS },
-    { id: "coding", title: "Coding Puzzles", tagline: "Guide the robot with instructions", emoji: "🤖", color: "lv3", activity: "coding", sort: 3, published: true, levels: CODING_LEVELS },
+    { id: "electricity", area: "science", title: "Electricity & Parts", tagline: "Circuits, parts and logic gates", emoji: "⚡", color: "lv1", activity: "circuit", sort: 0, published: true, levels: ELECTRICITY_LEVELS },
+    { id: "computer", area: "science", title: "Inside a Computer", tagline: "Input, brain, memory and output", emoji: "💻", color: "lv4", activity: null, sort: 1, published: true, levels: COMPUTER_LEVELS },
+    { id: "binary", area: "science", title: "Binary Magic", tagline: "Count like a computer with 1s and 0s", emoji: "🔢", color: "lv2", activity: "binary", sort: 2, published: true, levels: BINARY_LEVELS },
+    { id: "coding", area: "science", title: "Coding Puzzles", tagline: "Guide the robot with instructions", emoji: "🤖", color: "lv3", activity: "coding", sort: 3, published: true, levels: CODING_LEVELS },
+    // Coming soon: shown as locked tiles so kids and parents can see what's next.
+    { id: "alphabets", area: "language", title: "Alphabets", tagline: "A to Z with sounds", emoji: "🔠", color: "lv3", activity: null, sort: 10, published: true, coming_soon: true, levels: [] },
+    { id: "words", area: "language", title: "Words", tagline: "Read and spell first words", emoji: "📖", color: "lv1", activity: null, sort: 11, published: true, coming_soon: true, levels: [] },
+    { id: "sentences", area: "language", title: "Sentences", tagline: "Build and read sentences", emoji: "💬", color: "lv2", activity: null, sort: 12, published: true, coming_soon: true, levels: [] },
+    { id: "typing", area: "language", title: "Typing", tagline: "Learn the keyboard, finger by finger", emoji: "⌨️", color: "lv4", activity: null, sort: 13, published: true, coming_soon: true, levels: [] },
+    { id: "numbers", area: "maths", title: "Numbers", tagline: "Count, compare and order", emoji: "🔟", color: "lv2", activity: null, sort: 20, published: true, coming_soon: true, levels: [] },
+    { id: "mathematics", area: "maths", title: "Mathematics", tagline: "Add, subtract, multiply and more", emoji: "➕", color: "lv3", activity: null, sort: 21, published: true, coming_soon: true, levels: [] },
   ],
+
   cards: [...ELECTRICITY_CARDS, ...COMPUTER_CARDS, ...BINARY_CARDS, ...CODING_CARDS].map(c => ({ ...c, published: true })),
   quiz: [...ELECTRICITY_QUIZ, ...COMPUTER_QUIZ, ...BINARY_QUIZ, ...CODING_QUIZ],
 };
