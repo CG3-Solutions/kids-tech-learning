@@ -472,3 +472,104 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 .celebrate { display: grid; gap: 12px; justify-items: center; text-align: center }
 .celebrate h2 { font-size: 2rem }
 .apple-card .mini-lamps i, .big-card .mini-lamps i { border-color: currentColor }
+
+/* ───────── Volt's circuit adventure ───────── */
+.circuit.board, .circuit.ws { width: 100%; height: auto; display: block }
+.circuit .flow.live { opacity: 1; animation: run .6s linear infinite }
+.circuit .w.thin { stroke-width: 5 }
+.circuit .sw-lever { stroke: var(--ink); stroke-width: 6; stroke-linecap: round; transition: transform .25s }
+.circuit .bulb-glass.lvl1 { fill: color-mix(in srgb, var(--spark) 35%, var(--surface-2)) }
+.circuit .bulb-glass.lvl2 { fill: color-mix(in srgb, var(--spark) 70%, var(--surface-2)); filter: drop-shadow(0 0 6px var(--glow)) }
+.circuit .bulb-glass.lvl3 { fill: var(--spark); filter: drop-shadow(0 0 14px var(--glow)) }
+.circuit .led-body.lit { fill: var(--plus); filter: drop-shadow(0 0 10px var(--plus)) }
+.circuit .fan.spin { animation: spin .5s linear infinite }
+.circuit .waves.on { opacity: 1; animation: pulse .4s ease-in-out infinite alternate }
+.circuit .muted-text, .circuit .part-label { fill: var(--muted) }
+.gate path, .gate circle { fill: var(--surface-2); stroke: var(--ink); stroke-width: 3; transition: fill .2s }
+.gate.on path:first-child { fill: color-mix(in srgb, var(--spark) 45%, var(--surface)) }
+.gate .gate-line { fill: none }
+.circuit .gate-label { font-family: var(--f-body); font-weight: 700 }
+.gate-slot { fill: var(--surface); stroke: var(--muted); stroke-width: 3; stroke-dasharray: 8 6 }
+.lwire { fill: none; stroke: var(--muted); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s }
+.lwire.on { stroke: var(--spark); filter: drop-shadow(0 0 3px var(--glow)) }
+.in-toggle rect { fill: var(--surface-2); stroke: var(--ink); stroke-width: 3; transition: fill .2s }
+.in-toggle.on rect { fill: var(--spark) }
+.in-toggle .knob { fill: var(--surface); stroke: var(--ink); stroke-width: 3; transition: cx .2s }
+.circuit .in-toggle .bit { font-family: var(--f-body); font-weight: 700 }
+.circuit .in-toggle .lbl { font-family: var(--f-body); font-weight: 700 }
+.panel.flat { padding: 10px; background: var(--surface-2); border: 0 }
+.switch-btn.small { font-size: 1.05rem; padding: 10px 16px; border: none; border-radius: 14px; background: var(--spark); color: var(--spark-ink); font-family: var(--f-display); font-weight: 700 }
+.switch-btn.small.off { background: var(--ink); color: var(--board) }
+.sky.day { background: color-mix(in srgb, var(--spark) 25%, var(--surface)) }
+.sky.night { background: color-mix(in srgb, var(--ink) 85%, var(--lv4)) }
+.sky.night .circuit text { fill: var(--board) }
+
+.tt-wrap { overflow-x: auto; min-width: 0 }
+.tt { border-collapse: collapse; margin: 0 auto; background: var(--surface); border-radius: 12px; overflow: hidden }
+.tt th, .tt td { padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap }
+.tt th { font-family: var(--f-display); font-weight: 600; background: var(--surface-2) }
+.tt th.out, .tt td.out { background: color-mix(in srgb, var(--spark) 12%, var(--surface)) }
+.tt tr.cur td { box-shadow: inset 0 0 0 9999px color-mix(in srgb, var(--spark) 14%, transparent) }
+.tt tr.seen td:first-child { box-shadow: inset 4px 0 0 var(--good) }
+.tt tr.bad td { color: var(--bad) }
+.tt.small th, .tt.small td { padding: 4px 8px; font-size: .9rem }
+.tt-count { font-size: .85rem; margin-top: 6px }
+
+.tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center }
+.tray-item { border: 2px solid var(--line); background: var(--surface); border-radius: 14px; padding: 6px 12px; font-weight: 700; display: inline-flex; gap: 6px; align-items: center }
+.tray-item span { font-size: 1.4rem }
+.tray-item.yes { border-color: var(--good); opacity: .6 }
+.tray-item.no { border-color: var(--bad); opacity: .6 }
+.bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px }
+.bin { border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; min-height: 90px; align-content: start }
+.bin.yes { background: color-mix(in srgb, var(--good) 12%, var(--surface)); border: 2px solid var(--good) }
+.bin.no { background: color-mix(in srgb, var(--bad) 10%, var(--surface)); border: 2px solid var(--bad) }
+.bin small { color: var(--muted) }
+.bin div { font-size: 1.6rem; display: flex; gap: 6px; flex-wrap: wrap }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-weight: 700 }
+.checklist li.done { color: var(--good) }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: center }
+.controls .row { margin-top: 6px }
+
+.adder { display: grid; gap: 12px; overflow-x: auto }
+.bitrow { display: flex; gap: 8px; align-items: center; justify-content: center }
+.bitrow-label { font-family: var(--f-display); font-size: 1.4rem; font-weight: 700; width: 28px; text-align: center }
+.bitrow-num { font-family: var(--f-display); font-size: 1.4rem; font-weight: 700; min-width: 58px; font-variant-numeric: tabular-nums }
+.bitbtn { width: 56px; height: 62px; border-radius: 14px; border: 3px solid var(--ink); background: var(--ink); color: var(--board); display: grid; place-items: center; align-content: center; gap: 0; padding: 0 }
+.bitbtn b { font-family: ui-monospace, Menlo, monospace; font-size: 1.5rem; line-height: 1 }
+.bitbtn small { font-size: .75rem; opacity: .8 }
+.bitbtn.on { background: var(--spark); color: var(--spark-ink); border-color: var(--spark-ink) }
+.bitbtn.ro { cursor: default }
+.bitrow.result { border-top: 3px solid var(--ink); padding-top: 12px }
+.adders { display: grid; grid-template-columns: 56px repeat(4, 56px) 58px; gap: 8px; justify-content: center; padding-left: 36px }
+.adder-box { position: relative; height: 56px; border-radius: 12px; border: 2px dashed var(--muted); display: grid; place-items: center; align-content: center; font-size: .75rem; color: var(--muted) }
+.adder-box b { font-size: 1.2rem; color: var(--ink) }
+.adder-box.on { border-style: solid; border-color: var(--spark) }
+.adder-box.carry-out { font-weight: 700 }
+.adder-box.carry-out.on { background: color-mix(in srgb, var(--spark) 30%, var(--surface)); color: var(--ink) }
+.carry-arrow { position: absolute; left: -12px; top: 50%; transform: translateY(-50%); font-size: .9rem; color: var(--line) }
+.carry-arrow.on { color: var(--plus) }
+
+.ws-board { overflow-x: auto; border-radius: 16px; background: var(--surface-2); padding: 6px }
+.ws-board svg { min-width: 520px }
+.ws .cell { fill: var(--surface); stroke: var(--line); stroke-width: 1.5 }
+.ws .cell.open { stroke: var(--wire); stroke-dasharray: 6 6; stroke-width: 2.5; cursor: pointer }
+.tdot { fill: var(--surface); stroke: var(--lv4); stroke-width: 3; cursor: pointer }
+.tdot.sel { fill: var(--lv4) }
+.ex-select { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 7px 10px; font-weight: 700 }
+
+.parent-note { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px }
+.parent-note summary { cursor: pointer; font-weight: 700; color: var(--muted) }
+.parent-note p { margin-top: 8px; max-width: 70ch }
+.celebrate .parent-note { text-align: left; width: min(640px, 100%) }
+.part-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; padding-top: 8px }
+.part-head h3 { font-size: 1.25rem }
+.part-head p { flex-basis: 100%; font-size: .95rem }
+.paths { display: grid; gap: 6px }
+.path-row { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; background: var(--surface-2); border-radius: 12px; padding: 8px 12px; font-size: .95rem }
+.path-row a { margin-left: auto; font-weight: 700 }
+.adder-grid { display: grid; grid-template-columns: 44px repeat(5, 56px) 70px; gap: 10px 8px; justify-content: center; align-items: center; min-width: max-content; margin: 0 auto }
+.ag-label { font-family: var(--f-display); font-size: 1.4rem; font-weight: 700; text-align: center }
+.ag-label.small { font-size: .75rem; color: var(--muted); font-family: var(--f-body) }
+.ag-num { font-family: var(--f-display); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums }
+.adder-grid > .ag-label:nth-last-of-type(1) { border: 0 }

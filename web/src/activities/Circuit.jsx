@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 const DEVS = [{ id: "bulb", n: "Bulb" }, { id: "motor", n: "Motor" }, { id: "buzzer", n: "Buzzer" }, { id: "led", n: "LED" }];
 
-export default function Circuit({ onFirstSuccess }) {
+export default function Circuit({ onFirstSuccess, onState }) {
   const [closed, setClosed] = useState(false);
   const [dev, setDev] = useState("bulb");
   const [flipped, setFlipped] = useState(false);
@@ -22,7 +22,8 @@ export default function Circuit({ onFirstSuccess }) {
     }
     if (works) onFirstSuccess?.();
     return stop;
-  }, [works, dev]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [works, dev]);
+  useEffect(() => { onState?.({ closed, dev, flipped, works }); }, [closed, dev, flipped, works]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const msg = !closed ? ["The loop is broken.", "The switch is open, like a drawbridge up. Electricity can’t get across."]
     : dev === "bulb" ? ["The bulb glows!", "The loop is complete, so electricity flows from the battery, through the switch and the bulb, and back."]

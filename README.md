@@ -15,7 +15,11 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 
 ### Features
 - **Accounts:** only parents sign up (email + password, sign-in link, optional Google). Children are profiles with a first name and an animal avatar, never an email.
-- **Kids:** "Who's learning?" picker, subject cards with **Read to me**, the Build-a-circuit, Binary cards and Robot puzzles activities, a treasure hunt, quizzes, stars and 10 badges.
+- **Kids:** "Who's learning?" picker, subject cards with **Read to me**, a treasure hunt, robot puzzles, quizzes, stars and badges.
+- **Adventures** (step-by-step, with a story character, sounds and a map):
+  - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
+  - **Bit's binary adventure** (Binary Magic): 7 steps plus 2 bonus games. See `docs/05-binary-adventure.md`.
+  - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
 - **Parents:** a maths-question gate, then per-child progress for each subject, recent quiz scores, a "Teach next" suggestion, child management and teaching guides.
 - **Admins:** create and edit subjects, cards (every field, including circuit symbols) and quiz questions, save drafts, publish, and load the starter content.
 - **Demo mode:** without Supabase settings, the app runs fully in the browser (saved in localStorage). This is useful for trying it out and for development.

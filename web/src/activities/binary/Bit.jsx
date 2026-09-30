@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { speak } from "../../lib/speech.js";
-import { isMuted, onMuteChange } from "../../lib/sfx.js";
+import Guide from "../../components/journey/Guide.jsx";
 
 // Bit the Robot: can only say ON or OFF. Its antenna lamp shows its own state.
 export function BitFace({ mood = "happy", lamp = true, size = 96 }) {
@@ -20,19 +18,6 @@ export function BitFace({ mood = "happy", lamp = true, size = 96 }) {
   );
 }
 
-// Bit's speech bubble. Reads itself aloud when the text changes (unless sound is muted).
-export default function Bit({ children, say, mood = "happy", lamp = true }) {
-  const text = say ?? (typeof children === "string" ? children : "");
-  const [muted, setM] = useState(isMuted());
-  useEffect(() => onMuteChange(setM), []);
-  useEffect(() => { if (text && !muted) speak(text); }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
-  return (
-    <div className="bit">
-      <BitFace mood={mood} lamp={lamp} />
-      <div className="bubble" role="status">
-        <div>{children ?? say}</div>
-        {text && <button className="btn ghost small" onClick={() => speak(text)} aria-label="Hear Bit again">🔊 Hear it</button>}
-      </div>
-    </div>
-  );
+export default function Bit(props) {
+  return <Guide Face={BitFace} {...props} />;
 }

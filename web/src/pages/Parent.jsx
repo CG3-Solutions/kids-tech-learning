@@ -5,6 +5,35 @@ import { ChildForm, ordinal } from "./Profiles.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { badgeState, moduleStats, nextSuggestion, starCount } from "../lib/progress.js";
 import { GUIDES } from "./Guides.jsx";
+import { isUnlocked } from "../components/journey/Journey.jsx";
+import { CIRCUIT_JOURNEY } from "../content/circuits.js";
+import { BINARY_JOURNEY } from "../content/subjects.js";
+
+const PATHS = [
+  { name: "🔌 Circuits & gates", guide: "circuits", steps: CIRCUIT_JOURNEY },
+  { name: "🔢 Binary adventure", guide: "binary", steps: BINARY_JOURNEY },
+];
+
+// Where a child is on each adventure: steps done, and the next open step.
+function PathProgress({ child, data }) {
+  const done = new Set(data.progress.map(p => p.item_id));
+  return (
+    <div className="paths">
+      {PATHS.map(p => {
+        const main = p.steps.filter(s => !s.bonus);
+        const n = main.filter(s => done.has(s.id)).length;
+        const next = p.steps.find((s, i) => !done.has(s.id) && isUnlocked(p.steps, i, done, child.grade ?? 0));
+        return (
+          <div key={p.name} className="path-row">
+            <b>{p.name}</b>
+            <span className="muted">{n} of {main.length} steps{next ? ` · next: ${next.emoji} ${next.title}` : " · all done! ⭐"}</span>
+            <Link to={`/parent/guides/${p.guide}`}>Course guide</Link>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function ChildSummary({ child, data, modules, cards, onEdit }) {
   const badges = badgeState(data, modules).filter(b => b.earned);
@@ -37,6 +66,7 @@ function ChildSummary({ child, data, modules, cards, onEdit }) {
           );
         })}
       </div>
+      <PathProgress child={child} data={data} />
       {sugg && (
         <div className="suggest">
           <div className="eyebrow">Teach next</div>

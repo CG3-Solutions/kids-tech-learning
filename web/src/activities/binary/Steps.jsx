@@ -2,31 +2,18 @@ import { useMemo, useState } from "react";
 import Bit, { BitFace } from "./Bit.jsx";
 import Lamp, { pattern } from "./Lamp.jsx";
 import { sfx } from "../../lib/sfx.js";
+import { Choices, MiniLamps, useAnswer as useCheck } from "../../components/journey/kit.jsx";
+
+// Binary steps call onRight after a correct answer; the shared checker doesn't, so wrap it.
+function useAnswer(onRight) {
+  const [feedback, check, clear] = useCheck();
+  return [feedback, (ok, r, w) => { if (check(ok, r, w)) onRight?.(); }, clear];
+}
 
 const rand = n => Math.floor(Math.random() * n);
 const apples = n => "🍎".repeat(n);
 
-// Small row of read-only lamps, used to show patterns kids have found.
-export function MiniLamps({ bits }) {
-  return <span className="mini-lamps" aria-label={pattern(bits)}>{bits.map((b, i) => <i key={i} className={b ? "on" : ""} />)}</span>;
-}
-
-function Choices({ options, onPick, disabled }) {
-  return (
-    <div className="choices">
-      {options.map(o => <button key={o.value} className="choice" disabled={disabled} onClick={() => onPick(o.value)}>{o.label}</button>)}
-    </div>
-  );
-}
-
-// Asks one multiple-choice question; wrong answers get another try.
-function useAnswer(onRight) {
-  const [feedback, setFeedback] = useState(null);
-  const check = (ok, rightMsg = "Yes! ⭐", wrongMsg = "Not quite. Try again!") => {
-    if (ok) { sfx.ding(); setFeedback({ ok, msg: rightMsg }); onRight?.(); } else { sfx.oops(); setFeedback({ ok, msg: wrongMsg }); }
-  };
-  return [feedback, check, () => setFeedback(null)];
-}
+export { MiniLamps };
 
 // ───────────── Step 1: Bit's lamp ─────────────
 export function Step1({ onComplete }) {
