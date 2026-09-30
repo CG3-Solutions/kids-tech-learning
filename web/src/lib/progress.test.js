@@ -92,3 +92,15 @@ describe("demo api", () => {
     expect((await api.getContent()).cards.some(c => c.id === "x-1")).toBe(false);
   });
 });
+
+describe("supabase url", async () => {
+  const { normalizeSupabaseUrl } = await import("./api.js");
+  it("fixes a pasted dashboard link", () => {
+    expect(normalizeSupabaseUrl("https://supabase.com/dashboard/project/lsfxsomrzrtmyyhrwdao/settings/api")).toBe("https://lsfxsomrzrtmyyhrwdao.supabase.co");
+  });
+  it("keeps a project url and trims extras", () => {
+    expect(normalizeSupabaseUrl(" https://abc.supabase.co/ ")).toBe("https://abc.supabase.co");
+    expect(normalizeSupabaseUrl("https://abc.supabase.co/rest/v1/")).toBe("https://abc.supabase.co");
+    expect(normalizeSupabaseUrl(undefined)).toBe("");
+  });
+});
