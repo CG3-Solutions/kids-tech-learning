@@ -35,13 +35,13 @@ export function createDemoApi(storage = local) {
     async updateProfile(patch) { need(); db.profile = { ...db.profile, display_name: patch.display_name ?? db.profile.display_name }; save(); return db.profile; },
 
     async listChildren() { need(); return [...db.children].sort((a, b) => a.created_at.localeCompare(b.created_at)); },
-    async addChild({ name, avatar }) {
-      need(); const child = { id: uid(), parent_id: db.user.id, name: name.trim(), avatar, created_at: new Date().toISOString() };
+    async addChild({ name, avatar, grade = null }) {
+      need(); const child = { id: uid(), parent_id: db.user.id, name: name.trim(), avatar, grade, created_at: new Date().toISOString() };
       db.children.push(child); save(); return child;
     },
     async updateChild(id, patch) {
       need(); const c = db.children.find(x => x.id === id); if (!c) throw new Error("Child not found.");
-      Object.assign(c, { name: patch.name?.trim() ?? c.name, avatar: patch.avatar ?? c.avatar }); save(); return c;
+      Object.assign(c, { name: patch.name?.trim() ?? c.name, avatar: patch.avatar ?? c.avatar, grade: patch.grade !== undefined ? patch.grade : c.grade ?? null }); save(); return c;
     },
     async deleteChild(id) {
       need(); db.children = db.children.filter(c => c.id !== id);

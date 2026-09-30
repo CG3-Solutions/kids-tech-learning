@@ -38,10 +38,12 @@ To use Supabase locally, copy `web/.env.example` to `web/.env.local` and fill in
 3. **Authentication → URL Configuration**:
    - Site URL: `https://cg3-solutions.github.io/kids-tech-learning/`
    - Redirect URLs: add the same URL, plus `http://localhost:5173/` for local development.
-4. **Project Settings → API**: copy the **Project URL** and the **anon public** key. The anon key is meant to be public; the security rules in `schema.sql` protect the data.
+4. Get the two values. The easiest way is the **Connect** button at the top of the project dashboard. They are also under **Project Settings (gear icon) → Data API** and **→ API Keys**:
+   - **Project URL** looks like `https://<project-id>.supabase.co`. It is *not* the `supabase.com/dashboard/...` address in your browser.
+   - The **publishable key** (`sb_publishable_...`) or the legacy **anon public** key (`eyJ...`). Both are meant to be public; the security rules in `schema.sql` protect the data. **Never** use the `service_role` or `sb_secret_...` key in the app.
 5. In GitHub, go to **Settings → Secrets and variables → Actions → Variables** and add:
    - `VITE_SUPABASE_URL` = the Project URL
-   - `VITE_SUPABASE_ANON_KEY` = the anon key
+   - `VITE_SUPABASE_ANON_KEY` = the publishable or anon key
 6. Re-run the deploy (**Actions → Deploy Spark Lab → Run workflow**).
 7. Sign up in the app. Then make yourself admin in **SQL Editor**:
    ```sql

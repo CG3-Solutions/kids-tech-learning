@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
-import { ChildForm } from "./Profiles.jsx";
+import { ChildForm, ordinal } from "./Profiles.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { badgeState, moduleStats, nextSuggestion, starCount } from "../lib/progress.js";
 import { GUIDES } from "./Guides.jsx";
@@ -15,7 +15,7 @@ function ChildSummary({ child, data, modules, cards, onEdit }) {
     <section className="panel child-sum">
       <div className="hd">
         <span className="face">{child.avatar}</span>
-        <div><h3>{child.name}</h3><span className="muted" style={{ fontSize: ".9rem" }}>{lastActive ? `Last active ${new Date(lastActive).toLocaleDateString()}` : "Not started yet"}</span></div>
+        <div><h3>{child.name}</h3><span className="muted" style={{ fontSize: ".9rem" }}>{child.grade ? `${ordinal(child.grade)} standard · ` : ""}{lastActive ? `Last active ${new Date(lastActive).toLocaleDateString()}` : "Not started yet"}</span></div>
         <span className="spacer" />
         <button className="btn ghost" onClick={onEdit}>Edit</button>
       </div>

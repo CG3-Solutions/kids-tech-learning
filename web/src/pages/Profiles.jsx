@@ -4,13 +4,24 @@ import TopBar from "../components/TopBar.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { AVATARS } from "../content/index.js";
 
+export const ordinal = n => `${n}${["th", "st", "nd", "rd"][(n % 100 >= 11 && n % 100 <= 13) ? 0 : Math.min(n % 10, 4) % 4] || "th"}`;
+
 export function ChildForm({ initial, onSave, onCancel, saveLabel = "Add" }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [avatar, setAvatar] = useState(initial?.avatar ?? AVATARS[0]);
+  const [grade, setGrade] = useState(initial?.grade ?? "");
   const [busy, setBusy] = useState(false);
   return (
-    <form className="stack" style={{ gap: 14, textAlign: "left" }} onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave({ name, avatar }); } finally { setBusy(false); } }}>
+    <form className="stack" style={{ gap: 14, textAlign: "left" }} onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave({ name, avatar, grade: grade === "" ? null : Number(grade) }); } finally { setBusy(false); } }}>
       <div className="field"><label htmlFor="childName">Child's first name</label><input id="childName" maxLength={40} value={name} onChange={e => setName(e.target.value)} required autoFocus /></div>
+      <div className="field">
+        <label htmlFor="childGrade">Class (standard)</label>
+        <select id="childGrade" value={grade} onChange={e => setGrade(e.target.value)}>
+          <option value="">Not set</option>
+          {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{ordinal(i + 1)} standard</option>)}
+        </select>
+        <small>Used to pick the right difficulty. Older learners can jump ahead.</small>
+      </div>
       <div className="field">
         <label>Pick an animal</label>
         <div className="avatars">{AVATARS.map(a => <button type="button" key={a} aria-pressed={a === avatar} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}>{a}</button>)}</div>

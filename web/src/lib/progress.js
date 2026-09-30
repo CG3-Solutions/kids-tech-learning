@@ -1,9 +1,10 @@
-import { PUZZLES } from "../content/subjects.js";
+import { BINARY_JOURNEY, PUZZLES } from "../content/subjects.js";
 
 // Items a child can complete in a module: every published card, plus puzzles for the coding module.
 export function moduleItems(module, cards) {
   const ids = cards.filter(c => c.module_id === module.id && c.published !== false).map(c => c.id);
   if (module.activity === "coding") ids.push(...PUZZLES.map(p => `puzzle-${p.id}`));
+  if (module.activity === "binary") ids.push(...BINARY_JOURNEY.map(s => s.id));
   return ids;
 }
 
@@ -31,7 +32,7 @@ export const BADGES = [
   { id: "first", emoji: "✨", name: "First spark", how: "Learn your first card", test: s => s.items >= 1 },
   { id: "ten", emoji: "🔟", name: "Ten cards", how: "Learn 10 cards", test: s => s.cards >= 10 },
   { id: "circuit", emoji: "🔌", name: "Circuit builder", how: "Light a bulb in Build a circuit", test: s => s.ids.has("activity-circuit") },
-  { id: "binary", emoji: "🃏", name: "Binary boss", how: "Make 5 numbers with binary cards", test: s => s.ids.has("activity-binary") },
+  { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },
   { id: "quiz", emoji: "🏆", name: "Quiz whiz", how: "Get every quiz answer right", test: s => s.perfect >= 1 },
@@ -45,7 +46,7 @@ export function badgeState(child, modules) {
   const s = {
     ids,
     items: child.progress.length,
-    cards: child.progress.filter(p => !p.item_id.startsWith("puzzle-") && !p.item_id.startsWith("activity-")).length,
+    cards: child.progress.filter(p => !/^(puzzle|activity|binary)-/.test(p.item_id)).length,
     puzzles: child.progress.filter(p => p.item_id.startsWith("puzzle-")).length,
     perfect: child.attempts.filter(a => a.total > 0 && a.score === a.total).length,
     modulesTouched: new Set(child.progress.filter(p => !p.item_id.startsWith("activity-")).map(p => p.module_id)).size,

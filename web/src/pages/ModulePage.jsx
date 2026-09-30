@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import CardDetail from "../components/CardDetail.jsx";
 import Quiz from "../components/Quiz.jsx";
 import Circuit from "../activities/Circuit.jsx";
-import BinaryCards from "../activities/BinaryCards.jsx";
+import BinaryJourney from "../activities/binary/BinaryJourney.jsx";
 import CodingPuzzles from "../activities/CodingPuzzles.jsx";
 import Hunt from "../activities/Hunt.jsx";
 import Machines from "../activities/Machines.jsx";
@@ -16,8 +16,9 @@ const LV_COLORS = ["var(--lv0)", "var(--lv1)", "var(--lv2)", "var(--lv3)", "var(
 const TAB_NAMES = { ...Object.fromEntries(Object.entries(ACTIVITIES).map(([k, v]) => [k, `${v.emoji} ${v.title}`])), machines: "🏭 Machines" };
 
 export default function ModulePage() {
-  const { moduleId, tab = "cards" } = useParams();
-  const { published, childData, markDone, addAttempt, setChildState } = useApp();
+  const { moduleId, tab: tabParam } = useParams();
+  const location = useLocation();
+  const { published, activeChild, childData, markDone, addAttempt, setChildState } = useApp();
   const [openId, setOpenId] = useState(null);
   const [levelFilter, setLevelFilter] = useState("all");
 
@@ -29,6 +30,8 @@ export default function ModulePage() {
 
   if (!published) return <TopBar />;
   if (!m) return <Navigate to="/learn" replace />;
+  // Binary Magic opens on Bit's adventure; other subjects open on their cards.
+  const tab = tabParam ?? (m.activity === "binary" ? "binary" : "cards");
 
   const levels = (m.levels?.length ? m.levels : [...new Set(cards.map(c => c.level))].map(id => ({ id, name: `Level ${id}`, note: "" })))
     .filter(l => cards.some(c => c.level === l.id));
@@ -49,7 +52,7 @@ export default function ModulePage() {
         </div>
         <nav className="tabs" aria-label="Sections">
           {tabs.map(t => (
-            <Link key={t} to={`/learn/${m.id}${t === "cards" ? "" : `/${t}`}`} className={t === tab ? "active" : ""} onClick={hush}>
+            <Link key={t} to={`/learn/${m.id}/${t}`} className={t === tab ? "active" : ""} onClick={hush}>
               {t === "cards" ? "📚 Cards" : t === "quiz" ? "❓ Quiz" : TAB_NAMES[t]}
             </Link>
           ))}
@@ -82,9 +85,7 @@ export default function ModulePage() {
         )}
 
         {tab === "circuit" && <Circuit onFirstSuccess={onFirstCircuit} />}
-        {tab === "binary" && (
-          <BinaryCards wins={childData.state.binaryWins ?? 0} onWin={n => { setChildState("binaryWins", n); if (n >= 5) markDone(m.id, "activity-binary"); }} />
-        )}
+        {tab === "binary" && <BinaryJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "coding" && <CodingPuzzles solved={done} onSolve={id => markDone(m.id, `puzzle-${id}`)} />}
         {tab === "hunt" && <Hunt marks={childData.state.hunt ?? {}} onChange={v => setChildState("hunt", v)} />}
         {tab === "machines" && <Machines />}

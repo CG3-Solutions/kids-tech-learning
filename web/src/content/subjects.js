@@ -159,6 +159,19 @@ export const BINARY_QUIZ = [
   bq(6, "How many cards are ON to make 31?", [{ label: "All five", emoji: "🖐️" }, { label: "One", emoji: "☝️" }, { label: "None", emoji: "✊" }], 0, "16 + 8 + 4 + 2 + 1 = 31."),
 ];
 
+// Bit's binary adventure: the steps shown on the Binary Magic map, in order.
+export const BINARY_JOURNEY = [
+  { id: "binary-step-1", emoji: "💡", title: "Bit's lamp", blurb: "Meet Bit. ON and OFF.", learned: "Computers only know two things: ON and OFF." },
+  { id: "binary-step-2", emoji: "📡", title: "Secret signal", blurb: "One lamp sends a message.", learned: "One lamp can send 2 different messages." },
+  { id: "binary-step-3", emoji: "💡💡", title: "Two lamps", blurb: "Find every pattern.", learned: "Two lamps make 4 patterns, so 4 messages!" },
+  { id: "binary-step-4", emoji: "✨", title: "Magic doubling", blurb: "Add a lamp, double the patterns.", learned: "Every new lamp DOUBLES the number of patterns." },
+  { id: "binary-step-5", emoji: "🍎", title: "Apple cards", blurb: "Count apples with lamps.", learned: "Add up the apples on the ON cards to get the number. ON is 1, OFF is 0." },
+  { id: "binary-step-6", emoji: "🔢", title: "Counting machine", blurb: "Press +1 and watch.", learned: "Binary counting: the last lamp blinks every time." },
+  { id: "binary-step-7", emoji: "🃏", title: "Big cards", blurb: "Make bigger numbers.", learned: "You can make any number with doubling cards. You speak binary!" },
+  { id: "binary-bonus-pixel", emoji: "🖼️", title: "Pixel painter", blurb: "Decode a secret picture.", learned: "Pictures are made of pixels, and pixels are stored as bits.", bonus: true },
+  { id: "binary-bonus-secret", emoji: "🔐", title: "Secret message", blurb: "Decode Bit's secret words.", learned: "Letters are stored as numbers, and numbers as bits.", bonus: true },
+];
+
 // ───────────────────────── Coding ─────────────────────────
 const k = card("coding", "code");
 export const CODING_LEVELS = [{ id: 0, name: "Coding words", note: "Ideas every coder uses" }];
