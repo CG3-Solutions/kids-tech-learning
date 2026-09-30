@@ -20,7 +20,11 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
   - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
   - **Bit's binary adventure** (Binary Magic): 7 steps plus 2 bonus games. See `docs/05-binary-adventure.md`.
   - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
-- **Parents:** a maths-question gate, then per-child progress for each subject, recent quiz scores, a "Teach next" suggestion, child management and teaching guides.
+- **Kid navigation:** three areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch child · Grown-ups · Sign out.
+- **Parent console** (behind a maths-question gate): Overview · Children · Progress reports (7-day learning time, subjects, adventures, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
+- **Screen time:** a daily limit per child, counting active time only, with a 5-minute warning, a "Time's up" screen, and "+15 minutes" for grown-ups.
+- **Voices:** four kid-friendly voices (Bright girl, Cheerful boy, Friendly robot, Calm teacher), chosen by default from the child's gender and changeable per child, with a preview button.
+- **Email:** milestone emails (badges, finished subjects) and an 8 pm daily summary, sent by a Supabase Edge Function through Resend.
 - **Admins:** create and edit subjects, cards (every field, including circuit symbols) and quiz questions, save drafts, publish, and load the starter content.
 - **Demo mode:** without Supabase settings, the app runs fully in the browser (saved in localStorage). This is useful for trying it out and for development.
 
@@ -59,6 +63,22 @@ To use Supabase locally, copy `web/.env.example` to `web/.env.local` and fill in
 **Optional: Google sign-in.** Enable the Google provider in **Supabase → Authentication → Providers** (this needs a Google Cloud OAuth client). Then add the Actions variable `VITE_ENABLE_GOOGLE` = `true`.
 
 **Email limits:** Supabase's built-in email sender only allows a few emails per hour. Before inviting many families, add your own SMTP provider under **Authentication → Emails → SMTP settings**.
+
+## Upgrading an existing database (release 2)
+If your database was set up before screen time and notifications existed, run `supabase/release-2.sql` once in the SQL Editor. It's safe to re-run.
+
+## Email notifications (optional)
+Parents choose milestone emails and/or a daily summary under **Parent area → Notifications**. Until this is set up, notifications appear in that page's history as "Waiting to send".
+
+1. **Resend:** create a free account at https://resend.com and create an **API key**. To email parents other than yourself, also **add and verify your domain** (Resend → Domains). The built-in test sender only delivers to your own address.
+2. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `notify`, paste `supabase/functions/notify/index.ts`, and deploy. Then open the function's settings and turn **off** "Verify JWT", because the function checks its own secret instead.
+3. **Edge Functions → Secrets:** add
+   - `RESEND_API_KEY`: your Resend key
+   - `MAIL_FROM`: e.g. `Spark Lab <hello@yourdomain.com>`
+   - `NOTIFY_SECRET`: any long random text (keep a copy for the next step)
+   - `APP_URL`: `https://cg3-solutions.github.io/kids-tech-learning/`
+4. **Database → Extensions:** enable `pg_net` and `pg_cron`.
+5. **SQL Editor:** open `supabase/notifications-setup.sql`, replace `YOUR-PROJECT-REF` and `YOUR-NOTIFY-SECRET`, and run it. Milestone emails go out as they happen; the daily summary goes out at 8 pm India time.
 
 ## GitHub Pages
 In **Settings → Pages**, set **Source** to **GitHub Actions**. After that, every push to `main` deploys automatically.

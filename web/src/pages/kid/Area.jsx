@@ -1,0 +1,43 @@
+import { Link, Navigate, useParams } from "react-router-dom";
+import { useApp } from "../../lib/AppContext.jsx";
+import { moduleStats } from "../../lib/progress.js";
+import { AREAS } from "../../content/areas.js";
+import { Crumbs } from "./Home.jsx";
+
+export default function Area() {
+  const { areaId } = useParams();
+  const { childData, published } = useApp();
+  const area = AREAS.find(a => a.id === areaId);
+  if (!area) return <Navigate to="/learn" replace />;
+  if (!published) return null;
+  const mods = published.modules.filter(m => m.area === area.id);
+  return (
+    <div className="stack page">
+      <Crumbs items={[{ to: "/learn", label: "Home" }, { label: area.title }]} />
+      <div className="area-head" style={{ "--c": `var(--${area.color})` }}>
+        <span className="em" aria-hidden="true">{area.emoji}</span>
+        <div><h1>{area.title}</h1><p className="lead">{area.tagline}</p></div>
+      </div>
+      <div className="modules">
+        {mods.map(m => {
+          if (m.coming_soon) {
+            return (
+              <div key={m.id} className="module soon" style={{ "--c": `var(--${m.color})` }} aria-disabled="true">
+                <span className="ribbon">Coming soon</span>
+                <div className="top"><span className="em" aria-hidden="true">{m.emoji}</span><div><h3>{m.title}</h3><p>{m.tagline}</p></div></div>
+              </div>
+            );
+          }
+          const st = moduleStats(m, published.cards, childData);
+          return (
+            <Link key={m.id} className="module" to={`/learn/${m.id}`} style={{ "--c": `var(--${m.color})` }}>
+              <div className="top"><span className="em" aria-hidden="true">{m.emoji}</span><div><h3>{m.title}</h3><p>{m.tagline}</p></div></div>
+              <div className="bar" aria-label={`${st.pct}% done`}><i style={{ width: `${st.pct}%` }} /></div>
+              <div className="row muted" style={{ fontSize: ".9rem" }}><span>{st.done} of {st.total} done</span><span className="spacer" />{st.pct === 100 && <b>🏆 Finished</b>}</div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

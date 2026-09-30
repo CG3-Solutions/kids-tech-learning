@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { marked } from "marked";
-import TopBar from "../components/TopBar.jsx";
+import ParentLayout from "../layouts/ParentLayout.jsx";
 
 const files = import.meta.glob("../../../docs/*.md", { query: "?raw", import: "default" });
 export const GUIDES = [
@@ -24,12 +24,11 @@ export default function Guides() {
   }, [guide]);
   if (!guide) return <Navigate to="/parent" replace />;
   return (
-    <>
-      <TopBar variant="parent"><Link className="btn" to="/parent">← Parent area</Link></TopBar>
-      <main className="wrap stack" style={{ paddingTop: 22 }}>
+    <ParentLayout title="Teaching guides">
+      <div className="stack">
         <nav className="chips">{GUIDES.map(g => <Link key={g.slug} className={`chip${g.slug === slug ? " active" : ""}`} to={`/parent/guides/${g.slug}`}>{g.title}</Link>)}</nav>
         <article className="guide" dangerouslySetInnerHTML={{ __html: html }} />
-      </main>
-    </>
+      </div>
+    </ParentLayout>
   );
 }
