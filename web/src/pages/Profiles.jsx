@@ -1,0 +1,54 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import TopBar from "../components/TopBar.jsx";
+import { useApp } from "../lib/AppContext.jsx";
+import { AVATARS } from "../content/index.js";
+
+export function ChildForm({ initial, onSave, onCancel, saveLabel = "Add" }) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [avatar, setAvatar] = useState(initial?.avatar ?? AVATARS[0]);
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="stack" style={{ gap: 14, textAlign: "left" }} onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave({ name, avatar }); } finally { setBusy(false); } }}>
+      <div className="field"><label htmlFor="childName">Child's first name</label><input id="childName" maxLength={40} value={name} onChange={e => setName(e.target.value)} required autoFocus /></div>
+      <div className="field">
+        <label>Pick an animal</label>
+        <div className="avatars">{AVATARS.map(a => <button type="button" key={a} aria-pressed={a === avatar} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}>{a}</button>)}</div>
+      </div>
+      <div className="row"><button className="btn primary" type="submit" disabled={busy || !name.trim()}>{saveLabel}</button>{onCancel && <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>}</div>
+    </form>
+  );
+}
+
+export default function Profiles() {
+  const { api, children, chooseChild, loadAccount, setError } = useApp();
+  const nav = useNavigate();
+  const [adding, setAdding] = useState(false);
+
+  const add = async data => {
+    try { const c = await api.addChild(data); await loadAccount(); chooseChild(c.id); nav("/learn"); } catch (e) { setError(e.message); }
+  };
+
+  return (
+    <>
+      <TopBar variant="public"><Link className="btn" to="/parent">Parent area</Link></TopBar>
+      <main className="wrap">
+        <div className="who">
+          <h1>{children.length ? "Who's learning today?" : "Add your first learner"}</h1>
+          {!adding && (
+            <div className="kids">
+              {children.map(c => (
+                <button key={c.id} className="kid" onClick={() => { chooseChild(c.id); nav("/learn"); }}>
+                  <span className="face">{c.avatar}</span>{c.name}
+                </button>
+              ))}
+              <button className="kid add" onClick={() => setAdding(true)}><span className="face">＋</span>Add child</button>
+            </div>
+          )}
+          {adding && <div className="panel" style={{ width: "min(480px, 100%)" }}><ChildForm onSave={add} onCancel={children.length ? () => setAdding(false) : null} /></div>}
+          {!children.length && !adding && <p className="muted">Children don't need an email. Just a first name and an animal.</p>}
+        </div>
+      </main>
+    </>
+  );
+}

@@ -1,0 +1,70 @@
+import { PUZZLES } from "../content/subjects.js";
+
+// Items a child can complete in a module: every published card, plus puzzles for the coding module.
+export function moduleItems(module, cards) {
+  const ids = cards.filter(c => c.module_id === module.id && c.published !== false).map(c => c.id);
+  if (module.activity === "coding") ids.push(...PUZZLES.map(p => `puzzle-${p.id}`));
+  return ids;
+}
+
+export function moduleStats(module, cards, child) {
+  const items = moduleItems(module, cards);
+  const done = new Set(child.progress.filter(p => p.module_id === module.id).map(p => p.item_id));
+  const doneCount = items.filter(id => done.has(id)).length;
+  const attempts = child.attempts.filter(a => a.module_id === module.id);
+  const best = attempts.reduce((m, a) => (a.score / a.total > (m ? m.score / m.total : -1) ? a : m), null);
+  return {
+    done: doneCount,
+    total: items.length,
+    pct: items.length ? Math.round((doneCount / items.length) * 100) : 0,
+    quizzes: attempts.length,
+    best,
+  };
+}
+
+// One star per thing learned, plus one per correct quiz answer.
+export function starCount(child) {
+  return child.progress.length + child.attempts.reduce((s, a) => s + a.score, 0);
+}
+
+export const BADGES = [
+  { id: "first", emoji: "✨", name: "First spark", how: "Learn your first card", test: s => s.items >= 1 },
+  { id: "ten", emoji: "🔟", name: "Ten cards", how: "Learn 10 cards", test: s => s.cards >= 10 },
+  { id: "circuit", emoji: "🔌", name: "Circuit builder", how: "Light a bulb in Build a circuit", test: s => s.ids.has("activity-circuit") },
+  { id: "binary", emoji: "🃏", name: "Binary boss", how: "Make 5 numbers with binary cards", test: s => s.ids.has("activity-binary") },
+  { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
+  { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },
+  { id: "quiz", emoji: "🏆", name: "Quiz whiz", how: "Get every quiz answer right", test: s => s.perfect >= 1 },
+  { id: "explorer", emoji: "🧭", name: "Explorer", how: "Learn a card in every subject", test: s => s.modulesTouched >= s.moduleCount },
+  { id: "hunter", emoji: "🔎", name: "Treasure hunter", how: "Tick 20 boxes in the treasure hunt", test: s => s.huntTicks >= 20 },
+  { id: "super", emoji: "🌟", name: "Super learner", how: "Earn 100 stars", test: s => s.stars >= 100 },
+];
+
+export function badgeState(child, modules) {
+  const ids = new Set(child.progress.map(p => p.item_id));
+  const s = {
+    ids,
+    items: child.progress.length,
+    cards: child.progress.filter(p => !p.item_id.startsWith("puzzle-") && !p.item_id.startsWith("activity-")).length,
+    puzzles: child.progress.filter(p => p.item_id.startsWith("puzzle-")).length,
+    perfect: child.attempts.filter(a => a.total > 0 && a.score === a.total).length,
+    modulesTouched: new Set(child.progress.filter(p => !p.item_id.startsWith("activity-")).map(p => p.module_id)).size,
+    moduleCount: modules.length,
+    huntTicks: Object.values(child.state?.hunt ?? {}).filter(Boolean).length,
+    stars: starCount(child),
+  };
+  return BADGES.map(b => ({ ...b, earned: b.test(s) }));
+}
+
+// What a parent should teach next: the first unlearned card in the least-finished subject.
+export function nextSuggestion(modules, cards, child) {
+  const ranked = modules
+    .map(m => ({ m, st: moduleStats(m, cards, child) }))
+    .filter(x => x.st.total > 0 && x.st.done < x.st.total)
+    .sort((a, b) => a.st.pct - b.st.pct || a.m.sort - b.m.sort);
+  if (!ranked.length) return null;
+  const { m } = ranked[0];
+  const done = new Set(child.progress.map(p => p.item_id));
+  const card = cards.filter(c => c.module_id === m.id && c.published !== false).sort((a, b) => a.sort - b.sort).find(c => !done.has(c.id));
+  return { module: m, card: card ?? null };
+}

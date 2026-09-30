@@ -1,28 +1,64 @@
-# Kids Tech Learning
+# Spark Lab
 
-Guides and a kid-friendly web app for teaching a 7-year-old (2nd standard) about electricity, electronic parts, computers and programming. These are the first steps toward robotics and quantum computing later on.
+A learning app for young kids (about 6–10) covering **electricity & parts**, **inside a computer**, **binary** and **coding puzzles**. It has picture cards with real-life examples, hands-on games, quizzes, badges, a parent dashboard and an admin content editor.
+
+Live site: https://cg3-solutions.github.io/kids-tech-learning/
 
 ## What's inside
 
 | Path | What it is |
 |---|---|
-| [docs/01-learning-roadmap.md](docs/01-learning-roadmap.md) | Where to start and the long-term path: ages 7 → teens |
-| [docs/02-electronic-components.md](docs/02-electronic-components.md) | Every part, explained simply, with real-life examples and a question to ask |
-| [docs/03-activities-and-safety.md](docs/03-activities-and-safety.md) | Treasure hunt, how machines fit together, weekly plan and safety rules |
-| [app/index.html](app/index.html) | **Spark Lab**, the app to show him (open in any browser, phone or tablet) |
+| `web/` | The app (React + Vite) |
+| `supabase/schema.sql` | Database tables and security rules for Supabase |
+| `docs/` | Teaching guides. They also appear inside the app under **Parent area → Teaching guides** |
+| `.github/workflows/deploy.yml` | Builds, tests and deploys to GitHub Pages on every push to `main` |
 
-## Live site (GitHub Pages)
-Once GitHub Pages is on, the app is at `https://cg3-solutions.github.io/kids-tech-learning/`, and the docs are at `.../docs/01-learning-roadmap.html` and so on.
+### Features
+- **Accounts:** only parents sign up (email + password, sign-in link, optional Google). Children are profiles with a first name and an animal avatar, never an email.
+- **Kids:** "Who's learning?" picker, subject cards with **Read to me**, the Build-a-circuit, Binary cards and Robot puzzles activities, a treasure hunt, quizzes, stars and 10 badges.
+- **Parents:** a maths-question gate, then per-child progress for each subject, recent quiz scores, a "Teach next" suggestion, child management and teaching guides.
+- **Admins:** create and edit subjects, cards (every field, including circuit symbols) and quiz questions, save drafts, publish, and load the starter content.
+- **Demo mode:** without Supabase settings, the app runs fully in the browser (saved in localStorage). This is useful for trying it out and for development.
 
-To turn it on: repo **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save**. It goes live in 1–2 minutes.
+## Run it locally
 
-## Using the app
-Open `app/index.html` in a browser. It works offline, apart from the fonts. It has:
-- **Parts:** picture cards for each component (what it is, what it's like, where to find it at home, its circuit symbol, a "Think!" question, and a "Try it" activity). Tap **Read to me** to hear it read aloud.
-- **Build a circuit:** flip a switch and connect a bulb, motor, buzzer or LED. Try turning the LED around.
-- **Machines:** how a street light, washing machine, parking sensor and toy robot are built.
-- **Quiz:** 8 random questions, and he earns stars.
-- **Treasure hunt:** walk around the house and tick what each appliance has inside.
-- **For parents:** the learning path, a sample week, what to buy, and the safety rules.
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173 (demo mode)
+npm test
+```
 
-`app/spark-lab.html` is the same page without the HTML wrapper (the version published as a Claude artifact).
+To use Supabase locally, copy `web/.env.example` to `web/.env.local` and fill in your values.
+
+## Set up accounts and the database (Supabase, free tier)
+
+1. Create a project at https://supabase.com. Pick the region closest to your users (e.g. Mumbai).
+2. **SQL Editor → New query**: paste all of `supabase/schema.sql` and click **Run**.
+3. **Authentication → URL Configuration**:
+   - Site URL: `https://cg3-solutions.github.io/kids-tech-learning/`
+   - Redirect URLs: add the same URL, plus `http://localhost:5173/` for local development.
+4. **Project Settings → API**: copy the **Project URL** and the **anon public** key. The anon key is meant to be public; the security rules in `schema.sql` protect the data.
+5. In GitHub, go to **Settings → Secrets and variables → Actions → Variables** and add:
+   - `VITE_SUPABASE_URL` = the Project URL
+   - `VITE_SUPABASE_ANON_KEY` = the anon key
+6. Re-run the deploy (**Actions → Deploy Spark Lab → Run workflow**).
+7. Sign up in the app. Then make yourself admin in **SQL Editor**:
+   ```sql
+   update public.profiles set role = 'admin'
+   where id = (select id from auth.users where email = 'you@example.com');
+   ```
+8. Open **Parent area → Content editor → Load starter content** to copy the lessons into the database.
+
+**Optional: Google sign-in.** Enable the Google provider in **Supabase → Authentication → Providers** (this needs a Google Cloud OAuth client). Then add the Actions variable `VITE_ENABLE_GOOGLE` = `true`.
+
+**Email limits:** Supabase's built-in email sender only allows a few emails per hour. Before inviting many families, add your own SMTP provider under **Authentication → Emails → SMTP settings**.
+
+## GitHub Pages
+In **Settings → Pages**, set **Source** to **GitHub Actions**. After that, every push to `main` deploys automatically.
+
+## Privacy
+- Children's data is limited to a first name, an avatar and learning progress, all owned by the parent's account.
+- Row-level security means each parent can read and change only their own children. Only admins can edit lessons.
+- Deleting a child deletes all their progress. Deleting the parent account deletes everything.
+- Before opening the app to the public, add a privacy policy page that covers India's DPDP Act and, if you have US users, COPPA.
