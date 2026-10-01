@@ -82,7 +82,8 @@ export default function TypingCourse() {
     addTypingSession({ lesson_id: lesson.id, mode, input, wpm: r.wpm, accuracy: r.accuracy, seconds: r.seconds, chars: r.chars, errors: r.errors, passed: st > 0, keys: r.keys });
     if (st > 0 && !smart) markDone("typing", lesson.id);
   };
-  const muteBtn = <button className="btn ghost" onClick={() => setMuted(!muted)} aria-pressed={muted}>{muted ? "🔇 Sound off" : "🔊 Sound on"}</button>;
+  const muteBtn = <button className="btn ghost sound-btn" onClick={() => setMuted(!muted)} aria-pressed={muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"}>
+    <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span><span className="label">{muted ? " Sound off" : " Sound on"}</span></button>;
 
   if (lesson) {
     const part = TYPING_PARTS.find(p => p.id === lesson.part);

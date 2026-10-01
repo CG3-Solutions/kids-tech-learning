@@ -88,16 +88,32 @@ export function badgeState(child, modules) {
   return BADGES.map(b => ({ ...b, earned: b.test(s) }));
 }
 
-// What a parent should teach next: a weak computer concept, else the first unlearned card in the least-finished subject.
-// A computer concept that needs practice comes first.
-export function nextSuggestion(modules, cards, child) {
+// Which subjects suit a learner best, by class: young children start with letters and numbers,
+// older ones with computers and typing. Grown-ups start with typing.
+export const START_ORDER = [
+  [2, ["alphabets", "numbers", "words", "mathematics", "sentences", "computer", "typing", "binary", "electricity", "coding"]],
+  [5, ["words", "mathematics", "numbers", "sentences", "computer", "typing", "binary", "electricity", "coding", "alphabets"]],
+  [8, ["computer", "mathematics", "sentences", "typing", "binary", "electricity", "coding", "words", "numbers", "alphabets"]],
+  [99, ["computer", "typing", "mathematics", "electricity", "binary", "coding", "sentences", "words", "numbers", "alphabets"]],
+];
+export function startOrder(learner) {
+  if (learner?.learner === "adult") return ["typing", "computer", "mathematics", "electricity", "binary", "coding"];
+  const g = learner?.grade || 1;
+  return START_ORDER.find(([upTo]) => g <= upTo)[1];
+}
+
+// What to do next: a weak computer concept first; otherwise the first unfinished subject that suits
+// the learner's class (`learner` is the child's profile: { grade, learner }).
+export function nextSuggestion(modules, cards, child, learner) {
   const weak = weakConcept(child);
   const computer = weak && modules.find(m => m.activity === "computer");
   if (computer) return { module: computer, card: null, concept: weak, weak: true };
+  const order = startOrder(learner);
+  const rank = m => { const i = order.indexOf(m.id); return i < 0 ? order.length : i; };
   const ranked = modules
     .map(m => ({ m, st: moduleStats(m, cards, child) }))
     .filter(x => x.st.total > 0 && x.st.done < x.st.total)
-    .sort((a, b) => a.st.pct - b.st.pct || a.m.sort - b.m.sort);
+    .sort((a, b) => rank(a.m) - rank(b.m) || a.m.sort - b.m.sort);
   if (!ranked.length) return null;
   const { m } = ranked[0];
   const done = new Set(child.progress.map(p => p.item_id));

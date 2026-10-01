@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { SEED } from "../content/index.js";
 import { PUZZLES } from "../content/subjects.js";
 import { CIRCUIT_JOURNEY } from "../content/circuits.js";
-import { moduleStats, starCount, badgeState, nextSuggestion } from "./progress.js";
+import { moduleStats, moduleItems, starCount, badgeState, nextSuggestion } from "./progress.js";
 import { run, flatten } from "./coding.js";
 import { createDemoApi } from "./demoApi.js";
 
@@ -39,10 +39,18 @@ describe("progress", () => {
     expect(earned).toEqual(expect.arrayContaining(["first", "quiz"]));
     expect(earned).not.toContain("robot");
   });
-  it("suggests the least-finished subject", () => {
-    const s = nextSuggestion(SEED.modules, SEED.cards, empty);
-    expect(s.module.id).toBe("electricity");
-    expect(s.card.id).toBe("el-electricity");
+  it("suggests a subject that suits the child's class", () => {
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty, { grade: 1 }).module.id).toBe("alphabets");
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty, { grade: 3 }).module.id).toBe("words");
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty, { grade: 7 }).module.id).toBe("computer");
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty, { grade: 10 }).module.id).toBe("computer");
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty, { learner: "adult" }).module.id).toBe("typing");
+    expect(nextSuggestion(SEED.modules, SEED.cards, empty).module.id).toBe("alphabets"); // class not set: start at the beginning
+  });
+  it("skips subjects that are finished", () => {
+    const words = SEED.modules.find(m => m.id === "words");
+    const all = moduleItems(words, SEED.cards).map(id => ({ module_id: "words", item_id: id }));
+    expect(nextSuggestion(SEED.modules, SEED.cards, { ...empty, progress: all }, { grade: 3 }).module.id).toBe("mathematics");
   });
 });
 
