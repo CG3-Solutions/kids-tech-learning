@@ -75,7 +75,7 @@ Badges: 🏃 **Speedy fingers** (10 wpm), ⚡ **Lightning fingers** (20 wpm) and
 
 ## 👩 Grown-ups learning to type
 - **Two ways in:** a parent can add **themselves** as a learner (**Who's learning → Add myself**, or **Grown-ups → Learners → Add yourself**). Or a new visitor can choose **⌨️ Adults: learn to type** on the home page; after signing in they go straight to their typing profile.
-- **Defaults:** grown-up profiles start in Pro mode with the calm teacher voice, and opening the grown-ups area from their own profile needs no maths check.
+- **Defaults:** grown-up profiles start in Pro mode with the calm teacher voice, and opening the grown-ups area from their own profile doesn't ask for the parent password.
 
 ## 🏫 For schools
 1. **The teacher signs up** like a parent and turns on **I'm a teacher** under **Account**. A **Classes** page appears.

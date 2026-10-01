@@ -1071,3 +1071,4 @@ button.kb-key { cursor: pointer }
 @media (max-width: 520px) { .hide-sm { display: none } }
 
 .pc-card { min-width: 0 }
+.error-text { color: var(--bad); font-weight: 700 }
