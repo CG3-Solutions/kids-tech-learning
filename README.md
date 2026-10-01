@@ -19,8 +19,11 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 - **Adventures** (step-by-step, with a story character, sounds and a map):
   - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
   - **Bit's binary adventure** (Binary Magic): 7 steps plus 2 bonus games. See `docs/05-binary-adventure.md`.
+  - **Polly the Parrot** (Language): Alphabets (9 steps), Words (10) and Sentences (10). See `docs/06-language-course.md`.
+  - **Ollie the Octopus** (Maths): Numbers (12 steps) and Mathematics (16 steps, up to 10th standard). See `docs/07-maths-course.md`.
+  - The Language and Maths steps use one shared practice engine. It supports picture choices, a number pad, word and letter tiles, and learning cards, with visuals such as counting grids, place-value blocks, fractions and shapes. Questions are generated fresh each time.
   - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
-- **Kid navigation:** three areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch child · Grown-ups · Sign out.
+- **Kid navigation:** four areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech · ⌨️ Typing, coming soon), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch child · Grown-ups · Sign out.
 - **Parent console** (behind a maths-question gate): Overview · Children · Progress reports (7-day learning time, subjects, adventures, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
 - **Screen time:** a daily limit per child, counting active time only, with a 5-minute warning, a "Time's up" screen, and "+15 minutes" for grown-ups.
 - **Voices:** four kid-friendly voices (Bright girl, Cheerful boy, Friendly robot, Calm teacher), chosen by default from the child's gender and changeable per child, with a preview button.

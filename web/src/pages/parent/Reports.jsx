@@ -4,16 +4,12 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { useFamily, daysBack } from "../../lib/useFamily.js";
 import { badgeState, moduleStats, starCount } from "../../lib/progress.js";
 import { isUnlocked } from "../../components/journey/Journey.jsx";
-import { CIRCUIT_JOURNEY } from "../../content/circuits.js";
-import { BINARY_JOURNEY } from "../../content/subjects.js";
+import { JOURNEYS } from "../../content/journeys.js";
 import { AREAS } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
 
-const PATHS = [
-  { name: "🔌 Volt's circuits & gates", guide: "circuits", steps: CIRCUIT_JOURNEY },
-  { name: "🔢 Bit's binary adventure", guide: "binary", steps: BINARY_JOURNEY },
-];
+const PATHS = Object.values(JOURNEYS);
 
 export default function Reports() {
   const { childId } = useParams();

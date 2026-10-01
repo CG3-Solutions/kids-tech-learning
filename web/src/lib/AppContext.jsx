@@ -62,11 +62,11 @@ export function AppProvider({ children: kids }) {
 
   const chooseChild = id => { setActiveId(id); local.set("sparklab.activeChild", id); };
 
-  // Subjects kids see: published ones, plus built-in "coming soon" tiles the database doesn't have yet.
+  // Subjects kids see: published ones, plus built-in subjects the database doesn't have yet.
   const published = useMemo(() => {
     if (!content) return null;
     const have = new Set(content.modules.map(m => m.id));
-    const extra = SEED.modules.filter(m => m.coming_soon && !have.has(m.id));
+    const extra = SEED.modules.filter(m => !have.has(m.id));
     return {
       modules: [...content.modules, ...extra].filter(m => m.published !== false).map(m => ({ area: "science", ...m })).sort((a, b) => a.sort - b.sort),
       cards: content.cards.filter(c => c.published !== false).sort((a, b) => a.level - b.level || a.sort - b.sort),

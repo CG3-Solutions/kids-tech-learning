@@ -25,7 +25,7 @@ describe("milestones", () => {
     expect(findMilestones(before, after, pub, kid).some(m => m.title.includes(`finished ${coding.title}`))).toBe(true);
   });
   it("ignores coming-soon subjects", () => {
-    expect(SEED.modules.filter(m => m.coming_soon).map(m => m.id)).toEqual(["alphabets", "words", "sentences", "typing", "numbers", "mathematics"]);
+    expect(SEED.modules.filter(m => m.coming_soon).map(m => m.id)).toEqual(["typing"]);
   });
 });
 

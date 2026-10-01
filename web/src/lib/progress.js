@@ -1,12 +1,11 @@
-import { BINARY_JOURNEY, PUZZLES } from "../content/subjects.js";
-import { CIRCUIT_JOURNEY } from "../content/circuits.js";
+import { PUZZLES } from "../content/subjects.js";
+import { JOURNEYS, STEP_IDS } from "../content/journeys.js";
 
 // Items a child can complete in a module: every published card, plus puzzles for the coding module.
 export function moduleItems(module, cards) {
   const ids = cards.filter(c => c.module_id === module.id && c.published !== false).map(c => c.id);
   if (module.activity === "coding") ids.push(...PUZZLES.map(p => `puzzle-${p.id}`));
-  if (module.activity === "binary") ids.push(...BINARY_JOURNEY.map(s => s.id));
-  if (module.activity === "circuit") ids.push(...CIRCUIT_JOURNEY.map(s => s.id));
+  if (JOURNEYS[module.activity]) ids.push(...JOURNEYS[module.activity].steps.map(s => s.id));
   return ids;
 }
 
@@ -36,6 +35,11 @@ export const BADGES = [
   { id: "circuit", emoji: "🔌", name: "Circuit builder", how: "Finish Part A: circuit basics", test: s => s.ids.has("circuit-step-5") || s.ids.has("activity-circuit") },
   { id: "gates", emoji: "🚦", name: "Logic gatekeeper", how: "Finish Part B: switches that think", test: s => s.ids.has("circuit-step-12") },
   { id: "computer", emoji: "🖥️", name: "Computer builder", how: "Finish Part C: the adder and memory", test: s => s.ids.has("circuit-step-15") },
+  { id: "abc", emoji: "🔠", name: "Alphabet star", how: "Finish Polly's alphabet adventure", test: s => s.ids.has("abc-step-9") },
+  { id: "wordwiz", emoji: "📖", name: "Word wizard", how: "Finish Part B of Polly's word adventure", test: s => s.ids.has("words-step-8") },
+  { id: "sentence", emoji: "💬", name: "Sentence builder", how: "Finish Part B of Polly's sentence adventure", test: s => s.ids.has("sent-step-7") },
+  { id: "numbers", emoji: "🔟", name: "Number ninja", how: "Finish Part B of Ollie's number adventure", test: s => s.ids.has("num-step-9") },
+  { id: "maths", emoji: "🧮", name: "Maths master", how: "Finish Part C of Ollie's maths adventure", test: s => s.ids.has("math-step-12") },
   { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },
@@ -50,7 +54,7 @@ export function badgeState(child, modules) {
   const s = {
     ids,
     items: child.progress.length,
-    cards: child.progress.filter(p => !/^(puzzle|activity|binary|circuit)-/.test(p.item_id)).length,
+    cards: child.progress.filter(p => !STEP_IDS.has(p.item_id) && !/^(puzzle|activity)-/.test(p.item_id)).length,
     puzzles: child.progress.filter(p => p.item_id.startsWith("puzzle-")).length,
     perfect: child.attempts.filter(a => a.total > 0 && a.score === a.total).length,
     modulesTouched: new Set(child.progress.filter(p => !p.item_id.startsWith("activity-")).map(p => p.module_id)).size,
