@@ -20,12 +20,17 @@ Anyone can switch modes at the top of the course page. Each mode has its own goa
 
 **Stars:** ⭐ pass, ⭐⭐ 95% accuracy, ⭐⭐⭐ 98% accuracy.
 
-## The lessons (release 1: stages 1–3)
+## The lessons: 33 lessons in 6 stages
 | Stage | Lessons | Goal to pass |
 |---|---|---|
 | **1. Get ready** | 1 Sit like a typist (F, J, space) · 2 Home row fingers | Kids 85% · Pro 90% accuracy |
 | **2. The home row** | 3 D and K · 4 S and L · 5 A and ; · 6 G and H · 7 Home row words · 8 **Home row check** | Check: 90% accuracy and Kids 5 / Pro 15 words a minute |
 | **3. The top row** | 9 E and I · 10 R and U · 11 T and Y · 12 W and O · 13 Q and P · 14 Top row words · 15 **Top row check** | Check: 90% accuracy and Kids 8 / Pro 20 words a minute |
+| **4. The bottom row** | 16 M and V · 17 C and comma · 18 X and full stop · 19 Z and slash · 20 B and N · 21 All the letters · 22 **Bottom row check** | Check: 90% accuracy and Kids 10 / Pro 25 |
+| **5. Capitals and punctuation** | 23 Left Shift capitals · 24 Right Shift capitals · 25 Sentences · 26 ? and ' · 27 **Capitals and punctuation check** | Check: 90% accuracy and Kids 10 / Pro 28 |
+| **6. Numbers and symbols** | 28 Numbers 1–5 · 29 Numbers 6–0 · 30 Numbers in sentences · 31 ! @ # $ % · 32 Brackets, dash, plus, equals and more · 33 **Numbers and symbols check** | Check: 88–90% accuracy and Kids 8 / Pro 22 |
+
+**Shift with the other hand.** For a capital or a symbol, the keyboard lights up the key *and* the Shift key to hold: the left Shift for right-hand keys and the right Shift for left-hand keys. The hands picture shows both fingers. Caps Lock is never used: if it's on, the screen asks you to turn it off.
 
 The text is new every time and uses **only keys learned so far**: drills of the new keys, then real words (including Indian words such as *dal*, *roti*, *diwali*, *goa*).
 
@@ -34,7 +39,7 @@ The text is new every time and uses **only keys learned so far**: drills of the 
 - **Pro mode:** a speedometer shows live speed with your personal best and the lesson's goal.
 - **Both modes:** a 🔥 streak flame appears after 10 keys in a row without a mistake and grows with the streak. Results show the best streak, and a personal best gets confetti.
 
-Badges: ⌨️ **Home row hero** (pass lesson 8) and 🚀 **Top row ace** (pass lesson 15). Parents get a milestone email for each.
+Badges: ⌨️ **Home row hero** (lesson 8), 🚀 **Top row ace** (lesson 15), 🔡 **Alphabet typist** (lesson 22), ✍️ **Sentence typist** (lesson 27) and 🎹 **Keyboard master** (lesson 33). Parents get a milestone email for each.
 
 ## 🪜 Speed ladder
 Rungs at 5, 8, 10, 12, 15, 20, 25, 30, 35, 40, 50 and 60 words a minute. Each rung is a **1-minute test**: reach that speed with **at least 90% accuracy** to climb. A fast run with too many mistakes doesn't count.
@@ -59,6 +64,27 @@ Badges: 🏃 **Speedy fingers** (10 wpm), ⚡ **Lightning fingers** (20 wpm) and
 - **Gentle for kids:** Kids mode never says "game over". Balloons rise slowly, Word Rocket gets 75 seconds and Keyo cheers every result. Pro mode adds 3 lives in Balloon Pop and faster starts.
 - **Time and settings:** game time counts toward screen time, and sounds follow the sound button. Confetti is hidden for people who turn on "reduce motion" on their device.
 
+## ⏱️ Typing tests and 📜 certificates
+1-, 3- and 5-minute tests of real text: sentences once capitals are learned, words before that. Every test with **90% accuracy** earns a **certificate**. It shows the learner's name, speed, accuracy, test length and date, and can be printed or saved as a PDF (A4 landscape).
+
+## 📈 My progress
+- **🎯 Smart practice:** a short lesson made from the keys this learner missed most in the last 20 sessions.
+- **Charts:** speed and accuracy over the last 20 sessions, with the 90% accuracy goal marked.
+- **Keyboard heat map:** darker keys are missed more often. Hover or tap a key for its numbers.
+- **🏆 Family leaderboard:** everyone in the family who types, fastest first. Grown-ups can join in.
+
+## 👩 Grown-ups learning to type
+- **Two ways in:** a parent can add **themselves** as a learner (**Who's learning → Add myself**, or **Grown-ups → Learners → Add yourself**). Or a new visitor can choose **⌨️ Adults: learn to type** on the home page; after signing in they go straight to their typing profile.
+- **Defaults:** grown-up profiles start in Pro mode with the calm teacher voice, and opening the grown-ups area from their own profile needs no maths check.
+
+## 🏫 For schools
+1. **The teacher signs up** like a parent and turns on **I'm a teacher** under **Account**. A **Classes** page appears.
+2. **Create a class.** It gets a 6-character **join code**.
+3. **Parents join:** they enter the code under **Learners → Join a class**. The teacher then sees that learner's **typing results only**: name and avatar, typing lessons passed, speed, accuracy, tests and speed-ladder rung. Never other subjects, screen time or anything else.
+4. **Set tasks:** pass a lesson, take a test (optionally at a minimum speed), or reach a speed-ladder rung, with an optional due date. Learners see them as **📌 From your teacher** on their typing page.
+5. **Class dashboard:** each student's lessons, best speed, accuracy, ladder, last active day and task status (done, overdue or progress). **Download spreadsheet (CSV)** exports it.
+6. **Leaving:** parents can leave a class, and teachers can remove a student, at any time. Deleting a class never deletes anyone's progress.
+
 ## Tips for parents and teachers
 - **Accuracy first, speed later.** A child who types slowly and correctly will get fast; one who rushes builds bad habits.
 - **Short and often:** 10 minutes a day is better than an hour on Sunday.
@@ -72,7 +98,5 @@ Badges: 🏃 **Speedy fingers** (10 wpm), ⚡ **Lightning fingers** (20 wpm) and
 **Parent area → Progress reports → Typing:** best speed, recent accuracy, typing time, the keys missed most often, and the last lessons. Typing lessons also appear in the activity feed.
 
 ## Coming next
-- **Release 2:** the bottom row, capitals and punctuation, numbers and symbols; smart practice on each learner's weakest keys; timed tests; progress charts; adult learner accounts.
-- **Release 3:** certificates, and leaderboards for a family or class.
-- **Release 4:** schools: teacher accounts, classes, assignments and class reports.
-- **Later:** Hindi typing (InScript).
+- Hindi typing (InScript, Devanagari).
+- The number pad, and other keyboard layouts for adults (Dvorak, Colemak).

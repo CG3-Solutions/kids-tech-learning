@@ -18,6 +18,7 @@ import ScreenTime from "./pages/parent/ScreenTime.jsx";
 import Notifications from "./pages/parent/Notifications.jsx";
 import VoiceSound from "./pages/parent/VoiceSound.jsx";
 import Account from "./pages/parent/Account.jsx";
+import Classes from "./pages/parent/Classes.jsx";
 import Guides from "./pages/Guides.jsx";
 import Admin from "./pages/Admin.jsx";
 
@@ -73,6 +74,7 @@ export default function App() {
       <Route path="/parent/notifications" element={P(<Notifications />)} />
       <Route path="/parent/voice" element={P(<VoiceSound />)} />
       <Route path="/parent/account" element={P(<Account />)} />
+      <Route path="/parent/classes/:classId?" element={P(<Classes />)} />
       <Route path="/parent/guides/:slug" element={P(<Guides />)} />
       <Route path="/admin" element={P(<Admin />, true)} />
       <Route path="*" element={<Navigate to="/" replace />} />

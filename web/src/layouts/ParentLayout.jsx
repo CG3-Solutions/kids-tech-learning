@@ -4,7 +4,7 @@ import { Bolt } from "../components/TopBar.jsx";
 
 const ITEMS = [
   { to: "/parent", label: "Overview", icon: "📊", end: true },
-  { to: "/parent/children", label: "Children", icon: "👧" },
+  { to: "/parent/children", label: "Learners", icon: "👧" },
   { to: "/parent/reports", label: "Progress reports", icon: "📈" },
   { to: "/parent/screen-time", label: "Screen time", icon: "⏱" },
   { to: "/parent/notifications", label: "Notifications", icon: "✉️" },
@@ -14,14 +14,18 @@ const ITEMS = [
 ];
 
 export default function ParentLayout({ title, children }) {
-  const { api, user, isAdmin, signOut, error, clearError } = useApp();
+  const { api, user, isAdmin, profile, signOut, error, clearError } = useApp();
   const nav = useNavigate();
-  const items = isAdmin ? [...ITEMS.slice(0, -1), { to: "/admin", label: "Content editor", icon: "🛠️" }, ITEMS.at(-1)] : ITEMS;
+  const extra = [
+    ...(profile?.is_teacher ? [{ to: "/parent/classes", label: "Classes", icon: "🏫" }] : []),
+    ...(isAdmin ? [{ to: "/admin", label: "Content editor", icon: "🛠️" }] : []),
+  ];
+  const items = [...ITEMS.slice(0, -1), ...extra, ITEMS.at(-1)];
   return (
     <div className="pc-shell">
       {api?.mode === "demo" && <div className="mode-banner"><div className="wrap">Demo mode: saved in this browser only. Emails are not sent.</div></div>}
       <header className="pc-top">
-        <Link className="brand" to="/parent"><Bolt /><b>Spark Lab</b><span className="pc-tag">Parents</span></Link>
+        <Link className="brand" to="/parent"><Bolt /><b>Spark Lab</b><span className="pc-tag">{profile?.is_teacher ? "Parents & teachers" : "Parents"}</span></Link>
         <span className="spacer" />
         <span className="pc-user muted">{api?.mode === "demo" ? "Demo account" : user?.email}</span>
         <Link className="btn primary" to="/profiles">Back to kids</Link>

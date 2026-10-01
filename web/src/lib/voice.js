@@ -10,7 +10,7 @@ export const VOICES = [
   { id: "teacher", name: "Calm teacher", emoji: "🧑‍🏫", like: /female|samantha|zira|karen|moira|veena|heera|neerja|aditi/i, pitch: 1.05, rate: 0.88 },
 ];
 export const defaultVoiceFor = gender => (gender === "girl" ? "bright" : gender === "boy" ? "cheerful" : "robot");
-export const voiceOf = child => VOICES.find(v => v.id === (child?.voice || defaultVoiceFor(child?.gender))) ?? VOICES[2];
+export const voiceOf = child => VOICES.find(v => v.id === (child?.voice || (child?.learner === "adult" ? "teacher" : defaultVoiceFor(child?.gender)))) ?? VOICES[2];
 
 let current = VOICES[2];
 export function setVoice(preset) { current = preset ?? VOICES[2]; }

@@ -417,8 +417,11 @@ export function starsFor(lesson, mode, r) {
   if (r.accuracy < g.acc || (g.wpm && r.wpm < g.wpm)) return 0;
   return r.accuracy >= 98 ? 3 : r.accuracy >= 95 ? 2 : 1;
 }
-// Kids in 6th standard and above start in Pro mode; anyone can switch.
-export const defaultMode = grade => ((grade ?? 0) >= 6 ? "pro" : "kids");
+// Adults, and kids in 6th standard and above, start in Pro mode; anyone can switch.
+export const defaultMode = gradeOrLearner => (typeof gradeOrLearner === "object" && gradeOrLearner
+  ? (gradeOrLearner.learner === "adult" || (gradeOrLearner.grade ?? 0) >= 6 ? "pro" : "kids")
+  : (gradeOrLearner ?? 0) >= 6 ? "pro" : "kids");
+export const isAdult = learner => learner?.learner === "adult";
 
 // ───────── Speed ladder and games ─────────
 // Each rung of the speed ladder is a 1-minute test at this many words a minute (with 90% accuracy).

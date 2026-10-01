@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SEED } from "../content/index.js";
 
 const TYPING_FIELDS = "id, lesson_id, mode, input, wpm, accuracy, seconds, chars, errors, passed, keys, created_at";
-const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min"];
+const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min", "learner"];
 const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, k === "name" && typeof obj[k] === "string" ? obj[k].trim() : obj[k]]));
 
 export function createSupabaseApi(url, anonKey, { google = false } = {}) {
@@ -35,7 +35,7 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
     },
     async updateProfile(patch) {
       const user = await this.getUser();
-      return ok(await sb.from("profiles").update(pick(patch, ["display_name", "notify_milestones", "notify_daily"])).eq("id", user.id).select().single());
+      return ok(await sb.from("profiles").update(pick(patch, ["display_name", "notify_milestones", "notify_daily", "is_teacher"])).eq("id", user.id).select().single());
     },
 
     async listChildren() { return ok(await sb.from("children").select("*").order("created_at")); },
@@ -75,6 +75,56 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
       return ok(await sb.from("child_usage").select("*").in("child_id", childIds).gte("day", fromDay));
     },
     async addUsage(childId, day, secs, bonus = 0) { ok(await sb.rpc("add_usage", { cid: childId, d: day, secs, bonus })); },
+
+    // ───────── Schools (needs release-4.sql) ─────────
+    async listClasses() {
+      const user = await this.getUser();
+      return ok(await sb.from("classes").select("id, name, join_code, created_at").eq("teacher_id", user.id).order("created_at"));
+    },
+    async createClass(name) { return ok(await sb.from("classes").insert({ name: name.trim() }).select("id, name, join_code, created_at").single()); },
+    async deleteClass(id) { ok(await sb.from("classes").delete().eq("id", id)); },
+    async classRoster(classId) {
+      const members = ok(await sb.from("class_members").select("child_id, joined_at").eq("class_id", classId));
+      const ids = members.map(m => m.child_id);
+      const assignments = ok(await sb.from("assignments").select("*").eq("class_id", classId).order("created_at", { ascending: false }));
+      if (!ids.length) return { members: [], assignments };
+      const [kids, typing, progress, state] = await Promise.all([
+        sb.from("children").select("id, name, avatar, grade, learner").in("id", ids),
+        sb.from("typing_sessions").select(`child_id, ${TYPING_FIELDS}`).in("child_id", ids).order("created_at", { ascending: false }).limit(3000),
+        sb.from("progress").select("child_id, item_id, module_id, done_at").eq("module_id", "typing").in("child_id", ids),
+        sb.from("child_state").select("child_id, value").eq("key", "typing").in("child_id", ids),
+      ]).then(rs => rs.map(ok));
+      return {
+        assignments,
+        members: members.map(m => ({
+          joined_at: m.joined_at,
+          child: kids.find(k => k.id === m.child_id) ?? { id: m.child_id, name: "?", avatar: "🙂" },
+          typing: typing.filter(t => t.child_id === m.child_id),
+          progress: progress.filter(p => p.child_id === m.child_id),
+          state: { typing: state.find(x => x.child_id === m.child_id)?.value ?? {} },
+        })),
+      };
+    },
+    async removeMember(classId, childId) { ok(await sb.from("class_members").delete().eq("class_id", classId).eq("child_id", childId)); },
+    async addAssignment(a) {
+      const row = pick(a, ["class_id", "title", "kind", "target", "min_wpm", "due_on"]);
+      return ok(await sb.from("assignments").insert(row).select().single());
+    },
+    async deleteAssignment(id) { ok(await sb.from("assignments").delete().eq("id", id)); },
+    async joinClass(code, childId) { return ok(await sb.rpc("join_class", { code, cid: childId }))[0]; },
+    async leaveClass(classId, childId) { ok(await sb.from("class_members").delete().eq("class_id", classId).eq("child_id", childId)); },
+    // Classes the family's learners are in: [{ class_id, child_id, name }]. Empty until release-4.sql is run.
+    async childClasses(childIds) {
+      if (!childIds.length) return [];
+      const r = await sb.from("class_members").select("class_id, child_id, classes(name)").in("child_id", childIds);
+      return r.error ? [] : r.data.map(m => ({ class_id: m.class_id, child_id: m.child_id, name: m.classes?.name ?? "Class" }));
+    },
+    async assignmentsFor(childId) {
+      const mine = await this.childClasses([childId]);
+      if (!mine.length) return [];
+      const rows = ok(await sb.from("assignments").select("*").in("class_id", mine.map(m => m.class_id)).order("created_at", { ascending: false }));
+      return rows.map(a => ({ ...a, class_name: mine.find(m => m.class_id === a.class_id)?.name }));
+    },
 
     async queueNotification({ child_id = null, title, body = "" }) {
       ok(await sb.from("notifications").insert({ child_id, kind: "milestone", title: title.slice(0, 200), body: body.slice(0, 2000) }));

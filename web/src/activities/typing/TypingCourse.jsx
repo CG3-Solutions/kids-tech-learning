@@ -9,6 +9,7 @@ import TypingProgress from "./TypingProgress.jsx";
 import { TYPING_JOURNEY, TYPING_PARTS, LADDER, defaultMode, starsFor, gamesOpen, gamePool, smartLesson } from "../../content/typing.js";
 import { typingSummary, fmtMinutes } from "../../lib/typing.js";
 import { useApp } from "../../lib/AppContext.jsx";
+import { assignmentStatus } from "../../lib/school.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { hush } from "../../lib/speech.js";
 
@@ -30,7 +31,12 @@ function bestStars(sessions) {
 
 // The Typing course: stages of lessons, a Kids/Pro switch, and the learner's numbers.
 export default function TypingCourse() {
-  const { activeChild, childData, markDone, addTypingSession, setChildState } = useApp();
+  const { api, activeChild, childData, markDone, addTypingSession, setChildState } = useApp();
+  const [tasks, setTasks] = useState([]); // set by the learner's teacher (schools)
+  useEffect(() => {
+    if (!api?.assignmentsFor || !activeChild) return;
+    api.assignmentsFor(activeChild.id).then(setTasks).catch(() => setTasks([]));
+  }, [api, activeChild?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState(null);
   const [section, setSection] = useState("lessons"); // lessons | ladder | tests | games | progress
   const [smart, setSmart] = useState(null);           // a smart-practice lesson, while open
@@ -38,7 +44,7 @@ export default function TypingCourse() {
   useEffect(() => onMuteChange(setM), []);
 
   const sessions = childData.typing ?? [];
-  const mode = childData.state?.typing?.mode ?? defaultMode(activeChild?.grade);
+  const mode = childData.state?.typing?.mode ?? defaultMode(activeChild);
   const kids = mode !== "pro";
   const done = useMemo(() => new Set(childData.progress.map(p => p.item_id)), [childData.progress]);
   const stars = useMemo(() => bestStars(sessions), [sessions]);
@@ -160,6 +166,36 @@ export default function TypingCourse() {
           </button>
         ))}
       </nav>
+
+      {tasks.length > 0 && (() => {
+        const list = tasks.map(t => ({ t, st: assignmentStatus(t, childData) }));
+        const open = list.filter(x => !x.st.done);
+        const fmt = d => new Date(`${d}T00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+        const goTask = t => {
+          if (t.kind === "lesson") { const i = steps.findIndex(s => s.id === t.target); if (i >= 0 && unlocked(i)) go(t.target); else { hush(); setSection("lessons"); } }
+          else { hush(); setSection(t.kind === "test" ? "tests" : "ladder"); }
+        };
+        return (
+          <section className="tasks-card" aria-label="From your teacher">
+            <h3>📌 From your teacher</h3>
+            {open.length ? (
+              <ul>
+                {open.map(({ t, st }) => {
+                  const i = steps.findIndex(s => s.id === t.target);
+                  const locked = t.kind === "lesson" && i >= 0 && !unlocked(i);
+                  return (
+                    <li key={t.id}>
+                      <span><b>{t.title}</b><small className="muted"> · {t.class_name}{t.due_on ? ` · due ${fmt(t.due_on)}` : ""}{st.overdue ? " · overdue" : ""} · {st.detail}</small></span>
+                      {locked ? <span className="tag">Finish earlier lessons first</span> : <button className="btn small" onClick={() => goTask(t)}>Go →</button>}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : <p>All your tasks are done. ⭐</p>}
+            {list.length > open.length && open.length > 0 && <p className="muted small-note">{list.length - open.length} done ✓</p>}
+          </section>
+        );
+      })()}
 
       <div className="kpis wide">
         <div className="kpi"><span>Lessons</span><b>{lessonsDone}/{steps.length}</b><small>passed</small></div>
