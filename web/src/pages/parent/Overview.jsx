@@ -50,7 +50,8 @@ export default function Overview() {
                 <div className="kpi"><span>Stars</span><b>★ {starCount(d)}</b><small>all time</small></div>
                 <div className="kpi"><span>Badges</span><b>{badges}</b><small>earned</small></div>
               </div>
-              {sugg && <div className="suggest"><div className="eyebrow">Teach next</div><b>{sugg.module.emoji} {sugg.module.title}{sugg.card ? `: ${sugg.card.data.n}` : ""}</b></div>}
+              {sugg && <div className="suggest"><div className="eyebrow">Teach next</div><b>{sugg.module.emoji} {sugg.module.title}{sugg.concept ? `: ${sugg.concept.title}` : sugg.card ? `: ${sugg.card.data.n}` : ""}</b>
+                {sugg.weak && <p className="muted small-note">Needs practice: missed check questions. {sugg.concept.parent}</p>}</div>}
             </section>
           );
         })}

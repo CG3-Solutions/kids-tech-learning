@@ -1196,3 +1196,38 @@ button.kb-key { cursor: pointer }
 }
 .depth-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .depth-chip { background: color-mix(in srgb, var(--lv4) 14%, var(--surface)); border: 2px solid color-mix(in srgb, var(--lv4) 40%, var(--line)); border-radius: 99px; padding: 4px 12px; font-size: .9rem }
+
+/* ───────── C3: question types, spaced review, parent concept report ───────── */
+.q-type { align-self: flex-start; font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--spark); background: color-mix(in srgb, var(--spark) 12%, var(--surface)); border-radius: 999px; padding: 3px 10px }
+.pic-opts { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) }
+.check-opt.pic { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center }
+.pic-e { font-size: 2.6rem; line-height: 1 }
+.tf-opts { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+.check-opt.tf { text-align: center; font-size: 1.25rem }
+.order-done.ok { color: var(--good) }
+.order-done.bad { color: var(--bad) }
+.order-done .order-next { opacity: .5 }
+.practice-note { border-radius: 12px; padding: 10px 14px; background: color-mix(in srgb, var(--spark) 10%, var(--surface)) }
+.practice-note p { margin: 4px 0 0 }
+.right-order { margin: 8px 0 }
+.bug-prog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+.bug-prog button { width: 100%; text-align: left; display: flex; gap: 10px; align-items: center; border: 2px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; font: inherit; font-weight: 600; color: var(--ink) }
+.bug-prog .ln { min-width: 1.6em; color: var(--muted); font-weight: 800 }
+.bug-prog button.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, var(--surface)) }
+.bug-prog button.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface)) }
+.bug-prog button.faded { opacity: .55 }
+.bug-tag { margin-left: auto; font-size: .85rem; font-family: inherit }
+.q-meta { align-items: center; gap: 10px; flex-wrap: wrap }
+.concept-chip { font-size: .85rem; font-weight: 700; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--surface) }
+.review-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; background: var(--surface); color: var(--ink); text-decoration: none }
+.review-banner.due { border-color: var(--spark); background: color-mix(in srgb, var(--spark) 10%, var(--surface)) }
+.review-banner .em { font-size: 2rem }
+.review-banner > div { flex: 1; min-width: 180px }
+.review-banner p { margin: 2px 0 0 }
+.review-sum { display: grid; gap: 6px; padding-left: 0; list-style: none; font-size: 1.1rem }
+.status-pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: .85rem; font-weight: 700; white-space: nowrap }
+.status-pill.weak { background: color-mix(in srgb, var(--bad) 16%, var(--surface)); color: var(--bad) }
+.status-pill.ok { background: color-mix(in srgb, var(--spark) 14%, var(--surface)) }
+.status-pill.strong { background: color-mix(in srgb, var(--good) 16%, var(--surface)); color: var(--good) }
+.missed-list { display: grid; gap: 8px; padding-left: 18px }
+.missed-list li > span { display: block }

@@ -28,7 +28,7 @@ function ParentNote({ step }) {
 
 // A step-by-step adventure: a map of steps grouped into parts, and one open step at a time.
 // `views` maps step id → component({ grade, onComplete }).
-export default function Journey({ title, intro, Face, steps, parts = [], views, done, grade, onStepDone }) {
+export default function Journey({ title, intro, Face, steps, parts = [], views, done, grade, onStepDone, top }) {
   const { unlockAll } = useApp(); // a parent may have opened every level for this learner
   const open_ = (i, d = done) => unlockAll || isUnlocked(steps, i, d, grade);
   const [open, setOpen] = useState(null);
@@ -98,6 +98,7 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
         </div>
         {muteBtn}
       </div>
+      {top}
       {groups.map(({ part, items }) => (
         <section key={part?.id ?? "all"} className="stack" style={{ gap: 10 }}>
           {part && (

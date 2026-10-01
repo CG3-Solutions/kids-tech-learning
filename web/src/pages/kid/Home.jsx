@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats, nextSuggestion, badgeState } from "../../lib/progress.js";
 import { AREAS } from "../../content/areas.js";
+import { dueQuestions } from "../../activities/computer/Review.jsx";
 
 export function Crumbs({ items }) {
   return (
@@ -34,6 +35,18 @@ export default function Home() {
         <span className="face">{activeChild.avatar}</span>
         <div><h1>Hi {activeChild.name}!</h1><p className="lead">What shall we learn today?</p></div>
       </div>
+
+      {(() => {
+        const due = dueQuestions(childData.state?.review ?? {}).length;
+        const comp = published.modules.find(m => m.activity === "computer" && !m.coming_soon);
+        return due > 0 && comp ? (
+          <Link className="review-banner due" to={`/learn/${comp.id}/computer`}>
+            <span className="em" aria-hidden="true">🔁</span>
+            <div><b>Review time with Chip!</b><p>{due} question{due > 1 ? "s" : ""} to try again.</p></div>
+            <span className="btn primary">Start</span>
+          </Link>
+        ) : null;
+      })()}
 
       {target && (
         <Link className="continue" to={`/learn/${target.module.id}`} style={{ "--c": `var(--${target.module.color})` }}>

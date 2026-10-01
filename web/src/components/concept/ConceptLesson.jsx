@@ -5,19 +5,15 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Guide from "../journey/Guide.jsx";
 import { SeeIt } from "./Anims.jsx";
-import { DoIt, e2e } from "./Games.jsx";
+import { DoIt } from "./Games.jsx";
+import Question, { prepare } from "./Question.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { hush } from "../../lib/speech.js";
 
 export const SCREENS = [["hook", "Think"], ["explain", "Learn"], ["see", "See it"], ["doit", "Do it"], ["check", "Check"], ["recap", "Recap"]];
 export const PASS = 2; // correct answers needed out of 3
 
-const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
-// Options in a random order, remembering which one is right.
-export const mixQuestion = q => {
-  const order = shuffle(q.options.map((_, i) => i));
-  return { ...q, options: order.map(i => q.options[i]), answer: order.indexOf(q.answer) };
-};
+export const mixQuestion = prepare; // options in a random order, remembering which one is right
 
 function Hook({ spec, Face, onNext }) {
   const [pick, setPick] = useState(null);
@@ -42,10 +38,12 @@ function Hook({ spec, Face, onNext }) {
 export const DEPTH_IDS = ["base", "mid", "high"];
 export const DEPTH_LABELS = ["Class 1–3", "Class 4–7", "Class 8–12"];
 export const depthsOf = spec => [0, ...[1, 2].filter(d => spec.deeper?.[DEPTH_IDS[d]])];
+// Check questions get a key ("comp-step-6:mid:1") so a missed one can come back in spaced review.
+const keyed = (spec, where, check) => check.map((q, i) => ({ ...q, key: `${spec.id}:${where}:${i}` }));
 export function atDepth(spec, d) {
   const deep = d > 0 ? spec.deeper?.[DEPTH_IDS[d]] : null;
-  if (!deep) return spec;
-  return { ...spec, explain: { text: deep.text, like: deep.like ?? spec.explain.like }, check: deep.check, recap: { ...spec.recap, points: [...spec.recap.points, ...deep.points] } };
+  if (!deep) return { ...spec, check: keyed(spec, "base", spec.check) };
+  return { ...spec, explain: { text: deep.text, like: deep.like ?? spec.explain.like }, check: keyed(spec, DEPTH_IDS[d], deep.check), recap: { ...spec.recap, points: [...spec.recap.points, ...deep.points] } };
 }
 
 function DepthBar({ depth, depths, setDepth }) {
@@ -73,25 +71,27 @@ function Explain({ spec, Face, onNext, depthBar }) {
   );
 }
 
-function Check({ spec, Face, onPass, onAgain, onResult }) {
-  const [qs, setQs] = useState(() => spec.check.map(mixQuestion));
+// Three questions (any type, see Question.jsx). Each wrong answer is passed to onMiss for spaced review.
+function Check({ spec, Face, onPass, onAgain, onResult, onMiss }) {
+  const fresh = () => spec.check.map(prepare);
+  const [qs, setQs] = useState(fresh);
   const [i, setI] = useState(0);
-  const [pick, setPick] = useState(null);
+  const [answered, setAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [round, setRound] = useState(0);
   const q = qs[i];
-  const answer = k => {
-    if (pick != null) return;
-    setPick(k);
-    if (k === q.answer) { sfx.ding(); setScore(s => s + 1); } else sfx.oops();
+  const answer = ok => {
+    setAnswered(true);
+    if (ok) setScore(s => s + 1); else onMiss?.(q.key);
   };
   const next = () => {
-    if (i + 1 < qs.length) { setI(i + 1); setPick(null); return; }
+    if (i + 1 < qs.length) { setI(i + 1); setAnswered(false); return; }
     setDone(true);
     onResult(score, qs.length);
     if (score >= PASS) sfx.tada();
   };
-  const retry = () => { setQs(spec.check.map(mixQuestion)); setI(0); setPick(null); setScore(0); setDone(false); };
+  const retry = () => { setQs(fresh()); setI(0); setAnswered(false); setScore(0); setDone(false); setRound(r => r + 1); };
   if (done) {
     const passed = score >= PASS;
     return (
@@ -99,6 +99,7 @@ function Check({ spec, Face, onPass, onAgain, onResult }) {
         <Guide Face={Face} mood={passed ? "cheer" : "sad"} say={passed ? `${score} out of ${qs.length}! You've got it.` : `${score} out of ${qs.length}. Let's look at it again, then try once more.`}>
           {passed ? `${"⭐".repeat(score)} ${score} out of ${qs.length}! You've got it.` : `${score} out of ${qs.length}. You need ${PASS} to pass. Let's look again!`}
         </Guide>
+        {score < qs.length && <p className="muted">🔁 Chip saved the question{qs.length - score > 1 ? "s" : ""} you missed. {qs.length - score > 1 ? "They'll" : "It'll"} come back for review tomorrow.</p>}
         <div className="row">
           {passed ? <button className="btn primary big" onClick={onPass}>Recap →</button> : <>
             <button className="btn primary big" onClick={retry}>↻ Try the check again</button>
@@ -111,18 +112,8 @@ function Check({ spec, Face, onPass, onAgain, onResult }) {
   return (
     <div className="stack">
       <div className="eyebrow">Question {i + 1} of {qs.length}</div>
-      <Guide Face={Face} say={q.q}>{q.q}</Guide>
-      <div className="check-opts">
-        {q.options.map((o, k) => (
-          <button key={o} {...(e2e() && k === q.answer ? { "data-right": "1" } : {})} className={`check-opt${pick == null ? "" : k === q.answer ? " right" : k === pick ? " wrong" : " faded"}`} onClick={() => answer(k)} disabled={pick != null}>{o}</button>
-        ))}
-      </div>
-      {pick != null && (
-        <div className={`check-why ${pick === q.answer ? "ok" : "bad"}`} role="status">
-          <b>{pick === q.answer ? "✓ Right!" : `✗ The answer is: ${q.options[q.answer]}.`}</b> {q.why}
-        </div>
-      )}
-      {pick != null && <div><button className="btn primary" onClick={next}>{i + 1 < qs.length ? "Next question →" : "See my score →"}</button></div>}
+      <Question key={`${round}-${i}`} q={q} Face={Face} onAnswer={answer} />
+      {answered && <div><button className="btn primary" onClick={next}>{i + 1 < qs.length ? "Next question →" : "See my score →"}</button></div>}
     </div>
   );
 }
@@ -154,7 +145,8 @@ function Recap({ spec, onFinish, onDeeper, deeperLabel }) {
 }
 
 // `level`: the depth to start at (from the learner's class). The star needs the check passed at any depth.
-export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, level = 0 }) {
+// `onMiss(key)`: a check question answered wrongly (for spaced review).
+export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, onMiss, level = 0 }) {
   const depths = depthsOf(base);
   const [depth, setDepthState] = useState(depths.includes(level) ? level : depths.filter(d => d <= level).at(-1) ?? 0);
   const spec = useMemo(() => atDepth(base, depth), [base, depth]);
@@ -195,7 +187,7 @@ export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, l
             {!doitDone && <span className="muted">Finish the activity first</span>}</div>
         </div>
       )}
-      {key === "check" && <Check key={depth} {...body} onResult={(s, t) => { if (s >= PASS) setChecked(true); onCheck?.(s, t, DEPTH_IDS[depth]); }} onPass={() => move(5)} onAgain={() => go(1)} />}
+      {key === "check" && <Check key={depth} {...body} onMiss={onMiss} onResult={(s, t) => { if (s >= PASS) setChecked(true); onCheck?.(s, t, DEPTH_IDS[depth]); }} onPass={() => move(5)} onAgain={() => go(1)} />}
       {key === "recap" && <Recap spec={spec} onFinish={onComplete} deeperLabel={deeper != null ? DEPTH_LABELS[deeper] : null}
         onDeeper={deeper != null ? () => { setDepth(deeper); setReached(r => Math.max(r, 1)); go(1); } : null} />}
     </div>

@@ -59,3 +59,21 @@ Every concept has three depths. The **Learn** text, the **Check** questions and 
 - **Use the "Try it at home" ideas.** Counting computers at home, zooming into photo pixels and finding the Wi-Fi router make the ideas stick.
 - **Staying safe online (step 13):** agree on family rules together: allowed apps, no chatting with strangers, and always telling you if something feels wrong, with no punishment for telling.
 - **Check results** appear in the parent report, under Adventures and Activity.
+
+## Review, quiz and the parent report (C3)
+**Question types.** Lesson checks, Chip's quiz and review use five kinds of question: choose an answer, **picture choice**, **true or false**, **put in order** (tap the steps in order, with an Undo) and **spot the bug** (tap the wrong line of a program; the fix is shown). Every answer shows the right answer and a one-line reason. Each concept also has 4 practice questions in mixed types: 2 for everyone and 2 for Class 4 and up (`content/computerPractice.js`).
+
+**Spaced review.** A question answered wrongly in a check or the quiz is saved. It comes back after **1 day**. Right again → **3 days**, then **7 days**, then it's mastered. Wrong at any point → back to 1 day.
+- A **🔁 Review time** banner appears on the child's home screen and on Chip's path when questions are due (up to 8 a session). Otherwise the path shows when the next review is.
+- Saved in `child_state.review` (no database change).
+
+**Chip's quiz** (the ❓ Quiz tab) replaces the old card quiz for this subject. It asks up to 8 questions from the steps the child has finished (the first 3 steps before any are done), at the child's level, in mixed types, with concepts that have questions in review first. The score counts for the quiz average and the Quiz whiz badge as before. Missed questions go into review.
+
+**Parent report.** *Progress reports → 💻 Inside a Computer: concepts* shows, for each concept started:
+| Label | Meaning |
+|---|---|
+| **Strong** | 3 of 3 on the check, nothing left to review |
+| **Getting there** | Passed, with a little left to review |
+| **Needs practice** | Check not passed yet, or 2+ questions in review, or a question missed 3+ times |
+
+It also shows the best check score and level, questions waiting and mastered, **Teach this next** (the weakest concept, with its parent tip) and the exact **questions to go over together**, with answers. On the dashboard overview, **Teach next** now picks a concept that needs practice first.

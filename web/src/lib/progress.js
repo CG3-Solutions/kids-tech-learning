@@ -2,6 +2,15 @@ import { PUZZLES } from "../content/subjects.js";
 import { JOURNEYS, STEP_IDS } from "../content/journeys.js";
 import { LADDER } from "../content/typing.js";
 import { GLOSSARY_MODULES } from "../content/index.js";
+import { COMPUTER_JOURNEY } from "../content/computer.js";
+import { conceptStatus } from "./review.js";
+
+// The computer concept a child most needs to practise (from check scores and spaced review), or null.
+export function weakConcept(child) {
+  const done = new Set(child.progress.map(p => p.item_id));
+  const weak = conceptStatus(COMPUTER_JOURNEY, child.state ?? {}, done).filter(r => r.status === "weak");
+  return weak.sort((a, b) => b.open - a.open || b.misses - a.misses)[0]?.step ?? null;
+}
 
 // Items a child can complete in a module: every published card, plus puzzles for the coding module.
 export function moduleItems(module, cards) {
@@ -79,8 +88,12 @@ export function badgeState(child, modules) {
   return BADGES.map(b => ({ ...b, earned: b.test(s) }));
 }
 
-// What a parent should teach next: the first unlearned card in the least-finished subject.
+// What a parent should teach next: a weak computer concept, else the first unlearned card in the least-finished subject.
+// A computer concept that needs practice comes first.
 export function nextSuggestion(modules, cards, child) {
+  const weak = weakConcept(child);
+  const computer = weak && modules.find(m => m.activity === "computer");
+  if (computer) return { module: computer, card: null, concept: weak, weak: true };
   const ranked = modules
     .map(m => ({ m, st: moduleStats(m, cards, child) }))
     .filter(x => x.st.total > 0 && x.st.done < x.st.total)

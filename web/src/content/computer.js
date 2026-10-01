@@ -4,6 +4,7 @@
 // The base text is pitched at Class 1–3; computerDeep.js adds Class 4–7 and 8–12 versions.
 // Plain data, so tests, progress and parent reports can use it.
 import { DEEP } from "./computerDeep.js";
+import { PRACTICE } from "./computerPractice.js";
 
 export const COMPUTER_PARTS = [
   { id: "A", title: "Part A · What computers are", who: "Everyone starts here", note: "What makes something a computer, and how instructions make it work." },
@@ -293,6 +294,17 @@ export const COMPUTER_JOURNEY = [
     learned: "Keep private details private, be kind, and tell a grown-up if something feels wrong.",
     parent: "Agree on family rules together: which apps are allowed, no chatting with strangers, and always telling you if something feels wrong, with no punishment for telling.",
   }),
-].map(s => ({ ...s, deeper: DEEP[s.id] })); // Class 4–7 and 8–12 versions (computerDeep.js)
+].map(s => ({ ...s, deeper: DEEP[s.id], practice: PRACTICE[s.id] ?? [] })); // deeper versions (computerDeep.js), practice questions (computerPractice.js)
+
+// Every question has a key that says where it lives, for spaced review:
+//   "comp-step-6:base:1" (check, Class 1–3), "comp-step-6:mid:0" (check, Class 4–7), "comp-step-6:p:2" (practice)
+const BY_ID = Object.fromEntries(COMPUTER_JOURNEY.map(s => [s.id, s]));
+export function conceptQuestion(key) {
+  const [id, where, n] = key.split(":");
+  const s = BY_ID[id];
+  const list = !s ? null : where === "p" ? s.practice : where === "base" ? s.check : s.deeper?.[where]?.check;
+  const q = list?.[Number(n)];
+  return q ? { ...q, key, conceptId: id } : null;
+}
 
 export const COMPUTER_STEP_IDS = COMPUTER_JOURNEY.map(s => s.id);
