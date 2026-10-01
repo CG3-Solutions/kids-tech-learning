@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { isMuted, setMuted, onMuteChange, sfx } from "../../lib/sfx.js";
 import { hush } from "../../lib/speech.js";
+import { useApp } from "../../lib/AppContext.jsx";
 
 // Is step `index` open for this child?
 // - A step with `openFrom` is open straight away for children in that class (standard) or above.
@@ -28,6 +29,8 @@ function ParentNote({ step }) {
 // A step-by-step adventure: a map of steps grouped into parts, and one open step at a time.
 // `views` maps step id → component({ grade, onComplete }).
 export default function Journey({ title, intro, Face, steps, parts = [], views, done, grade, onStepDone }) {
+  const { unlockAll } = useApp(); // a parent may have opened every level for this learner
+  const open_ = (i, d = done) => unlockAll || isUnlocked(steps, i, d, grade);
   const [open, setOpen] = useState(null);
   const [celebrate, setCelebrate] = useState(false);
   const [run, setRun] = useState(0);
@@ -40,7 +43,7 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
   const step = steps[idx];
   const View = step && views[step.id];
   const doneNow = new Set([...done, ...(open ? [open] : [])]);
-  const next = steps.slice(idx + 1).find((_, k) => isUnlocked(steps, idx + 1 + k, doneNow, grade));
+  const next = steps.slice(idx + 1).find((_, k) => open_(idx + 1 + k, doneNow));
   const mainDone = main.filter(s => done.has(s.id)).length;
   const stepNo = s => main.indexOf(s) + 1;
 
@@ -84,7 +87,7 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
   }
 
   const groups = parts.length ? parts.map(p => ({ part: p, items: steps.filter(s => s.part === p.id) })) : [{ part: null, items: steps }];
-  const firstOpen = steps.find((s, i) => !done.has(s.id) && isUnlocked(steps, i, done, grade));
+  const firstOpen = steps.find((s, i) => !done.has(s.id) && open_(i));
   return (
     <div className="stack journey">
       <div className="map-head">
@@ -107,7 +110,7 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
           <ol className="path">
             {items.map(s => {
               const i = steps.indexOf(s);
-              const unlocked = isUnlocked(steps, i, done, grade);
+              const unlocked = open_(i);
               const isDone = done.has(s.id);
               const isNext = s === firstOpen;
               return (

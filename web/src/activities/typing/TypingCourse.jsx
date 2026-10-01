@@ -31,7 +31,7 @@ function bestStars(sessions) {
 
 // The Typing course: stages of lessons, a Kids/Pro switch, and the learner's numbers.
 export default function TypingCourse() {
-  const { api, activeChild, childData, markDone, addTypingSession, setChildState } = useApp();
+  const { api, activeChild, childData, markDone, addTypingSession, setChildState, unlockAll } = useApp();
   const [tasks, setTasks] = useState([]); // set by the learner's teacher (schools)
   useEffect(() => {
     if (!api?.assignmentsFor || !activeChild) return;
@@ -51,7 +51,8 @@ export default function TypingCourse() {
   const sum = useMemo(() => typingSummary(sessions), [sessions]);
   const steps = TYPING_JOURNEY;
   // Kids unlock lessons in order; in Pro mode every lesson is open (adults may know some already).
-  const unlocked = (i, d = done) => !kids || isUnlocked(steps, i, d, 0);
+  // A parent may have opened all levels for this learner (Parent dashboard → Learners).
+  const unlocked = (i, d = done) => unlockAll || !kids || isUnlocked(steps, i, d, 0);
   const lessonsDone = steps.filter(s => done.has(s.id)).length;
 
   const idx = steps.findIndex(s => s.id === open);
@@ -62,7 +63,7 @@ export default function TypingCourse() {
   const typingState = childData.state?.typing ?? {};
   const setMode = m => setChildState("typing", { ...typingState, mode: m });
   const climbed = typingState.ladder ?? 0;
-  const playOpen = gamesOpen(done, mode);
+  const playOpen = unlockAll || gamesOpen(done, mode);
   const pool = useMemo(() => gamePool(done, mode), [done, mode]);
   const save = (id, { r, won, input }) => addTypingSession({ lesson_id: id, mode, input, wpm: r.wpm, accuracy: r.accuracy, seconds: r.seconds, chars: r.chars, errors: r.errors, passed: won, keys: r.keys });
   const ladderResult = ({ rung, target, r, won, input }) => {

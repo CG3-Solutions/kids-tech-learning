@@ -1072,3 +1072,11 @@ button.kb-key { cursor: pointer }
 
 .pc-card { min-width: 0 }
 .error-text { color: var(--bad); font-weight: 700 }
+/* On/off switch */
+.lvl-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; white-space: nowrap }
+.lvl-switch input { position: absolute; opacity: 0; width: 1px; height: 1px }
+.lvl-track { width: 40px; height: 24px; border-radius: 99px; background: var(--line); position: relative; flex: none; transition: background .15s }
+.lvl-track i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .15s }
+.lvl-switch input:checked + .lvl-track { background: var(--good) }
+.lvl-switch input:checked + .lvl-track i { left: 19px }
+.lvl-switch input:focus-visible + .lvl-track { outline: 3px solid var(--wire); outline-offset: 2px }

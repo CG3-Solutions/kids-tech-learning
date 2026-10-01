@@ -201,6 +201,8 @@ export function AppProvider({ children: kids }) {
   const value = {
     api, user, profile, children, activeChild, childData, content, published, error, notice,
     isAdmin: profile?.role === "admin",
+    // A parent can open every level for a learner (Parent dashboard → Learners → Levels).
+    unlockAll: childData.state?.settings?.unlockAll === true,
     clearError: () => setError(null), setError, clearNotice: () => setNotice(null), setNotice,
     chooseChild, loadAccount, loadContent, loadChild, markDone, addAttempt, addTypingSession, setChildState, setProfile,
     screen: { seconds: usage.seconds, limitSec, remaining, timesUp, grantExtra, setKidActive },

@@ -43,8 +43,27 @@ function JoinClass({ children }) {
   );
 }
 
+// Levels: "In order" (each step opens after the one before) or "All open" (any level, any time).
+// Saved per learner in their settings, so it works on every device.
+function useLevelSettings(children) {
+  const { api, activeChild, loadChild, setError } = useApp();
+  const [settings, setSettings] = useState({});
+  useEffect(() => {
+    if (!api || !children.length) return;
+    Promise.all(children.map(c => api.loadChild(c.id).then(d => [c.id, d.state?.settings ?? {}])))
+      .then(rows => setSettings(Object.fromEntries(rows))).catch(e => setError(e.message));
+  }, [api, children, setError]);
+  const setAllOpen = async (child, on) => {
+    const next = { ...(settings[child.id] ?? {}), unlockAll: on };
+    setSettings(s => ({ ...s, [child.id]: next }));
+    try { await api.setState(child.id, "settings", next); if (child.id === activeChild?.id) loadChild(); } catch (e) { setError(e.message); }
+  };
+  return [settings, setAllOpen];
+}
+
 export default function Children() {
   const { api, children, loadAccount, setError } = useApp();
+  const [levels, setAllOpen] = useLevelSettings(children);
   const [editing, setEditing] = useState(null); // learner id | "new" | "new-adult"
   const [confirm, setConfirm] = useState(false);
   const child = children.find(c => c.id === editing);
@@ -73,18 +92,25 @@ export default function Children() {
         <>
           <div className="pc-table-wrap">
             <table className="pc-table">
-              <thead><tr><th>Learner</th><th>Class</th><th>Voice</th><th>Daily limit</th><th /></tr></thead>
+              <thead><tr><th>Learner</th><th>Class</th><th>Levels</th><th>Voice</th><th>Daily limit</th><th /></tr></thead>
               <tbody>
                 {children.map(c => (
                   <tr key={c.id}>
                     <td><span className="face sm">{c.avatar}</span> <b>{c.name}</b></td>
                     <td>{c.learner === "adult" ? "Grown-up" : c.grade ? `${ordinal(c.grade)} standard` : "—"}</td>
+                    <td>
+                      <label className="lvl-switch" title="All open: every level of every subject can be opened, in any order.">
+                        <input type="checkbox" checked={!!levels[c.id]?.unlockAll} onChange={e => setAllOpen(c, e.target.checked)} aria-label={`Open all levels for ${c.name}`} />
+                        <span className="lvl-track" aria-hidden="true"><i /></span>
+                        <span>{levels[c.id]?.unlockAll ? "🔓 All open" : "🔒 In order"}</span>
+                      </label>
+                    </td>
                     <td>{voiceOf(c).emoji} {voiceOf(c).name}</td>
                     <td>{c.daily_limit_min ? `${c.daily_limit_min} min` : "No limit"}</td>
                     <td className="right"><button className="btn ghost" onClick={() => setEditing(c.id)}>Edit</button></td>
                   </tr>
                 ))}
-                {!children.length && <tr><td colSpan="5" className="muted">No children yet.</td></tr>}
+                {!children.length && <tr><td colSpan="6" className="muted">No children yet.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -92,6 +118,7 @@ export default function Children() {
             <button className="btn primary" onClick={() => setEditing("new")}>＋ Add a child</button>
             {!children.some(c => c.learner === "adult") && <button className="btn" onClick={() => setEditing("new-adult")}>⌨️ Add yourself (learn typing)</button>}
           </div>
+          <p className="muted small-note"><b>Levels:</b> “In order” opens each step after the one before (older classes can jump ahead in some subjects). “All open” lets a learner try any level, in any order, including the typing games and tests. Good for testing, revision or a confident learner.</p>
           <JoinClass children={children} />
         </>
       )}
