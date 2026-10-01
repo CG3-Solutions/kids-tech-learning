@@ -4,6 +4,7 @@ import GameResult from "./GameResult.jsx";
 import Certificate from "./Certificate.jsx";
 import { TESTS, TEST_ACC, testText } from "../../content/typing.js";
 import { sfx } from "../../lib/sfx.js";
+import { MAX_HUMAN_WPM } from "../../lib/typing.js";
 
 const fmtDate = iso => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -17,7 +18,8 @@ export default function TypingTests({ mode, pool, name, sessions, onResult }) {
   const best = m => sessions.filter(s => s.lesson_id === `test-${m}`).reduce((a, s) => Math.max(a, s.wpm), 0);
 
   const finish = ({ r, input }) => {
-    const won = r.accuracy >= TEST_ACC && r.chars > 0;
+    // No certificate for impossible speeds (a stuck key or a typing robot).
+    const won = r.accuracy >= TEST_ACC && r.chars > 0 && r.wpm <= MAX_HUMAN_WPM;
     if (won) sfx.tada(); else sfx.ding();
     const session = onResult({ minutes, r, won, input });
     setRes({ r, won, session });
