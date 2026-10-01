@@ -6,6 +6,8 @@ Ollie the Octopus guides two adventures: **Numbers** and **Mathematics**, from c
 - A wrong answer gets a hint first; after a second try the answer is shown and the child moves on.
 - Each step ends with a score (up to 3 stars for answers right first time).
 - **Younger children** unlock steps one at a time; **older children** can open later parts straight away (each part says from which class).
+- **Wrong choices come from real mistakes**, so a wrong answer tells you something. For example, "the value of the 7 in 730" offers 7, 70, 700 and 7000 (mixing up places), and number names include the swapped-digit mix-up (95 and 59).
+- **Questions grow with the class.** For example, column sums use 3-digit numbers from Class 4; fractions add "1/4 of 20" from Class 4 and equivalent fractions ("2/3 = ?/9") from Class 5; area adds "find the missing side" from Class 6.
 
 ## 🔟 Ollie's number adventure
 Count, compare and understand big numbers.
@@ -82,3 +84,18 @@ _After Part C · open from 7th standard. Integers, equations, powers and Pythago
 | 14. 🔎 **Solve for x** | Find the mystery number. | To solve 3x + 4 = 19: subtract 4, then divide by 3. x = 5. | Make up mystery-number riddles: I think of a number, double it and add 3… |
 | 15. ⚡ **Powers and roots** | 2⁵ and √144. | a² × a = a³; √81 = 9 because 9 × 9 = 81. | Find the square numbers on a 100-square chart. |
 | 16. 📏 **Pythagoras** | a² + b² = c². | Pythagoras: c² = a² + b², so c = √(a² + b²). | Check a 3-4-5 triangle with a measuring tape: it makes a perfect corner! |
+
+## Question kinds in each step
+| Step | Question kinds |
+|---|---|
+| Adding / taking away within 10 | Sums with pictures; from Class 2 also missing numbers (3 + ? = 7) |
+| Adding / subtracting bigger numbers | Column sums with carrying and borrowing; 3-digit numbers from Class 4 |
+| Hundreds, tens and ones | Read the blocks; value of a digit (wrong choices are the same digit in other places) |
+| Times tables | Up to ×5 (Class 1–2), ×10 (Class 3), ×12 (Class 4 and up) |
+| Money problems | Change, totals, sharing a bill, two things bought together |
+| Negative numbers | Bigger or smaller, the smallest of four, and temperature changes in cold places (Leh, Gulmarg…) |
+| Fractions | What fraction is shaded; which is bigger; a fraction of a number (Class 4+); equivalent fractions (Class 5+) |
+| Decimals | Adding, comparing (3.2 or 3.15?), and change from ₹20/₹50/₹100 |
+| Percentages | x% of an amount, sale prices, and test marks as a percentage |
+| Area and perimeter | Area and perimeter of a rectangle; the missing side from the area (Class 6+) |
+| Integers | Always with at least one negative number: −3 + 5, 4 − (−2) |
