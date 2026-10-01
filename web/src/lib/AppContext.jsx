@@ -8,7 +8,7 @@ import { findMilestones } from "./milestones.js";
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
 
-const EMPTY_CHILD = { progress: [], attempts: [], state: {} };
+const EMPTY_CHILD = { progress: [], attempts: [], state: {}, typing: [] };
 const TICK = 5;          // seconds between screen-time ticks
 const FLUSH = 60;        // save screen time at least this often
 const IDLE_AFTER = 120;  // stop counting after 2 minutes without a tap or key
@@ -106,6 +106,16 @@ export function AppProvider({ children: kids }) {
     reportMilestones(before, after);
   }, [api, activeChild, reportMilestones]);
 
+  // A finished typing lesson: shown straight away, saved in the background.
+  const addTypingSession = useCallback(row => {
+    if (!activeChild) return;
+    const entry = { ...row, id: `local-${Date.now()}`, created_at: new Date().toISOString() };
+    dataRef.current = { ...dataRef.current, typing: [entry, ...(dataRef.current.typing ?? [])] };
+    setChildData(dataRef.current);
+    api.addTypingSession(activeChild.id, row)
+      .catch(e => setError(/typing_sessions/.test(e.message) ? "Typing results can't be saved yet: the database needs the release 3 upgrade (supabase/release-3.sql)." : e.message));
+  }, [api, activeChild]);
+
   const setChildState = useCallback((key, value) => {
     if (!activeChild) return;
     setChildData(d => ({ ...d, state: { ...d.state, [key]: value } }));
@@ -186,7 +196,7 @@ export function AppProvider({ children: kids }) {
     api, user, profile, children, activeChild, childData, content, published, error, notice,
     isAdmin: profile?.role === "admin",
     clearError: () => setError(null), setError, clearNotice: () => setNotice(null), setNotice,
-    chooseChild, loadAccount, loadContent, loadChild, markDone, addAttempt, setChildState, setProfile,
+    chooseChild, loadAccount, loadContent, loadChild, markDone, addAttempt, addTypingSession, setChildState, setProfile,
     screen: { seconds: usage.seconds, limitSec, remaining, timesUp, grantExtra, setKidActive },
     signOut,
   };

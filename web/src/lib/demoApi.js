@@ -4,13 +4,13 @@ import { local } from "./storage.js";
 
 const KEY = "sparklab.demo.v1";
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36));
-const blank = () => ({ user: null, profile: null, children: [], progress: [], attempts: [], state: {}, content: null, usage: [], notifications: [] });
+const blank = () => ({ user: null, profile: null, children: [], progress: [], attempts: [], state: {}, content: null, usage: [], notifications: [], typing: [] });
 const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min"];
 const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, typeof obj[k] === "string" && k === "name" ? obj[k].trim() : obj[k]]));
 
 export function createDemoApi(storage = local) {
   let db = { ...blank(), ...storage.get(KEY, {}) };
-  db.usage ??= []; db.notifications ??= [];
+  db.usage ??= []; db.notifications ??= []; db.typing ??= [];
   const listeners = new Set();
   const save = () => storage.set(KEY, db);
   const emit = () => listeners.forEach(fn => fn(db.user));
@@ -51,6 +51,7 @@ export function createDemoApi(storage = local) {
       db.progress = db.progress.filter(p => p.child_id !== id);
       db.attempts = db.attempts.filter(a => a.child_id !== id);
       db.usage = db.usage.filter(u => u.child_id !== id);
+      db.typing = db.typing.filter(t => t.child_id !== id);
       delete db.state[id]; save();
     },
 
@@ -60,7 +61,13 @@ export function createDemoApi(storage = local) {
         progress: db.progress.filter(p => p.child_id === childId),
         attempts: db.attempts.filter(a => a.child_id === childId).sort((a, b) => b.created_at.localeCompare(a.created_at)),
         state: { ...(db.state[childId] ?? {}) },
+        typing: db.typing.filter(t => t.child_id === childId).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 200),
       };
+    },
+    async addTypingSession(childId, row) {
+      need(); if (!owns(childId)) throw new Error("Child not found.");
+      const r = { ...row, id: uid(), child_id: childId, created_at: new Date().toISOString() };
+      db.typing.push(r); save(); return r;
     },
     async markDone(childId, moduleId, itemId) {
       need(); if (!owns(childId)) return;

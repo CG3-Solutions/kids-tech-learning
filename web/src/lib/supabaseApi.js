@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { SEED } from "../content/index.js";
 
+const TYPING_FIELDS = "id, lesson_id, mode, input, wpm, accuracy, seconds, chars, errors, passed, keys, created_at";
 const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min"];
 const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, k === "name" && typeof obj[k] === "string" ? obj[k].trim() : obj[k]]));
 
@@ -53,7 +54,13 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
         sb.from("quiz_attempts").select("id, module_id, score, total, created_at").eq("child_id", childId).order("created_at", { ascending: false }).limit(200),
         sb.from("child_state").select("key, value").eq("child_id", childId),
       ]).then(rs => rs.map(ok));
-      return { progress, attempts, state: Object.fromEntries(state.map(s => [s.key, s.value])) };
+      // Typing needs release-3.sql; until it's run, the rest of the app keeps working.
+      const typing = await sb.from("typing_sessions").select(TYPING_FIELDS).eq("child_id", childId).order("created_at", { ascending: false }).limit(200)
+        .then(r => (r.error ? [] : r.data));
+      return { progress, attempts, state: Object.fromEntries(state.map(s => [s.key, s.value])), typing };
+    },
+    async addTypingSession(childId, row) {
+      return ok(await sb.from("typing_sessions").insert({ child_id: childId, ...row }).select(TYPING_FIELDS).single());
     },
     async markDone(childId, moduleId, itemId) {
       ok(await sb.from("progress").upsert({ child_id: childId, module_id: moduleId, item_id: itemId }, { onConflict: "child_id,item_id", ignoreDuplicates: true }));

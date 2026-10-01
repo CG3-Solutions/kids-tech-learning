@@ -69,3 +69,23 @@ export function OllieFace({ mood = "happy", lamp = true, size = 96 }) {
     </svg>
   );
 }
+
+// Keyo the Keyboard Cat: guides the Typing course (cats love sitting on keyboards!).
+export function KeyoFace({ mood = "happy", lamp = true, size = 96 }) {
+  const mouth = mood === "sad" ? "M42 70 q8 -6 16 0" : mood === "wow" ? "M45 68 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0" : "M40 66 q5 6 10 0 q5 6 10 0";
+  return (
+    <svg className={`bit-face${mood === "cheer" ? " cheer" : ""}`} viewBox="0 0 100 110" width={size} height={size * 1.1} aria-hidden="true">
+      <path d="M16 40 L20 6 L42 26 Z M84 40 L80 6 L58 26 Z" fill="var(--lv1)" stroke="var(--ink)" strokeWidth="4" strokeLinejoin="round" />
+      <path d="M23 30 L24 16 L34 25 Z M77 30 L76 16 L66 25 Z" fill="var(--plus)" opacity=".7" />
+      <ellipse cx="50" cy="52" rx="38" ry="34" fill="var(--lv1)" stroke="var(--ink)" strokeWidth="4" />
+      <ellipse cx="36" cy="46" rx="7" ry={mood === "cheer" ? 3 : 8} fill="var(--ink)" /><ellipse cx="64" cy="46" rx="7" ry={mood === "cheer" ? 3 : 8} fill="var(--ink)" />
+      <circle cx="38" cy="43" r="2" fill="var(--surface)" /><circle cx="66" cy="43" r="2" fill="var(--surface)" />
+      <path d="M46 58 h8 l-4 5 z" fill="var(--plus)" stroke="var(--ink)" strokeWidth="2" strokeLinejoin="round" />
+      <path d={mouth} fill={mood === "wow" ? "var(--ink)" : "none"} stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M6 56 h22 M8 64 l20 -4 M94 56 h-22 M92 64 l-20 -4" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+      <rect x="30" y="88" width="40" height="18" rx="5" fill="var(--surface)" stroke="var(--ink)" strokeWidth="3" />
+      <text x="50" y="101" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">F J</text>
+      {lamp && <circle cx="86" cy="92" r="5" fill="var(--spark)" className="bit-glow" />}
+    </svg>
+  );
+}

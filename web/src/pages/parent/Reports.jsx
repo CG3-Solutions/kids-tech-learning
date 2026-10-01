@@ -8,6 +8,47 @@ import { JOURNEYS } from "../../content/journeys.js";
 import { AREAS } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
+import { typingSummary, fmtMinutes } from "../../lib/typing.js";
+import { ALL_STEPS } from "../../content/journeys.js";
+
+const LESSON = Object.fromEntries(ALL_STEPS.map(s => [s.id, s]));
+const keyName = c => (c === ";" ? ";" : c.toUpperCase());
+
+// Typing numbers for one child: speed, accuracy, keys to practise and recent lessons.
+function TypingReport({ sessions }) {
+  if (!sessions.length) return <p className="muted">No typing lessons yet. Open ⌨️ Typing from the child's home screen to start.</p>;
+  const sum = typingSummary(sessions);
+  return (
+    <>
+      <div className="kpis wide">
+        <div className="kpi"><span>Best speed</span><b>{sum.bestWpm || "—"}</b><small>words a minute</small></div>
+        <div className="kpi"><span>Accuracy</span><b>{sum.accuracy}%</b><small>last 5 lessons</small></div>
+        <div className="kpi"><span>Typing time</span><b>{fmtMinutes(sum)}</b><small>{sum.sessions} lessons typed</small></div>
+      </div>
+      {sum.weak.length > 0 && (
+        <p>Keys to practise: {sum.weak.map(w => <kbd key={w.key} className="kbd" title={`${Math.round(w.missRate * 100)}% missed`}>{keyName(w.key)}</kbd>)}
+          <span className="muted"> (missed most often in the last 20 lessons)</span></p>
+      )}
+      <div className="pc-table-wrap">
+        <table className="pc-table">
+          <thead><tr><th>When</th><th>Lesson</th><th>Mode</th><th>Speed</th><th>Accuracy</th><th>Result</th></tr></thead>
+          <tbody>
+            {sessions.slice(0, 8).map(t => (
+              <tr key={t.id}>
+                <td>{fmtWhen(t.created_at)}</td>
+                <td>{LESSON[t.lesson_id]?.title ?? t.lesson_id}</td>
+                <td>{t.mode === "pro" ? "Pro" : "Kids"}{t.input === "touch" ? " · tapped" : ""}</td>
+                <td>{t.wpm} wpm</td>
+                <td>{t.accuracy}%</td>
+                <td>{t.passed ? "✓ Passed" : "Try again"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
 
 const PATHS = Object.values(JOURNEYS);
 
@@ -77,6 +118,11 @@ export default function Reports() {
                 </div>
               );
             })}
+          </section>
+
+          <section className="pc-card">
+            <h2>Typing</h2>
+            <TypingReport sessions={d.typing ?? []} />
           </section>
 
           <section className="pc-card">
