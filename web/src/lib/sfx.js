@@ -38,5 +38,6 @@ export const sfx = {
   ding: () => play(() => { tone(880, 0, 0.18); tone(1320, 0.09, 0.25); }),
   bump: () => play(() => tone(200, 0, 0.07, { type: "triangle", vol: 0.05 })),
   oops: () => play(() => tone(220, 0, 0.25, { type: "triangle", vol: 0.07, slideTo: 150 })),
+  bell: () => play(() => { tone(659, 0, 0.5, { type: "triangle", vol: 0.1 }); tone(523, 0.42, 0.8, { type: "triangle", vol: 0.1 }); }),
   tada: () => play(() => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.3, { vol: 0.07 }))),
 };

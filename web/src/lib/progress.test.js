@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { SEED } from "../content/index.js";
 import { PUZZLES } from "../content/subjects.js";
-import { CIRCUIT_JOURNEY } from "../content/circuits.js";
+import { CIRCUIT_PATH } from "../content/circuits.js";
 import { moduleStats, moduleItems, starCount, badgeState, nextSuggestion } from "./progress.js";
 import { run, flatten } from "./coding.js";
 import { createDemoApi } from "./demoApi.js";
@@ -24,7 +24,7 @@ describe("progress", () => {
     const child = { ...empty, progress: [{ item_id: "el-battery", module_id: "electricity" }] };
     const st = moduleStats(elec, SEED.cards, child);
     expect(st.done).toBe(1);
-    expect(st.total).toBe(SEED.cards.filter(c => c.module_id === "electricity").length + CIRCUIT_JOURNEY.length);
+    expect(st.total).toBe(SEED.cards.filter(c => c.module_id === "electricity").length + CIRCUIT_PATH.length);
   });
   it("counts coding puzzles as items", () => {
     const coding = SEED.modules.find(m => m.id === "coding");

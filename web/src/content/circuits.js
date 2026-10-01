@@ -64,3 +64,13 @@ export const CIRCUIT_JOURNEY = [
     learned: "You can design your own circuits and gate machines.",
     parent: "Challenge your child to rebuild a real device: a doorbell, a staircase light or a seatbelt alarm." },
 ];
+
+// Volt's doorbell: a conversation before step 1, and the mission at the end of Part A.
+export const BELL_TALK = { id: "circuit-talk-bell", ...A, talk: true, emoji: "💬", title: "How does a doorbell ring?", blurb: "Volt asks you some questions.",
+  learned: "Pressing a doorbell closes a gap in a loop, so electricity flows from the battery through the bell and back. A spring opens the gap again when you let go.",
+  parent: "Ring your doorbell together and ask: how did the bell know? Let your child guess before you explain. Remind them never to open wiring connected to the wall." };
+export const BELL_MISSION = { id: "circuit-mission-bell", ...A, mission: true, emoji: "🎯", title: "Mission: build a doorbell", blurb: "Pick parts, wire, test and fix.",
+  learned: "A doorbell is a loop: battery, push button, wires and a buzzer. A broken wire, a plastic piece or a flat battery stops it. Two buttons side by side let either door ring the bell (OR).",
+  parent: "Ask your child to draw your doorbell's loop on paper. Then ask: if it stopped working, what would you check first?" };
+const at5 = CIRCUIT_JOURNEY.findIndex(s => s.id === "circuit-step-5") + 1;
+export const CIRCUIT_PATH = [BELL_TALK, ...CIRCUIT_JOURNEY.slice(0, at5), BELL_MISSION, ...CIRCUIT_JOURNEY.slice(at5)];

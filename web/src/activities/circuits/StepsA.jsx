@@ -215,7 +215,7 @@ export function BrighterDimmer({ onComplete }) {
       </div>
       {task >= TARGETS.length && (
         <Question q="At home, what works like this knob?" right="reg"
-          options={[{ value: "reg", label: "🌀 The fan regulator" }, { value: "tap", label: "🚰 The doorbell" }, { value: "tv", label: "📺 The TV screen" }]}
+          options={[{ value: "reg", label: "🌀 The fan regulator" }, { value: "tap", label: "🔔 The doorbell" }, { value: "tv", label: "📺 The TV screen" }]}
           rightMsg="Yes! The fan regulator lets more or less electricity through to change the speed." onRight={onComplete} />
       )}
     </div>

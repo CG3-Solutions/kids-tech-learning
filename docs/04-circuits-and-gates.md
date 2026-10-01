@@ -1,6 +1,6 @@
 # Circuits & Gates: Course Guide for Parents
 
-Volt the battery guides your child from a simple loop to the gates inside a computer. The course has **15 steps in three parts**, plus a **Free workshop** for building anything.
+Volt the battery guides your child from a simple loop to the gates inside a computer. The course has **15 steps in three parts**, plus a **Free workshop** for building anything. It is built around one big question a child asks: **"When I press the doorbell, how does it ring?"** It opens with a conversation about it, and Part A ends with a mission: build a doorbell.
 
 ## How the course is organized
 | Part | For | What it covers |
@@ -27,6 +27,14 @@ _Everyone, from 2nd standard. Loops, switches, conductors and parts._
 | 3. 🥄 **Will it light?** | Test spoons, coins, paper… | Metals let electricity through (conductors). Plastic, rubber, paper and wood stop it (insulators). | Look at a charger cable: metal inside to carry electricity, plastic outside to keep hands safe. |
 | 4. 🔁 **Swap the part** | Bulb, motor, buzzer, LED. | The same loop can power light, movement or sound. An LED only works one way round. | Find a motor (fan), a buzzer (microwave beep) and an LED (TV standby light) at home. |
 | 5. 🎚️ **Brighter or dimmer** | More batteries, or a knob. | More batteries push more electricity. A resistor knob holds some back, like a fan regulator. | Turn the fan regulator step by step together and watch the speed change. |
+
+### Volt's mission: build a doorbell
+| Step | What your child does | What they learn | Talk about it at home |
+|---|---|---|---|
+| 💬 **How does a doorbell ring?** (first step) | A conversation with Volt: did the bell hear the knock? How does the press get from the door to the bell? Why doesn't it ring all the time, and why does it stop when you let go? Every answer gets a reply; a wrong guess is a good thought, gently corrected. Includes a safety rule: we build only with batteries, and only an electrician opens wall wiring. | A doorbell is a loop. The button closes a gap while it's pressed, and a spring opens it again. | Ring your doorbell together and ask: how did the bell know? |
+| 🎯 **Mission: build a doorbell** (after step 5) | 1. **Parts**: picks the four parts a doorbell needs (battery, push button, buzzer, metal wires); a light switch, bulb, motor or plastic ruler each get a reason why not. 2. **Wire**: taps the dotted lines to complete the loop. 3. **Test**: presses and holds the doorbell (ding-dong!) and explains why it stops on letting go. 4. **Fix**: finds the fault in three broken doorbells (a broken wire, a plastic piece, a flat battery). 5. **Two doors**: wires a front and a back door; buttons in a row need both pressed, side by side either one rings (OR). 6. **Check**: one last question. | Loops, switches, conductors and insulators, used together to build something real. A first taste of OR before Part B. Earns the 🔔 **Doorbell builder** badge. | Ask your child to draw your doorbell's loop on paper. If it stopped working, what would they check first? |
+
+From **Class 8** (and for grown-ups) the mission adds 🔬 **Go deeper** notes: how a classic electric bell rings with an electromagnet (make-and-break), how a multimeter finds faults, series and parallel wiring, and how real doorbells use a low-voltage transformer, radio or Wi-Fi. The script and parts are plain data in `content/circuitTalk.js`.
 
 ## Part B · Switches that think
 _After Part A · open from 4th standard. Wiring switches together makes decisions. These are logic gates. Younger children play the AND and OR puzzles._
