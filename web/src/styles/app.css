@@ -1275,5 +1275,10 @@ button.kb-key { cursor: pointer }
   .q-card { gap: 10px }
   .practice-top { gap: 4px }
   .hear-row .btn.small { padding: 3px 9px; font-size: .82rem }
+  /* Long questions and long answer labels (sentences, "Describing word (adjective)") */
+  .q-prompt.long { font-size: 1.12rem; line-height: 1.35 }
+  .choices.long { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100% }
+  .choices.long .choice { min-width: 0; font-size: .98rem; padding: 10px 8px; line-height: 1.25 }
+  .tile-btn { padding: 8px 12px; font-size: 1.1rem }
   .tabs a, .tabs button { padding: 6px 12px; font-size: .95rem }
 }

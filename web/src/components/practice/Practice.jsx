@@ -116,13 +116,13 @@ export default function Practice({ spec, grade, onComplete, Face }) {
       </div>
       <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"} say={bubbleSay}>{pretty(bubble)}</Guide>
       <div className="q-card" {...testHook(q, answerText)}>
-        <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}`}>
+        <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}${String(q.prompt).length > 40 ? " long" : ""}`}>
           {pretty(q.prompt)}
           <button className="btn ghost small hear" onClick={() => speak(q.say ?? q.prompt, { force: true })} aria-label="Read the question aloud">🔊</button>
         </div>
         <Visual v={q.visual} />
         {q.type === "choice" && (
-          <div className={`choices${q.big ? " letters" : ""}`}>
+          <div className={`choices${q.big ? " letters" : ""}${q.options.some(o => String(labelOf(o)).length > 18) ? " long" : ""}`}>
             {q.options.map(o => {
               const v = valueOf(o), isAns = String(v) === String(q.answer);
               return <button key={String(v)} className={`choice${locked && isAns ? " right" : ""}`} disabled={locked} onClick={() => check(v)}>{labelOf(o)}</button>;

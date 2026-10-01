@@ -6,6 +6,8 @@ Polly the Parrot guides three adventures: **Alphabets**, **Words** and **Sentenc
 - A wrong answer gets a hint first; after a second try the answer is shown and the child moves on.
 - Each step ends with a score (up to 3 stars for answers right first time).
 - **Younger children** unlock steps one at a time; **older children** can open later parts straight away (each part says from which class).
+- **Questions match the class.** Words and sentences come from three levels, like Chip's computer path: **Class 1–3**, **Class 4–7** and **Class 8–12**. Most questions are at the child's level, with about one in four from the level below for review. The word and sentence banks are in `web/src/content/practice/languageData.js`.
+- **Wrong choices are real mistakes** (one goose, two "gooses"; "becuase"; "Their going to school"), so a wrong answer shows what to practise. Every question has exactly one right answer.
 
 ## 🔠 Polly's alphabet adventure
 Meet every letter, its sound and its order.
@@ -92,3 +94,26 @@ _After Part B · open from 6th standard. Subject and predicate, active and passi
 | 8. 🎯 **Subject and predicate** | Who or what is it about? | Every sentence has a subject and a predicate. | In a news headline, find who it's about (subject) and what happened (predicate). |
 | 9. 🔄 **Active and passive** | Ravi wrote → was written by Ravi. | Passive voice: object + was/is/will be + past participle + by + doer. | Spot passive sentences in a science textbook: “Water is boiled…”. |
 | 10. 💬 **Reported speech** | Direct to indirect. | In reported speech, the tense usually goes back and pronouns change. | Retell what a friend said at school, starting with “She said that…”. |
+
+## What changes with the class
+| Step | Class 1–3 | Class 4–7 | Class 8–12 |
+|---|---|---|---|
+| Words in ABC order | By the first letter (ball, fish, kite) | Same first letter: look at the second (bat, bed, bin) | Look further (plan, plane, plant) |
+| Picture words / Build the word | cat, bus, gem | rabbit, candle, turtle | telescope, pineapple, hourglass |
+| Rhyming words | cat–hat, moon–spoon | Rhymes spelled differently: four–floor, said–bread | (Class 4–7 words) |
+| Opposites | hot–cold, near–far | borrow–lend, arrive–depart | scarce–plentiful, ascend–descend |
+| One or many | cat–cats, box–boxes | baby–babies, leaf–leaves, child–children | crisis–crises, bacterium–bacteria, sister-in-law–sisters-in-law |
+| Spell it right | said, they, because | Wednesday, separate, neighbour | accommodate, rhythm, questionnaire |
+| Kinds of words | noun, verb, adjective (one word) | + adverb, in a sentence | + pronoun and preposition; the same word in different jobs ("water the plants" / "drink water") |
+| Same meaning | big–large, end–finish | huge–enormous, fix–repair | abundant–plentiful, conceal–hide |
+| Prefixes and suffixes | — | un-, re-, -ful, -less, -er | mis-, over-, under-, pre-, inter-, ir-, il-, -able, -hood |
+| Sound-alike words | — | there/their/they're, to/too/two, tale/tail | principal/principle, stationary/stationery, weather/whether |
+| Build a sentence | 4–6 words | 7–10 words | Longer sentences with although, if, which… |
+| Capital and full stop | Capital at the start, full stop at the end | Names of people, places, days and months | Historical names and dates |
+| Fill the gap | Everyday words | Pilot, telescope, tadpole | Verdict, erupt, circumference |
+| Joining words | and, but, because, so, or | (same) | although, unless, until, while |
+| Yesterday, today, tomorrow | Past, present, future | have finished, was watching, had left | If I had studied…, I wish I knew, will have been playing |
+| Punctuation | Commas in lists, ? and ! | Speech marks, apostrophes (Riya's) | children's / girls', commas around extra information |
+| Subject and predicate | Find the subject | (same) | Also find the predicate |
+| Active and passive / Reported speech | — | Simple past, present and future | Continuous, perfect and questions; "The earth goes round the sun" stays in the present |
+
