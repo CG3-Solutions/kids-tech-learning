@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { passGate } from "../components/ParentGate.jsx";
 import TopBar from "../components/TopBar.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { setIntent } from "./Profiles.jsx";
@@ -6,7 +8,17 @@ import { setIntent } from "./Profiles.jsx";
 const TILES = [["🔋", "var(--lv1)"], ["💡", "var(--lv1)"], ["⚙️", "var(--lv2)"], ["🧠", "var(--lv4)"], ["🔢", "var(--lv2)"], ["🤖", "var(--lv3)"], ["🔌", "var(--lv0)"], ["🖥️", "var(--lv4)"], ["⭐", "var(--lv3)"]];
 
 export default function Landing() {
-  const { user, published } = useApp();
+  const { api, user, published } = useApp();
+  const nav = useNavigate();
+  // Just came back from an email link or Google: it's the parent, so open the Parent dashboard.
+  useEffect(() => {
+    if (!api?.freshSignIn || !user) return;
+    api.freshSignIn = false;
+    passGate();
+    let typing = false;
+    try { typing = localStorage.getItem("sparklab.intent") === "typing"; } catch { /* private mode */ }
+    nav(typing ? "/profiles" : "/parent", { replace: true });
+  }, [api, user, nav]);
   return (
     <>
       <TopBar variant="public">
@@ -30,7 +42,7 @@ export default function Landing() {
                 <a className="btn big ghost" href="#subjects">See the subjects</a>
               </div>
             )}
-            <p className="muted small-note">{user ? "Kids' mode is for children. The Parent dashboard (settings, reports, screen time) asks a grown-up question first." : "Only grown-ups have accounts. After signing in, open Kids' mode on this device for your children: no email or password for them."}</p>
+            <p className="muted small-note">{user ? "Kids' mode is for children. The Parent dashboard (settings, reports, screen time) asks for the parent password first." : "Only grown-ups have accounts. After signing in, open Kids' mode on this device for your children: no email or password for them."}</p>
           </div>
           <div className="hero-board" aria-hidden="true">{TILES.map(([e, c], i) => <div key={i} style={{ "--c": c }}>{e}</div>)}</div>
         </section>

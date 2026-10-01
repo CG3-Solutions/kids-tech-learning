@@ -18,7 +18,7 @@ export default function Overview() {
     <ParentLayout title={`Hello${profile?.display_name ? `, ${profile.display_name}` : ""}`}>
       {children.length > 0 && (
         <div className="kids-mode-card">
-          <div><b>🧒 Handing the device to your child?</b><p className="muted">Kids' mode shows only lessons and games. Getting back here needs a grown-up question.</p></div>
+          <div><b>🧒 Handing the device to your child?</b><p className="muted">Kids' mode shows only lessons and games. Getting back here needs your parent password.</p></div>
           <button className="btn primary" onClick={() => { lockGate(); nav("/profiles"); }}>Start kids' mode</button>
         </div>
       )}

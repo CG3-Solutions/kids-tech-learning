@@ -33,6 +33,9 @@ export function createDemoApi(storage = local) {
       save(); emit(); return db.user;
     },
     async signOut() { db.user = null; save(); emit(); },
+    // Demo mode has no real account: the parent password is "demo" until changed in Settings → Account.
+    async verifyPassword(password) { need(); return password === (db.profile?.demo_password ?? "demo"); },
+    async setPassword(password) { need(); db.profile = { ...db.profile, demo_password: password }; save(); },
 
     async getProfile() { need(); return db.profile; },
     async updateProfile(patch) { need(); db.profile = { ...db.profile, ...pick(patch, ["display_name", "notify_milestones", "notify_daily", "is_teacher"]) }; save(); return db.profile; },

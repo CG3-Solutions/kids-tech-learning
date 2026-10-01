@@ -16,7 +16,7 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 ### Features
 - **Accounts and two modes:** only grown-ups have accounts (email + password, sign-in link, optional Google). Children are profiles with a first name and an animal avatar, never an email.
   - **👪 Parent dashboard:** where a grown-up lands after signing in. It holds learners, progress reports, **⚙️ Settings** (screen time, email notifications, voice & sound, account), teaching guides and classes.
-  - **🧒 Kids' mode:** started from the dashboard with **Start kids' mode**. It shows only the "Who's learning today?" picker, lessons and games. Getting back to the dashboard needs a grown-up question, even if the address is typed in.
+  - **🧒 Kids' mode:** started from the dashboard with **Start kids' mode**. It shows only the "Who's learning today?" picker, lessons and games. Getting back to the dashboard needs the **parent password** (the account's sign-in password), even if the address is typed in. After 5 wrong tries it pauses for 30 seconds. Accounts made with Google or an email link can use **Email me a sign-in link**, or set a password in Settings → Account.
 - **Kids:** subject cards with **Read to me**, a treasure hunt, robot puzzles, quizzes, stars and badges.
 - **Adventures** (step-by-step, with a story character, sounds and a map):
   - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
@@ -28,7 +28,7 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
   - The Language and Maths steps use one shared practice engine. It supports picture choices, a number pad, word and letter tiles, and learning cards, with visuals such as counting grids, place-value blocks, fractions and shapes. Questions are generated fresh each time.
   - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
 - **Kid navigation:** four areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech · ⌨️ Typing), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch learner · Parent dashboard & settings · Sign out.
-- **Parent console** (behind a maths-question gate): Overview · Children · Progress reports (7-day learning time, subjects, adventures, typing speed and weak keys, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
+- **Parent dashboard** (behind the parent password): Overview · Learners · Progress reports (7-day learning time, subjects, adventures, typing speed and weak keys, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
 - **Screen time:** a daily limit per child, counting active time only, with a 5-minute warning, a "Time's up" screen, and "+15 minutes" for grown-ups.
 - **Voices:** four kid-friendly voices (Bright girl, Cheerful boy, Friendly robot, Calm teacher), chosen by default from the child's gender and changeable per child, with a preview button.
 - **Email:** milestone emails (badges, finished subjects) and an 8 pm daily summary, sent by a Supabase Edge Function through Resend.

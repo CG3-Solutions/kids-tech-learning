@@ -7,6 +7,9 @@ const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit
 const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, k === "name" && typeof obj[k] === "string" ? obj[k].trim() : obj[k]]));
 
 export function createSupabaseApi(url, anonKey, { google = false } = {}) {
+  // Coming back from an email link or Google sign-in (the URL carries a one-time code): that's the
+  // parent proving who they are, so the app can open the Parent dashboard without asking again.
+  const freshSignIn = typeof window !== "undefined" && /[?&]code=/.test(window.location.search);
   const sb = createClient(url, anonKey, {
     auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
   });
@@ -15,6 +18,7 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
 
   return {
     mode: "supabase",
+    freshSignIn,
     features: { google, passwords: true },
 
     async getUser() { const { data } = await sb.auth.getSession(); return data.session?.user ?? null; },
@@ -27,6 +31,18 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
     async sendLink(email) { ok(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo(), shouldCreateUser: true } })); },
     async signInGoogle() { ok(await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } })); },
     async signOut() { await sb.auth.signOut(); },
+    // The Parent dashboard check: is this the account's password? (Supabase limits how often this can be tried.)
+    async verifyPassword(password) {
+      const user = await this.getUser();
+      if (!user?.email) return false;
+      const { error } = await sb.auth.signInWithPassword({ email: user.email, password });
+      if (!error) return true;
+      if (/invalid login credentials/i.test(error.message)) return false;
+      if (/rate limit|too many/i.test(error.message)) throw new Error("Too many tries. Wait a few minutes and try again.");
+      throw new Error(error.message);
+    },
+    // Set or change the account password (for accounts made with Google or an email link, too).
+    async setPassword(password) { ok(await sb.auth.updateUser({ password })); },
 
     async getProfile() {
       const user = await this.getUser();
