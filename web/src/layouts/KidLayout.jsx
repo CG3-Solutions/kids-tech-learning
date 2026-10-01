@@ -41,7 +41,7 @@ function AccountMenu() {
       {open && (
         <div className="acct-menu" role="menu">
           <Link role="menuitem" to="/profiles" onClick={() => setOpen(false)}>🔁 Switch learner</Link>
-          <button role="menuitem" onClick={() => needGate("parent")}>👪 Grown-ups area</button>
+          <button role="menuitem" onClick={() => needGate("parent")}>👪 Parent dashboard &amp; settings</button>
           <button role="menuitem" onClick={() => needGate("signout")}>🚪 Sign out</button>
         </div>
       )}

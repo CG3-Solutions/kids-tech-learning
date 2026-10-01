@@ -121,8 +121,8 @@ button { cursor: pointer }
 .kid .face { width: 120px; height: 120px; border-radius: 30px; display: grid; place-items: center; font-size: 3.8rem; background: var(--surface); border: 3px solid var(--line); transition: transform .15s, border-color .15s }
 .kid:hover .face { transform: translateY(-4px); border-color: var(--spark) }
 .kid.add .face { border-style: dashed; color: var(--muted); font-size: 2.6rem }
-.avatars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px }
-.avatars button { font-size: 1.8rem; border: 2px solid var(--line); background: var(--surface-2); border-radius: 12px; aspect-ratio: 1 }
+.avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px }
+.avatars button { min-width: 0; padding: 0; font-size: clamp(1.4rem, 6vw, 1.8rem); border: 2px solid var(--line); background: var(--surface-2); border-radius: 12px; aspect-ratio: 1 }
 .avatars button[aria-pressed="true"] { border-color: var(--spark); background: color-mix(in srgb, var(--spark) 22%, var(--surface)) }
 
 /* Kid home */
@@ -648,7 +648,8 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 .seg-field legend { font-weight: 700; font-size: .95rem; margin-bottom: 6px }
 .seg { display: flex; flex-wrap: wrap; gap: 6px }
 .seg label, .seg a, .seg > button { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none }
-.seg label input { position: absolute; opacity: 0; pointer-events: none }
+.seg label { position: relative }
+.seg label input { position: absolute; inset: 0; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none }
 .seg > button { color: var(--ink) }
 .seg .on { border-color: var(--ink); background: color-mix(in srgb, var(--spark) 22%, var(--surface)) }
 .seg label:focus-within { outline: 3px solid var(--wire); outline-offset: 2px }
@@ -1054,3 +1055,19 @@ button.kb-key { cursor: pointer }
 .check-row input { width: 20px; height: 20px; margin-top: 3px; flex: none }
 .kid .tag { display: block; margin: 4px auto 0; width: max-content }
 .trend .chart-tip { top: 30px }
+
+/* Parent mode vs kids' mode */
+.mode-chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-display); font-weight: 700; border-radius: 99px; padding: 6px 16px; font-size: 1rem }
+.mode-chip.kids { background: color-mix(in srgb, var(--spark) 30%, var(--surface)); color: var(--ink); border: 2px solid var(--spark) }
+.linklike { border: 0; background: none; padding: 0; font-weight: 700; color: var(--ink); text-decoration: underline; cursor: pointer }
+.kid.grown .face { background: color-mix(in srgb, var(--lv4) 12%, var(--surface)) }
+.kids-mode-card { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; background: color-mix(in srgb, var(--spark) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--spark) 45%, var(--line)); border-radius: 16px; padding: 14px 18px }
+.pc-nav-group { display: grid; gap: 2px; margin-bottom: 10px }
+.pc-nav-h { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px 2px }
+@media (max-width: 900px) {
+  .pc-nav-group { display: contents }
+  .pc-nav-h { display: none }
+}
+@media (max-width: 520px) { .hide-sm { display: none } }
+
+.pc-card { min-width: 0 }

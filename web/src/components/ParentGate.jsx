@@ -13,7 +13,7 @@ export default function ParentGate({ onPass, onCancel, title = "Ask a grown-up t
   };
   return (
     <form className="auth" onSubmit={submit}>
-      <div className="eyebrow">Grown-ups only</div>
+      <div className="eyebrow">👪 Parent dashboard · grown-ups only</div>
       <h1 style={{ fontSize: "1.8rem" }}>{title}</h1>
       <div className="field">
         <label htmlFor="gate">What is {a} × {b}?</label>
@@ -25,6 +25,9 @@ export default function ParentGate({ onPass, onCancel, title = "Ask a grown-up t
   );
 }
 
-// Grown-ups on their own profile skip the check: mark it passed for this browser session.
+// Parent mode vs kids' mode on a shared device:
+// - signing in, or a grown-up's own profile, opens parent mode (passGate);
+// - "Start kids' mode" locks it again (lockGate), so children need the grown-up check to get back.
 export const passGate = () => { try { sessionStorage.setItem("sparklab.gate", "1"); } catch { /* private mode */ } };
+export const lockGate = () => { try { sessionStorage.removeItem("sparklab.gate"); } catch { /* private mode */ } };
 export const gatePassed = () => { try { return sessionStorage.getItem("sparklab.gate") === "1"; } catch { return false; } };

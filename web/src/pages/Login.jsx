@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { passGate } from "../components/ParentGate.jsx";
 import TopBar from "../components/TopBar.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 
@@ -11,11 +12,22 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
 
-  useEffect(() => { if (user) nav("/profiles", { replace: true }); }, [user, nav]);
+  // Signing in on this page proves you're the grown-up: open the parent dashboard (or a grown-up's
+  // typing profile). Anyone who reaches this page already signed in (say, a child) goes to kids' mode.
+  const signedInHere = useRef(false);
+  useEffect(() => {
+    if (!user) return;
+    if (!signedInHere.current) { nav("/profiles", { replace: true }); return; }
+    passGate();
+    let typing = false;
+    try { typing = localStorage.getItem("sparklab.intent") === "typing"; } catch { /* private mode */ }
+    nav(typing ? "/profiles" : "/parent", { replace: true });
+  }, [user, nav]);
   if (!api) return null;
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const act = async fn => {
+    signedInHere.current = true;
     setBusy(true); setMsg(null);
     try { await fn(); } catch (e) { setMsg({ error: true, text: e.message }); } finally { setBusy(false); }
   };
@@ -26,7 +38,7 @@ export default function Login() {
         <TopBar variant="public" />
         <main className="wrap">
           <div className="auth">
-            <div className="eyebrow">Demo mode</div>
+            <div className="eyebrow">👪 Demo · parent sign-in</div>
             <h1 style={{ fontSize: "1.8rem" }}>Try Spark Lab</h1>
             <p className="muted">Accounts aren't connected yet, so everything is saved in this browser. You can add children, track progress and try the content editor.</p>
             <button className="btn primary big" onClick={() => act(() => api.signInDemo())}>Start the demo</button>
@@ -50,7 +62,7 @@ export default function Login() {
       <TopBar variant="public" />
       <main className="wrap">
         <form className="auth" onSubmit={submit}>
-          <div className="eyebrow">For parents</div>
+          <div className="eyebrow">👪 Parents and teachers</div>
           <h1 style={{ fontSize: "1.8rem" }}>{mode === "signin" ? "Welcome back" : "Create your parent account"}</h1>
           {api.features.google && (
             <>
