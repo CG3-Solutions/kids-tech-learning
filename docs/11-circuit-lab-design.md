@@ -137,7 +137,29 @@ It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/c
 - **Saving:** each child's board and switch settings save automatically on this device.
 - **Examples:** *Light it up*, *Musical doorbell* and *Fan and light together*.
 
-## The child's experience in projects (release 4)
+## Projects (release 4, built: units 1–3)
+
+The Circuit Lab tab now opens on **🧩 Projects** (with **🛠️ Free build** beside it). Units 1–3 (24 projects) are open; units 4–11 show as coming soon until their layouts are ready.
+
+How a project goes:
+1. **The big question and the goal.** The child chooses how to build:
+   - **🧭 Guided:** a faint copy of the next part shows where it goes, and the hint says what it is ("Next: a 100 Ω resistor, from C1 to E1").
+   - **🏆 Challenge:** no ghost, just "🎯 What it must do".
+   - **Fix-it** projects skip this and open the broken circuit.
+2. **Gather the parts:** the project's parts mixed with two that it doesn't need. A wrong pick says what that part does and that this project doesn't need it. Connectors are always in the tray.
+3. **Build:** the tray holds only the gathered parts, in the project's numbers.
+4. **Predict:** the project's question, answered before the first test, with the reason.
+5. **Test:** every check runs on the child's own circuit (`lib/circuit/marking.js`).
+   - The child's parts are matched to the project's parts of the same type in every possible way, and the best match is kept. So a different layout, or different labels, still passes.
+   - Failures are explained in plain words with the child's own labels, plus a tip: missing parts, a short circuit, an unprotected LED, a motor the wrong way round, or a gap in the loop.
+6. **It works!** The explanation, "In the world", "Try this" (and "Go deeper" where there is one), the concepts learned, and a ⭐. **Next project** opens the next one.
+
+More details:
+- **Saving and badges:** each project's board saves on its own, and ↺ Start again resets it (a fix-it project goes back to its broken start). Finishing every project in a unit earns its badge: 🔋 Loop maker, 🛤️ Series and parallel pro, 🔴 LED expert.
+- **Layouts** for guided mode are in `content/lab/layouts.js`. Tests build each one on the board and prove it passes its project's checks with exactly the project's parts. They also prove every fix-it start board fails.
+- **Turning a part** now spins it around its middle, so turning twice swaps its ends in place (how a child turns a real part round).
+
+## The child's experience in projects (design)
 
 - **A board with posts in a grid.**
   - Parts snap between posts. Connector strips come in lengths 1–6. Parts can stack in layers, like real kits.
@@ -179,7 +201,7 @@ It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/c
 | 1 | Study map + project specs (done) | Study map, baseline design, kit, notation, 100 projects as data, tests, these documents |
 | 2 | Simulation engine (done) | Solver, part models, chip behaviours, sound; all 100 reference circuits pass their checks |
 | 3 | Board + free build (done) | Grid, snapping, layers, tray, undo, zoom, autosave, live current and outputs |
-| 4 | Project player + units 1–3 | Guided/Challenge modes, behaviour marking, predict and explain, badges (24 projects) |
+| 4 | Project player + units 1–3 (done) | Guided/Challenge modes, behaviour marking, predict and explain, badges (24 projects) |
 | 5 | Units 5–6 | Motion and sound (20 projects) |
 | 6 | Units 4 and 7 | Conductors and sensors, clap button and optional microphone (22 projects) |
 | 7 | Units 8–10 | Logic, alarms and games (26 projects) |

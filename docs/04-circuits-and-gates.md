@@ -75,5 +75,13 @@ The **Circuit Lab** tab is a board where your child builds real circuits from a 
 - **What they see:** current flows along the wires, bulbs glow, fans spin and chips play tunes and sirens. A short circuit is caught with a warning, safely.
 - **Help:** "Describe my circuit" explains what's connected, and the 🔬 meter shows the current and voltage.
 
-Try the examples together, then ask your child to change one thing and predict what will happen before switching on. Guided projects (100 of them) come next, in the same lab.
+**Projects:** units 1–3 are open: power and loops, series and parallel, LEDs and resistors (24 projects).
+- **How each project goes:** it starts with a question, then your child gathers the right parts (wrong ones are explained), builds, predicts and tests.
+- **Ways to build:**
+  - **Guided** mode shows a faint copy of the next part to place.
+  - **Challenge** mode only says what the circuit must do.
+  - **Fix-it** projects start broken.
+- **The test:** it runs on your child's own circuit, so any build that really works passes, and anything wrong is explained in plain words. Each finished unit earns a badge.
+
+Try the examples together, then ask your child to change one thing and predict what will happen before switching on.
 

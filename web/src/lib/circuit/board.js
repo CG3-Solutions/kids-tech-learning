@@ -134,6 +134,29 @@ export function describe(parts, result) {
   return lines;
 }
 
+// Turn a part a quarter turn clockwise around its middle, so turning twice swaps its ends in
+// place (how a child turns a real part). Parts whose middle isn't on a post turn around pin 1.
+export function turned(part) {
+  const pins = Object.values(pinPosts(part));
+  const cx = pins.reduce((s, q) => s + q[0], 0) / pins.length, cy = pins.reduce((s, q) => s + q[1], 0) / pins.length;
+  const dir = ((part.dir ?? 0) + 1) % 4;
+  if (!Number.isInteger(cx) || !Number.isInteger(cy)) return { ...part, dir };
+  const [dx, dy] = [part.at[0] - cx, part.at[1] - cy];
+  return { ...part, dir, at: [cx - dy, cy + dx] };
+}
+
+// Is part `p` where the guide part `g` should go? Same type and the same posts for each pin
+// (two-pin parts that work either way round, and connectors, may face either way).
+const EITHER_WAY = new Set(["wire", "lamp", "resistor", "slide", "button", "speaker", "ldr", "touch", "probe", "piezo"]);
+export function samePlace(p, g) {
+  if (p.type !== g.type) return false;
+  const a = pinPosts(p), b = pinPosts(g);
+  const same = Object.keys(b).every(pin => key(a[pin]) === key(b[pin]));
+  if (same || !EITHER_WAY.has(g.type)) return same;
+  const [x, y] = Object.values(a).map(key).sort(), [u, w] = Object.values(b).map(key).sort();
+  return x === u && y === w;
+}
+
 // Build a board from [type, at, options] steps (examples and tests). Returns null if a step doesn't fit.
 export function buildBoard(steps) {
   const parts = [];

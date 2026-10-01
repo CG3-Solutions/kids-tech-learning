@@ -3,7 +3,7 @@ import { COLS, ROWS, pinPosts, coveredPosts, fits, makePart, endOptions, nextId,
 import { evaluate } from "./engine.js";
 import { KIT } from "../../content/lab/parts.js";
 import { EXAMPLES } from "../../content/lab/examples.js";
-import { buildBoard } from "./board.js";
+import { buildBoard, turned } from "./board.js";
 
 // Build a board step by step, like a child: makePart for each piece.
 function build(steps) {
@@ -139,5 +139,17 @@ describe("examples", () => {
     const r = evaluate(toCircuit(parts), inputs);
     for (const [id, v] of Object.entries(want)) expect(r.outputs[id], `${ex.id} ${id}`).toBe(v);
     expect(r.short).toBe(false);
+  });
+});
+
+describe("turning", () => {
+  it("turns around the middle, so two turns swap the ends in place", () => {
+    const lamp = { type: "lamp", at: [2, 0], dir: 0 };
+    expect(pinPosts(turned(lamp))).toEqual({ a: [3, -1], b: [3, 1] });
+    expect(pinPosts(turned(turned(lamp)))).toEqual({ a: [4, 0], b: [2, 0] });
+    const chip = { type: "melody", at: [1, 1], dir: 0 };
+    expect(Object.values(pinPosts(turned(turned(turned(turned(chip))))))).toEqual(Object.values(pinPosts(chip)));
+    const wire = { type: "wire", at: [0, 0], dir: 0, len: 3 }; // middle between posts: turns around its first end
+    expect(turned(wire).at).toEqual([0, 0]);
   });
 });
