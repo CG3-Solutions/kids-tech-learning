@@ -22,6 +22,7 @@ describe("natural voices in the app", () => {
   let nv, synth, heads;
   beforeEach(async () => {
     vi.resetModules();
+    try { localStorage.clear(); } catch { /* ignore */ }
     nv = await import("./neuralVoice.js");
     heads = {}; synth = vi.fn(async ({ voice, plan: p }) => ({ path: `${voice}/${await nv.sha256(nv.canonical(voice, p))}.mp3` }));
     globalThis.fetch = vi.fn(async url => ({ ok: !!heads[url] }));
@@ -35,11 +36,20 @@ describe("natural voices in the app", () => {
     expect(nv.hasPrivate("Apriya")).toBe(false);
     expect(nv.hasPrivate("A computer follows instructions.")).toBe(false); // one-letter names are ignored
   });
-  it("plays a recorded line from storage without asking the function", async () => {
-    const path = `teacher/${await nv.sha256(nv.canonical("teacher", plan))}.mp3`;
-    heads[`https://cdn/tts/${path}`] = true;
-    expect(await nv.neuralUrl("teacher", plan)).toBe(`https://cdn/tts/${path}`);
-    expect(synth).not.toHaveBeenCalled();
+  it("remembers recorded lines on this device, and never checks storage from the browser", async () => {
+    await nv.neuralUrl("teacher", plan);
+    expect(synth).toHaveBeenCalledTimes(1);
+    vi.resetModules(); // a new visit
+    const again = await import("./neuralVoice.js");
+    again.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
+    expect(await again.neuralUrl("teacher", plan)).toMatch(/^https:\/\/cdn\/tts\/teacher\//);
+    expect(synth).toHaveBeenCalledTimes(1);
+    expect(again.neuralConfirmed()).toBe(true);
+    expect(fetch).not.toHaveBeenCalled(); // no HEAD requests (they show as red 400s for new lines)
+  });
+  it("asks only once for a line that is already being made", async () => {
+    await Promise.all([nv.neuralUrl("robot", plan), nv.neuralUrl("robot", plan)]);
+    expect(synth).toHaveBeenCalledTimes(1);
   });
   it("asks the function to make a missing line, once", async () => {
     const url = await nv.neuralUrl("bright", plan);
@@ -71,17 +81,18 @@ describe("speaking with natural voices", () => {
     window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
     try { localStorage.clear(); } catch { /* ignore */ }
   });
-  // A recording that already exists in storage proves natural voices work.
+  // A line already recorded (known on this device) proves natural voices work.
   const confirm = async () => {
     const nv = await import("./neuralVoice.js");
-    const f = globalThis.fetch; globalThis.fetch = vi.fn(async () => ({ ok: true }));
-    await nv.neuralUrl("teacher", [[{ t: "Ready.", stress: false }]]);
-    globalThis.fetch = f;
+    const p = [[{ t: "Ready.", stress: false }]];
+    localStorage.setItem("sparklab.ttsKnown", JSON.stringify([`teacher/${await nv.sha256(nv.canonical("teacher", p))}.mp3`]));
+    await nv.neuralUrl("teacher", p);
   };
   const setup = async (synth) => {
     const nv = await import("./neuralVoice.js");
     globalThis.fetch = vi.fn(async () => ({ ok: true }));
-    nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth: synth ?? vi.fn() });
+    const makes = vi.fn(async ({ voice, plan: p }) => ({ path: `${voice}/${await nv.sha256(nv.canonical(voice, p))}.mp3` }));
+    nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth: synth ?? makes });
     nv.setPrivateNames(["Panvith"]);
     return import("./voice.js");
   };
@@ -125,7 +136,7 @@ describe("speaking with natural voices", () => {
     await confirm();
     globalThis.fetch = vi.fn(async () => ({ ok: false }));
     speakWith(VOICES[0], "Output comes out.");
-    await vi.waitFor(() => expect(spoken).toEqual(["Output comes out."]), { timeout: 5000, interval: 100 });
+    await vi.waitFor(() => expect(spoken).toEqual(["Output comes out."]), { timeout: 8000, interval: 200 });
   });
   it("the Slowly button and speed setting slow the recording down", async () => {
     const { speakWith, VOICES } = await setup();
@@ -133,6 +144,47 @@ describe("speaking with natural voices", () => {
     speakWith(VOICES[2], "Slow please.", { slow: true });
     await vi.waitFor(() => expect(played).toHaveLength(1));
     expect(played[0].rate).toBeCloseTo(0.8);
+  });
+});
+
+describe("previews, prefetching and missing files", () => {
+  let played, spoken, synth, nv, voice;
+  beforeEach(async () => {
+    vi.useFakeTimers(); vi.resetModules();
+    played = []; spoken = [];
+    try { localStorage.clear(); } catch { /* ignore */ }
+    globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
+    nv = await import("./neuralVoice.js");
+    synth = vi.fn(async ({ voice: v, plan: p }) => ({ path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }));
+    nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
+    voice = await import("./voice.js");
+  });
+  const audioThat = ok => { globalThis.Audio = class { constructor() { this.paused = true; } play() { played.push(this.src); if (ok) this.onplaying?.(); else setTimeout(() => this.onerror?.(), 0); return Promise.resolve(); } pause() { this.paused = true; } }; };
+  it("Preview waits for a new recording instead of falling back", async () => {
+    audioThat(true);
+    synth.mockImplementationOnce(async ({ voice: v, plan: p }) => { await new Promise(r => setTimeout(r, 6000)); return { path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }; });
+    voice.speakWith(voice.VOICES[0], "Hi! This is a preview.", { force: true, patient: true });
+    await vi.waitFor(() => expect(played).toHaveLength(1), { timeout: 10000, interval: 250 });
+    expect(played[0]).toMatch(/\/tts\/bright\//);
+    expect(spoken).toEqual([]);
+  }, 20000);
+  it("records a lesson's next lines in the background, one at a time", async () => {
+    audioThat(true);
+    await nv.neuralUrl("teacher", [[{ t: "Warm up.", stress: false }]]); // natural voices proven
+    synth.mockClear();
+    voice.prefetchSpeech(["Line one.", "Well done, Panvith!", "Line two."], voice.VOICES[2]);
+    nv.setPrivateNames(["Panvith"]);
+    await vi.waitFor(() => expect(synth).toHaveBeenCalledTimes(3));
+  });
+  it("a recording that has gone missing is forgotten and the device voice speaks", async () => {
+    audioThat(false);
+    await nv.neuralUrl("teacher", [[{ t: "Warm up.", stress: false }]]);
+    voice.speakWith(voice.VOICES[2], "Gone missing.");
+    await vi.waitFor(() => expect(spoken).toEqual(["Gone missing."]));
+    expect(played).toHaveLength(1);
+    const known = JSON.parse(localStorage.getItem("sparklab.ttsKnown"));
+    expect(known.some(k => played[0].endsWith(k))).toBe(false);
   });
 });
 

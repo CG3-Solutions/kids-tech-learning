@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
-import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice } from "../../lib/voice.js";
+import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, prefetchSpeech, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice } from "../../lib/voice.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { neuralAvailable, neuralEnabled, setNeuralEnabled, testNeural, neuralLastError, explain } from "../../lib/neuralVoice.js";
+
+// The preview line has no name in it, so it plays the real natural voice (names always use the device voice).
+const SAMPLE = "Hi! Today we'll learn about the CPU. It follows instructions EXACTLY. A mistake in a program is called a bug.";
 
 export default function VoiceSound() {
   const { api, children, loadAccount, setError } = useApp();
@@ -29,7 +32,15 @@ export default function VoiceSound() {
   }, []);
   const best = pickDeviceVoice(VOICES[2], voices);
   const goodDevice = best && scoreVoice(best, VOICES[2]) >= 50;
-  const choose = async (c, id) => { try { await api.updateChild(c.id, { voice: id }); await loadAccount(); } catch (e) { setError(e.message); } };
+  const choose = async (c, id) => {
+    try {
+      const v = VOICES.find(x => x.id === id);
+      prefetchSpeech([SAMPLE], v); // start recording the new voice's sample straight away
+      await api.updateChild(c.id, { voice: id });
+      await loadAccount();
+      speakWith(v, SAMPLE, { force: true, patient: true });
+    } catch (e) { setError(e.message); }
+  };
   return (
     <ParentLayout title="Voice & sound">
       <p className="lead">Choose how the guides (Chip, Bit, Volt, Polly, Ollie and Keyo) sound for each child. With natural voices on, lessons sound the same on every device; otherwise the voice comes from this device and can sound a little different on another phone or computer.</p>
@@ -45,7 +56,7 @@ export default function VoiceSound() {
                     <span className="em" aria-hidden="true">{v.emoji}</span><b>{v.name}</b>
                     <small>{defaultVoiceFor(c.gender) === v.id ? "Default" : " "}</small>
                   </button>
-                  <button className="btn ghost small" onClick={() => speakWith(v, `Hi ${c.name}! Today we'll learn about the CPU. It follows instructions EXACTLY. A mistake in a program is called a bug.`, { force: true })} aria-label={`Preview ${v.name}`}>▶ Preview</button>
+                  <button className="btn ghost small" onClick={() => speakWith(v, SAMPLE, { force: true, patient: true })} aria-label={`Preview ${v.name}`}>▶ Preview</button>
                 </div>
               ))}
             </div>

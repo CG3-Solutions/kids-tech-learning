@@ -3,7 +3,7 @@
 // so presets only nudge pitch, speak a little slower, and the best natural voice on the device is chosen.
 import { local } from "./storage.js";
 import { speechPlan } from "./speechPlan.js";
-import { neuralOn, hasPrivate, neuralUrl, neuralFailed, neuralConfirmed } from "./neuralVoice.js";
+import { neuralOn, hasPrivate, neuralUrl, neuralFailed, neuralConfirmed, forget } from "./neuralVoice.js";
 
 export const VOICES = [
   { id: "bright", name: "Bright girl", emoji: "👧", gender: "f", pitch: 1.12, rate: 0.92 },
@@ -83,7 +83,9 @@ try {
   window.addEventListener("pointerdown", unlock, true);
 } catch { /* ignore */ }
 
-const NEURAL_WAIT_MS = 2500; // longer than this to get a recording: use the device voice for this line
+// Longer than this to get a recording: use the device voice for this line (it keeps recording, for next time).
+// A parent's Preview waits longer, so it really plays the chosen voice.
+const NEURAL_WAIT_MS = 4000, PATIENT_WAIT_MS = 12000;
 
 export function hushVoice() {
   clearTimeout(timer); timer = null; run++;
@@ -114,15 +116,17 @@ function speakDevice(preset, raw, plan, slow, mine) {
 }
 
 // The natural voice: play the recorded line. Resolves true if it started playing.
-async function speakNeural(preset, raw, plan, slow, mine) {
+async function speakNeural(preset, raw, plan, slow, mine, wait = NEURAL_WAIT_MS) {
   const a = getAudio();
   if (!a) return false;
-  const url = await Promise.race([neuralUrl(preset.id, plan), new Promise((_, no) => setTimeout(() => no(new Error("slow")), NEURAL_WAIT_MS))]);
+  const url = await Promise.race([neuralUrl(preset.id, plan), new Promise((_, no) => setTimeout(() => no(new Error("slow")), wait))]);
   if (mine !== run) return true; // a newer line has started; nothing to do
   a.src = url;
   a.playbackRate = voiceSpeed().rate * (slow ? 0.8 : 1);
   a.onplaying = () => { if (mine === run) setSpeaking(raw); };
-  a.onended = a.onerror = () => { if (mine === run) setSpeaking(null); };
+  a.onended = () => { if (mine === run) setSpeaking(null); };
+  // The file is gone (e.g. storage was cleared): forget it, and say the line with the device voice.
+  a.onerror = () => { forget(url); if (mine === run) { setSpeaking(null); speakDevice(preset, raw, plan, slow, mine); } };
   await a.play();
   return true;
 }
@@ -130,7 +134,8 @@ async function speakNeural(preset, raw, plan, slow, mine) {
 // Reads `raw` in the preset's voice: the natural voice when it's on and the line has no names,
 // otherwise (or if that fails) the device voice.
 // opts.force: say it even if it was just said. opts.slow: extra slow ("Say it slowly").
-export function speakWith(preset, raw, { force = false, slow = false } = {}) {
+// opts.patient: wait longer for a new recording (the parent's Preview button).
+export function speakWith(preset, raw, { force = false, slow = false, patient = false } = {}) {
   try {
     const plan = speechPlan(raw);
     const ss = window.speechSynthesis;
@@ -150,18 +155,39 @@ export function speakWith(preset, raw, { force = false, slow = false } = {}) {
       if (!natural) { speakDevice(preset, raw, plan, slow, mine); return; }
       // Natural voices not proven yet in this session: speak now with the device voice, and get the
       // recording ready in the background (so the next time this line is natural).
-      if (!neuralConfirmed()) {
+      if (!neuralConfirmed() && !patient) {
         speakDevice(preset, raw, plan, slow, mine);
         neuralUrl(preset.id, plan).catch(e => { if (e?.status !== 422) neuralFailed(e); });
         return;
       }
-      speakNeural(preset, raw, plan, slow, mine).catch(e => {
+      speakNeural(preset, raw, plan, slow, mine, patient ? PATIENT_WAIT_MS : NEURAL_WAIT_MS).catch(e => {
         if (e?.message !== "slow" && e?.name !== "NotAllowedError" && e?.status !== 422) neuralFailed(e); // rest natural voices for a while
         if (mine === run) speakDevice(preset, raw, plan, slow, mine);
       });
     }, GAP_MS);
     return true;
   } catch { return false; }
+}
+
+// Records lines that are about to be needed (the next screens of a lesson), one at a time in the
+// background, so they play at once. Only when natural voices are on and have worked in this session.
+const queue = [];
+let fetching = false;
+export function prefetchSpeech(texts, preset = current) {
+  if (!neuralOn() || !neuralConfirmed()) return;
+  for (const raw of texts) {
+    if (!raw || hasPrivate(raw)) continue;
+    const plan = speechPlan(raw);
+    if (plan.length) queue.push([preset.id, plan]);
+  }
+  if (queue.length > 30) queue.splice(0, queue.length - 30);
+  const next = () => {
+    const job = queue.shift();
+    if (!job) { fetching = false; return; }
+    fetching = true;
+    neuralUrl(...job).catch(e => { if (e?.status !== 422) neuralFailed(e); queue.length = 0; }).finally(next);
+  };
+  if (!fetching) next();
 }
 
 // Stop talking when the app goes to the background.
