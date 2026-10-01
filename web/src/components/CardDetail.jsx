@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Symbol from "./Symbol.jsx";
 import { speak, hush } from "../lib/speech.js";
 
-export default function CardDetail({ card, levelName, color, learned, onLearned, onClose, prev, next, onGo }) {
+// `glossary`: a reference card with no "I learned this" star (the subject's path gives the stars).
+export default function CardDetail({ card, levelName, color, learned, onLearned, onClose, prev, next, onGo, glossary = false }) {
   const d = card.data;
   const [showAnswer, setShowAnswer] = useState(false);
   const closeRef = useRef(null);
@@ -18,7 +19,7 @@ export default function CardDetail({ card, levelName, color, learned, onLearned,
     return () => { document.removeEventListener("keydown", onKey); hush(); };
   }, [next, prev, onClose, onGo]);
 
-  const reveal = () => { setShowAnswer(true); speak(d.a); if (!learned) onLearned(); };
+  const reveal = () => { setShowAnswer(true); speak(d.a); if (!learned && !glossary) onLearned(); };
 
   return (
     <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -49,7 +50,7 @@ export default function CardDetail({ card, levelName, color, learned, onLearned,
         </div>
         <div className="card-ft">
           {prev ? <button className="btn ghost" onClick={() => onGo(prev.id)}>← {prev.data.n}</button> : <span />}
-          {learned ? <span className="learned">★ Learned</span>
+          {glossary ? <span className="muted">📚 Glossary</span> : learned ? <span className="learned">★ Learned</span>
             : <button className="btn primary" onClick={onLearned}>I learned this! ★</button>}
           {next ? <button className="btn ghost" onClick={() => onGo(next.id)}>{next.data.n} →</button> : <span />}
         </div>

@@ -8,7 +8,7 @@ import {
 export const SEED = {
   modules: [
     { id: "electricity", area: "science", title: "Electricity & Parts", tagline: "Circuits, parts and logic gates", emoji: "⚡", color: "lv1", activity: "circuit", sort: 0, published: true, levels: ELECTRICITY_LEVELS },
-    { id: "computer", area: "science", title: "Inside a Computer", tagline: "Input, brain, memory and output", emoji: "💻", color: "lv4", activity: null, sort: 1, published: true, levels: COMPUTER_LEVELS },
+    { id: "computer", area: "science", title: "Inside a Computer", tagline: "How computers work, step by step", emoji: "💻", color: "lv4", activity: "computer", sort: 1, published: true, levels: COMPUTER_LEVELS },
     { id: "binary", area: "science", title: "Binary Magic", tagline: "Count like a computer with 1s and 0s", emoji: "🔢", color: "lv2", activity: "binary", sort: 2, published: true, levels: BINARY_LEVELS },
     { id: "coding", area: "science", title: "Coding Puzzles", tagline: "Guide the robot with instructions", emoji: "🤖", color: "lv3", activity: "coding", sort: 3, published: true, levels: CODING_LEVELS },
     { id: "alphabets", area: "language", title: "Alphabets", tagline: "A to Z with sounds", emoji: "🔠", color: "lv3", activity: "alphabets", sort: 10, published: true, levels: [] },
@@ -35,7 +35,11 @@ export const ACTIVITIES = {
   numbers: { title: "Ollie's adventure", emoji: "🐙" },
   mathematics: { title: "Ollie's adventure", emoji: "🐙" },
   typing: { title: "Typing course", emoji: "⌨️" },
+  computer: { title: "Chip's path", emoji: "💻" },
 };
+
+// Subjects whose cards are a read-only glossary (no stars): their learning happens on the path.
+export const GLOSSARY_MODULES = new Set(["computer"]);
 
 // Extra activities shown on some modules alongside their main one.
 export const EXTRA_ACTIVITIES = { electricity: ["hunt", "machines"] };

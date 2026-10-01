@@ -13,6 +13,7 @@ export const GUIDES = [
   { slug: "language", file: "06-language-course.md", title: "Language course (Polly)" },
   { slug: "maths", file: "07-maths-course.md", title: "Maths course (Ollie)" },
   { slug: "typing", file: "08-typing-course.md", title: "Typing course (Keyo)" },
+  { slug: "computer", file: "09-computer-course.md", title: "Inside a Computer (Chip)" },
 ];
 
 export default function Guides() {
