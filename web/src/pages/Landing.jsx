@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import { useApp } from "../lib/AppContext.jsx";
+import { setIntent } from "./Profiles.jsx";
 
 const TILES = [["🔋", "var(--lv1)"], ["💡", "var(--lv1)"], ["⚙️", "var(--lv2)"], ["🧠", "var(--lv4)"], ["🔢", "var(--lv2)"], ["🤖", "var(--lv3)"], ["🔌", "var(--lv0)"], ["🖥️", "var(--lv4)"], ["⭐", "var(--lv3)"]];
 
@@ -14,11 +15,12 @@ export default function Landing() {
       <main className="wrap stack">
         <section className="hero">
           <div className="stack" style={{ gap: 18 }}>
-            <div className="eyebrow">For curious kids aged 6–10</div>
+            <div className="eyebrow">For learners from 1st to 12th standard, and grown-ups learning to type</div>
             <h1>How do machines <em>really</em> work?</h1>
-            <p className="lead">Spark Lab teaches electricity, computers, binary and coding with picture cards, real-life examples from home, hands-on games and quizzes. Parents follow each child's progress.</p>
+            <p className="lead">Spark Lab teaches language, maths, electricity, computers, binary, coding and touch typing with story guides, hands-on games and quizzes. Parents follow each child's progress.</p>
             <div className="row">
               <Link className="btn primary big" to={user ? "/profiles" : "/login"}>{user ? "Start learning" : "Get started free"}</Link>
+              <Link className="btn big" to={user ? "/profiles" : "/login"} onClick={() => setIntent("typing")}>⌨️ Adults: learn to type</Link>
               <a className="btn big ghost" href="#subjects">See the subjects</a>
             </div>
           </div>

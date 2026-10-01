@@ -8,7 +8,10 @@ import { JOURNEYS } from "../../content/journeys.js";
 import { AREAS } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
-import { typingSummary, fmtMinutes } from "../../lib/typing.js";
+import { typingSummary, fmtMinutes, mergeKeys } from "../../lib/typing.js";
+import TrendChart from "../../activities/typing/TrendChart.jsx";
+import { HeatKeyboard } from "../../activities/typing/Keyboard.jsx";
+import { trendPoints } from "../../activities/typing/TypingProgress.jsx";
 import { sessionTitle } from "../../content/typing.js";
 const keyName = c => (c === ";" ? ";" : c.toUpperCase());
 
@@ -27,6 +30,12 @@ function TypingReport({ sessions }) {
         <p>Keys to practise: {sum.weak.map(w => <kbd key={w.key} className="kbd" title={`${Math.round(w.missRate * 100)}% missed`}>{keyName(w.key)}</kbd>)}
           <span className="muted"> (missed most often in the last 20 lessons)</span></p>
       )}
+      <div className="trend-grid">
+        <TrendChart title="Speed (words a minute)" points={trendPoints(sessions).map(p => ({ ...p, value: p.wpm }))} />
+        <TrendChart title="Accuracy (%)" unit="%" min={50} max={100} goal={90} goalLabel="90% goal" points={trendPoints(sessions).map(p => ({ ...p, value: Math.max(50, p.accuracy) }))} />
+      </div>
+      <h3>Mistakes by key (last 20 sessions)</h3>
+      <HeatKeyboard keys={mergeKeys(sessions.slice(0, 20))} />
       <div className="pc-table-wrap">
         <table className="pc-table">
           <thead><tr><th>When</th><th>Lesson</th><th>Mode</th><th>Speed</th><th>Accuracy</th><th>Result</th></tr></thead>

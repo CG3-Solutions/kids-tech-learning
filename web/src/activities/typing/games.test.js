@@ -107,3 +107,47 @@ describe("game rules", () => {
     expect(findMilestones(at(2), at(3), pub, kid).map(m => m.title)).toEqual([expect.stringContaining("Speedy fingers")]);
   });
 });
+
+describe("smart practice, tests, heat map and leaderboard", async () => {
+  const { smartLesson, testText, lessonText: lt, TYPING_JOURNEY: J, sessionTitle: st } = await import("../../content/typing.js");
+  const { keyStats, heatLevel } = await import("./Keyboard.jsx");
+  const { leaderboard, trendPoints } = await import("./TypingProgress.jsx");
+  it("smart practice drills the weakest keys the learner knows", () => {
+    const pool = J.find(s => s.id === "typ-step-14").pool;
+    const L = smartLesson([{ key: "q" }, { key: "Z" }, { key: "P" }, { key: "e" }], pool);
+    expect(L.keys).toEqual(["q", "p", "e"]); // Z isn't learned yet; P counts as the p key
+    for (let i = 0; i < 20; i++) {
+      const t = lt(L, "kids");
+      for (const c of t) expect([...L.pool, " "]).toContain(c);
+      for (const c of L.keys) expect(t).toContain(c);
+    }
+    expect(st("practice-smart")).toBe("Smart practice");
+    expect(st("test-3")).toBe("3-minute typing test");
+  });
+  it("tests use real sentences once capitals are learned", () => {
+    const early = J.find(s => s.id === "typ-step-14").pool, late = J.find(s => s.id === "typ-step-27").pool;
+    expect(testText(early, 100)).not.toMatch(/[A-Z.]/);
+    expect(testText(late, 100)).toMatch(/^[A-Z][^]*[.?]$/);
+  });
+  it("heat map groups capitals with their key and needs a few tries", () => {
+    expect(keyStats({ a: [8, 1, 800], A: [2, 1, 300], "?": [3, 0, 600] })).toEqual({ a: [10, 2, 1100], "/": [3, 0, 600] });
+    expect(heatLevel(1, 1)).toBe(null);
+    expect(heatLevel(10, 0)).toBe(0);
+    expect(heatLevel(8, 2)).toBe(4);
+  });
+  it("leaderboard ranks the family by best speed; trend is oldest first without taps", () => {
+    const kids = [{ id: "a", name: "Aarav" }, { id: "b", name: "Mum" }, { id: "c", name: "New" }];
+    const data = {
+      a: { typing: [{ wpm: 12, accuracy: 95, seconds: 60, keys: {} }], progress: [], state: { typing: { ladder: 2 } } },
+      b: { typing: [{ wpm: 40, accuracy: 97, seconds: 60, keys: {} }], progress: [], state: {} },
+      c: { typing: [], progress: [], state: {} },
+    };
+    expect(leaderboard(kids, data).map(r => r.child.name)).toEqual(["Mum", "Aarav"]);
+    const pts = trendPoints([
+      { wpm: 20, accuracy: 90, seconds: 60, lesson_id: "typ-step-2", created_at: "2026-10-02T10:00:00Z" },
+      { wpm: 99, accuracy: 90, seconds: 60, lesson_id: "typ-step-2", input: "touch", created_at: "2026-10-01T11:00:00Z" },
+      { wpm: 10, accuracy: 80, seconds: 60, lesson_id: "typ-step-1", created_at: "2026-10-01T10:00:00Z" },
+    ]);
+    expect(pts.map(p => p.wpm)).toEqual([10, 20]);
+  });
+});

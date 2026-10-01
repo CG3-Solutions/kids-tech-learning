@@ -108,12 +108,14 @@ export function AppProvider({ children: kids }) {
 
   // A finished typing lesson: shown straight away, saved in the background.
   const addTypingSession = useCallback(row => {
-    if (!activeChild) return;
+    if (!activeChild) return null;
     const entry = { ...row, id: `local-${Date.now()}`, created_at: new Date().toISOString() };
     dataRef.current = { ...dataRef.current, typing: [entry, ...(dataRef.current.typing ?? [])] };
     setChildData(dataRef.current);
     api.addTypingSession(activeChild.id, row)
+      .then(saved => { if (saved?.id) entry.savedId = saved.id; })
       .catch(e => setError(/typing_sessions/.test(e.message) ? "Typing results can't be saved yet: the database needs the release 3 upgrade (supabase/release-3.sql)." : e.message));
+      return entry;
   }, [api, activeChild]);
 
   const setChildState = useCallback((key, value) => {

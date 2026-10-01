@@ -21,7 +21,8 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
   - **Bit's binary adventure** (Binary Magic): 7 steps plus 2 bonus games. See `docs/05-binary-adventure.md`.
   - **Polly the Parrot** (Language): Alphabets (9 steps), Words (10) and Sentences (10). See `docs/06-language-course.md`.
   - **Ollie the Octopus** (Maths): Numbers (12 steps) and Mathematics (16 steps, up to 10th standard). See `docs/07-maths-course.md`.
-  - **Keyo's typing course** (Typing): 15 lessons in three stages (get ready, home row, top row) with an on-screen keyboard coloured by finger, a hands guide, speed and accuracy, stars, and **Kids** and **Pro** modes (Pro for older kids and adults). Keyo climbs a ladder as you type, Pro mode has a speedometer, and streaks earn flames. Also a **🪜 Speed ladder** (1-minute tests from 5 to 60 words a minute, racing a pacer) and four games: **Balloon Pop**, **Word Rocket**, **Typing Race** and **Beat the Clock**. See `docs/08-typing-course.md`.
+  - **Keyo's typing course** (Typing): 33 lessons in six stages (get ready, home row, top row, bottom row, capitals and punctuation, numbers and symbols) with an on-screen keyboard coloured by finger, a hands guide, speed and accuracy, stars, and **Kids** and **Pro** modes (Pro for older kids and adults). Keyo climbs a ladder as you type, Pro mode has a speedometer, and streaks earn flames. Also a **🪜 Speed ladder** (1-minute tests from 5 to 60 words a minute, racing a pacer), four games (**Balloon Pop**, **Word Rocket**, **Typing Race**, **Beat the Clock**), **⏱️ typing tests** with printable **📜 certificates**, and **📈 My progress** (smart practice on weak keys, speed and accuracy charts, a keyboard heat map, a family leaderboard). Grown-ups can add themselves to learn typing. See `docs/08-typing-course.md`.
+- **Schools:** a grown-up can turn on **I'm a teacher**, create classes with join codes, set typing tasks with due dates, see a class dashboard and download it as a spreadsheet. Parents join their child with the code, and teachers see typing results only.
   - The Language and Maths steps use one shared practice engine. It supports picture choices, a number pad, word and letter tiles, and learning cards, with visuals such as counting grids, place-value blocks, fractions and shapes. Questions are generated fresh each time.
   - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
 - **Kid navigation:** four areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech · ⌨️ Typing), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch child · Grown-ups · Sign out.
@@ -73,6 +74,9 @@ If your database was set up before screen time and notifications existed, run `s
 
 ## Upgrading an existing database (release 3: typing)
 Run `supabase/release-3.sql` once in the SQL Editor. It adds the typing results table and turns the Typing subject on. It's safe to re-run. Until you run it, lessons still unlock and earn stars, but speed and accuracy results aren't saved.
+
+## Upgrading an existing database (release 4: grown-up learners and schools)
+Run `supabase/release-4.sql` once in the SQL Editor (after release 3). It adds grown-up learner profiles and the classes, members and tasks tables with their security rules. It's safe to re-run.
 
 ## Email notifications (optional)
 Parents choose milestone emails and/or a daily summary under **Parent area → Notifications**. Until this is set up, notifications appear in that page's history as "Waiting to send".

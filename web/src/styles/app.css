@@ -856,6 +856,8 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 .kb-key.next { background: var(--fc); color: var(--key-ink); opacity: 1; border-color: var(--ink); box-shadow: 0 0 0 4px var(--glow); transform: translateY(-2px); transition: transform .08s }
 .kb-key.wrong { background: var(--bad); color: #fff; border-color: var(--bad); opacity: 1 }
 button.kb-key { cursor: pointer }
+.kb-key .kb-up { position: absolute; top: 2px; left: 5px; font-size: .62em; opacity: .75 }
+.kb-key.armed { box-shadow: inset 0 0 0 3px var(--ink) }
 .hands { margin: 0 auto; max-width: 420px; width: 100%; text-align: center; display: grid; gap: 4px }
 .hands svg { width: 100%; height: auto }
 .hand-palm { fill: var(--surface-2); stroke: var(--line); stroke-width: 3 }
@@ -977,3 +979,78 @@ button.kb-key { cursor: pointer }
   .sky { height: 280px }
   .balloon { width: 46px; height: 56px; margin-left: -23px }
 }
+
+/* Typing progress: trend charts and the keyboard heat map */
+.trend { position: relative; margin: 0 }
+.trend svg { width: 100%; height: auto; display: block; touch-action: pan-y }
+.trend-title { font-weight: 700; margin-bottom: 4px }
+.trend-line { fill: none; stroke: var(--lv4); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round }
+.trend-area { fill: var(--lv4); opacity: .1 }
+.trend-dot { fill: var(--lv4); stroke: var(--surface); stroke-width: 2 }
+.trend-end { font-size: 13px; font-weight: 700; fill: var(--ink) }
+.crosshair { stroke: var(--muted); stroke-width: 1 }
+.heat { margin: 0; display: grid; gap: 8px }
+.heat-key { cursor: default; border: 0; color: var(--key-ink); font-size: clamp(.65rem, 1.7vw, .9rem) }
+.heat-key.none { background: var(--surface-2); color: var(--muted) }
+.heat-key.h0, .heat-scale .h0 { background: color-mix(in srgb, var(--plus) 8%, var(--surface)) }
+.heat-key.h1, .heat-scale .h1 { background: color-mix(in srgb, var(--plus) 25%, var(--surface)) }
+.heat-key.h2, .heat-scale .h2 { background: color-mix(in srgb, var(--plus) 45%, var(--surface)) }
+.heat-key.h3, .heat-scale .h3 { background: color-mix(in srgb, var(--plus) 68%, var(--surface)); color: #fff }
+.heat-key.h4, .heat-scale .h4 { background: var(--plus); color: #fff }
+.heat-key:hover, .heat-key:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px }
+.heat-legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-size: .9rem; color: var(--muted) }
+.heat-scale { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap }
+.heat-scale i { width: 16px; height: 12px; border-radius: 3px; display: inline-block }
+.trend-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) }
+.smart-card { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; background: color-mix(in srgb, var(--spark) 14%, var(--surface)); border: 2px solid color-mix(in srgb, var(--spark) 45%, var(--line)); border-radius: 16px; padding: 14px 16px }
+.board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.board li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; background: var(--surface-2); border-radius: 12px; padding: 8px 12px }
+.board li.me { outline: 2px solid var(--spark) }
+.board-n { font-size: 1.3rem; text-align: center }
+.board-v b { font-family: var(--f-display); font-size: 1.3rem }
+.board-x { grid-column: 2 / -1; font-size: .85rem }
+.cert-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px }
+
+/* Certificate (full screen; printing shows only the certificate) */
+.cert-portal { position: fixed; inset: 0; z-index: 60; background: var(--scrim); overflow: auto; padding: 20px 16px; display: grid; justify-items: center; align-content: start; gap: 12px }
+.cert-actions { display: flex; gap: 10px; flex-wrap: wrap }
+.cert { width: min(900px, 100%); aspect-ratio: 1.414; background: #FFFDF6; color: #16233F; border-radius: 6px; padding: clamp(10px, 2.5vw, 22px); box-shadow: 0 10px 40px rgba(0,0,0,.3) }
+.cert-border { height: 100%; border: 6px double #C9A227; border-radius: 4px; display: grid; align-content: center; justify-items: center; text-align: center; gap: clamp(2px, 1vw, 10px); padding: clamp(8px, 3vw, 30px) }
+.cert h1 { font-size: clamp(1.3rem, 4.5vw, 2.8rem); color: #16233F; letter-spacing: .02em }
+.cert-brand { font-family: var(--f-display); font-weight: 700; color: #B8860B; letter-spacing: .1em; text-transform: uppercase; font-size: clamp(.7rem, 1.6vw, 1rem) }
+.cert-line { color: #56647F; font-size: clamp(.75rem, 1.8vw, 1.1rem) }
+.cert-name { font-family: var(--f-display); font-size: clamp(1.4rem, 5vw, 3rem); font-weight: 700; border-bottom: 2px solid #C9A227; padding: 0 24px 2px }
+.cert-score { font-size: clamp(.9rem, 2.4vw, 1.5rem) }
+.cert-score b { font-family: var(--f-display); font-size: 1.5em; color: #2F7D6D }
+.cert-score span { color: #56647F }
+.cert-foot { width: 100%; display: flex; justify-content: space-between; align-items: end; margin-top: clamp(4px, 2vw, 18px); gap: 10px }
+.cert-sign { display: flex; align-items: center; gap: 8px; text-align: left; font-weight: 700; font-size: clamp(.7rem, 1.6vw, 1rem) }
+.cert-sign svg { --ink: #16233F; --surface: #fff; --lv1: #FFB800; --plus: #E0412F; --spark: #FFB800 }
+.cert-code { text-align: right; font-size: clamp(.65rem, 1.4vw, .85rem); color: #56647F }
+@media print {
+  @page { size: A4 landscape; margin: 0 }
+  body.printing-cert { background: #fff !important }
+  body.printing-cert > *:not(.cert-portal) { display: none !important }
+  body.printing-cert .cert-portal { position: static; background: none; padding: 0 }
+  body.printing-cert .no-print { display: none !important }
+  body.printing-cert .cert { width: 100%; box-shadow: none; border-radius: 0 }
+}
+
+/* Schools */
+.tasks-card { background: color-mix(in srgb, var(--lv4) 10%, var(--surface)); border: 2px solid color-mix(in srgb, var(--lv4) 40%, var(--line)); border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px }
+.tasks-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+.tasks-card li { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--surface); border-radius: 12px; padding: 8px 12px }
+.join-code { font-weight: 700; color: var(--muted) }
+.join-code b { font: 700 1.4rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .15em; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 4px 10px; margin-left: 6px }
+.code-input { width: 9em; font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase }
+.assign-form { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end }
+.assign-form .field { display: grid; gap: 4px; margin: 0 }
+.assign-form .field label { font-size: .85rem; font-weight: 700; color: var(--muted) }
+.assign-form input[type="number"], .assign-form input[type="date"] { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px }
+.assign-preview { flex-basis: 100%; font-size: .9rem }
+.class-table td, .class-table th { white-space: nowrap }
+.class-tabs { margin-bottom: 4px }
+.check-row { display: flex; gap: 10px; align-items: flex-start }
+.check-row input { width: 20px; height: 20px; margin-top: 3px; flex: none }
+.kid .tag { display: block; margin: 4px auto 0; width: max-content }
+.trend .chart-tip { top: 30px }

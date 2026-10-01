@@ -4,7 +4,7 @@ import { useApp } from "../lib/AppContext.jsx";
 import { starCount } from "../lib/progress.js";
 import { AREAS } from "../content/areas.js";
 import { Bolt } from "../components/TopBar.jsx";
-import ParentGate, { gatePassed } from "../components/ParentGate.jsx";
+import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 
 const fmtLeft = s => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : `${Math.ceil(s / 60)} min`);
 
@@ -27,7 +27,12 @@ function AccountMenu() {
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
   const doSignOut = async () => { await signOut(); nav("/"); };
-  const needGate = action => { setOpen(false); if (gatePassed()) { action === "parent" ? nav("/parent") : doSignOut(); } else setGate(action); };
+  // A grown-up's own profile doesn't need the grown-up check.
+  const needGate = action => {
+    setOpen(false);
+    if (activeChild.learner === "adult") passGate();
+    if (gatePassed()) { action === "parent" ? nav("/parent") : doSignOut(); } else setGate(action);
+  };
   return (
     <div className="acct" ref={ref}>
       <button className="acct-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
@@ -35,7 +40,7 @@ function AccountMenu() {
       </button>
       {open && (
         <div className="acct-menu" role="menu">
-          <Link role="menuitem" to="/profiles" onClick={() => setOpen(false)}>🔁 Switch child</Link>
+          <Link role="menuitem" to="/profiles" onClick={() => setOpen(false)}>🔁 Switch learner</Link>
           <button role="menuitem" onClick={() => needGate("parent")}>👪 Grown-ups area</button>
           <button role="menuitem" onClick={() => needGate("signout")}>🚪 Sign out</button>
         </div>

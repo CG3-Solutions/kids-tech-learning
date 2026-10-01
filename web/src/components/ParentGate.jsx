@@ -25,4 +25,6 @@ export default function ParentGate({ onPass, onCancel, title = "Ask a grown-up t
   );
 }
 
+// Grown-ups on their own profile skip the check: mark it passed for this browser session.
+export const passGate = () => { try { sessionStorage.setItem("sparklab.gate", "1"); } catch { /* private mode */ } };
 export const gatePassed = () => { try { return sessionStorage.getItem("sparklab.gate") === "1"; } catch { return false; } };
