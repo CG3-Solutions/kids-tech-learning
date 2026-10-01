@@ -37,21 +37,35 @@ export async function sha256(text) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-const ready = new Set(); // paths known to exist in storage
+// Lines known to be recorded, remembered on this device so they play straight from storage.
+// (The app never asks storage "is it there?" itself: a missing file shows as a red 400 in the browser
+// console. The function checks storage instead and records the line only if needed.)
+const KNOWN_KEY = "sparklab.ttsKnown", KNOWN_MAX = 4000;
+let known = null;
+const knownSet = () => (known ??= new Set(local.get(KNOWN_KEY, [])));
+function remember(path) {
+  const k = knownSet(); if (k.has(path)) return;
+  k.add(path);
+  local.set(KNOWN_KEY, [...k].slice(-KNOWN_MAX));
+}
+export function forget(url) {
+  const path = String(url).split("/tts/").pop();
+  if (knownSet().delete(path)) local.set(KNOWN_KEY, [...knownSet()]);
+}
+const pending = new Map(); // path → promise, so a line being prepared isn't asked for twice
+
 // The URL of the recorded line, making it first if needed. Throws if it can't.
 export async function neuralUrl(voice, plan) {
   if (!cfg) throw new Error("natural voices are off");
   const path = `${voice}/${await sha256(canonical(voice, plan))}.mp3`;
   const url = cfg.publicUrl(path);
-  if (ready.has(path)) return url;
-  const head = await fetch(url, { method: "HEAD" }).catch(() => null);
-  if (!head?.ok) {
-    const made = await cfg.synth({ voice, plan: cleanPlan(plan) });
-    if (made?.path !== path) throw new Error("unexpected voice file");
+  if (knownSet().has(path)) { confirmed = true; return url; }
+  if (!pending.has(path)) {
+    pending.set(path, cfg.synth({ voice, plan: cleanPlan(plan) })
+      .then(made => { if (made?.path !== path) throw new Error("unexpected voice file"); remember(path); confirmed = true; return url; })
+      .finally(() => pending.delete(path)));
   }
-  ready.add(path);
-  confirmed = true;
-  return url;
+  return pending.get(path);
 }
 
 // For "Test natural voice" in Voice & sound: makes (or finds) a short line and says what went wrong, if anything.

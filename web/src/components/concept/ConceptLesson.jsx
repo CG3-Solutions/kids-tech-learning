@@ -1,14 +1,14 @@
 // One concept as six short screens: Hook → Explain → See it → Do it → Check → Recap.
 // The star comes only from the Check: at least 2 of 3 right. A wrong answer always gets a
 // one-line explanation. Reusable for any subject: pass a concept `spec` (see content/computer.js).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Guide from "../journey/Guide.jsx";
 import { SeeIt } from "./Anims.jsx";
 import { DoIt } from "./Games.jsx";
 import Question, { prepare } from "./Question.jsx";
 import { sfx } from "../../lib/sfx.js";
-import { hush } from "../../lib/speech.js";
+import { hush, prepareSpeech } from "../../lib/speech.js";
 
 export const SCREENS = [["hook", "Think"], ["explain", "Learn"], ["see", "See it"], ["doit", "Do it"], ["check", "Check"], ["recap", "Recap"]];
 export const PASS = 2; // correct answers needed out of 3
@@ -61,12 +61,14 @@ function DepthBar({ depth, depths, setDepth }) {
 // "A super-fast helper" → "a super-fast helper" after "It's like" (but keep "CPU…" as it is).
 const lowerFirst = t => (/^[A-Z][a-z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
 
+const explainSay = spec => `${spec.explain.text.join(" ")} It's like ${lowerFirst(spec.explain.like)}`;
+
 function Explain({ spec, Face, onNext, depthBar }) {
   const e = spec.explain;
   return (
     <div className="stack">
       {depthBar}
-      <Guide Face={Face} say={`${e.text.join(" ")} It's like ${lowerFirst(e.like)}`}>{e.text[0]}</Guide>
+      <Guide Face={Face} say={explainSay(spec)}>{e.text[0]}</Guide>
       {e.text.slice(1).map(t => <p key={t} className="lead strong-lead">{t}</p>)}
       <div className="like-box"><b>It's like…</b><p>{e.like}</p></div>
       <div><button className="btn primary big" onClick={onNext}>See it →</button></div>
@@ -153,6 +155,10 @@ export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, o
   const depths = depthsOf(base);
   const [depth, setDepthState] = useState(depths.includes(level) ? level : depths.filter(d => d <= level).at(-1) ?? 0);
   const spec = useMemo(() => atDepth(base, depth), [base, depth]);
+  // Natural voices: record this lesson's lines in the background, so each screen speaks at once.
+  useEffect(() => {
+    prepareSpeech([spec.hook.q, spec.hook.reveal, explainSay(spec), ...spec.check.map(q => (q.type === "tf" ? `True or false? ${q.q}` : q.q))]);
+  }, [spec]);
   const [at, setAt] = useState(0);
   const [doitDone, setDoitDone] = useState(false);
   const [checked, setChecked] = useState(false);
