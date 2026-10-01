@@ -1,6 +1,6 @@
 # Maths Course Guide for Parents
 
-Ollie the Octopus guides two adventures: **Numbers** and **Mathematics**, from counting apples (1st standard) to algebra, powers and Pythagoras (10th standard). Topics for 11th–12th standard are planned for later.
+Ollie the Octopus guides two adventures: **Numbers** and **Mathematics** (with a party-planning mission), from counting apples (1st standard) to algebra, powers and Pythagoras (10th standard). Topics for 11th–12th standard are planned for later.
 
 - Every step asks about 6–12 questions, generated fresh each time, so replaying gives new practice.
 - A wrong answer gets a hint first; after a second try the answer is shown and the child moves on.
@@ -64,6 +64,16 @@ _After Part A · open from 3rd standard. Multiplication, tables, division and mo
 | 6. ✖️ **Times tables** | 2 to 12. | Knowing tables by heart makes bigger sums easy. | Practise one table a week in the car or at dinner. |
 | 7. 🍬 **Sharing equally** | Division. | 12 ÷ 3 = 4 because 3 × 4 = 12. | Share snacks equally between family members. |
 | 8. 💰 **Money problems** | Rupees and change. | Word problems: find the numbers, decide add/subtract/multiply/divide, then solve. | Let your child pay at a shop and check the change. |
+
+### Ollie's mission: plan a party
+The Mathematics adventure is built around a question every child cares about: **"How can maths help me plan a party?"**
+
+| Step | What your child does | What they learn | Talk about it at home |
+|---|---|---|---|
+| 💬 **How can maths plan a party?** (first step) | A conversation with Ollie: 6 friends and me makes how many? Are 5 cups enough for 7? Is one pizza enough for 14 slices? Can 2 pizzas and a 40-coin cake fit a 50-coin budget? Every answer gets a reply; a wrong guess is gently corrected with the sum. | Adding, taking away, multiplying and budgets are all useful in real life. | Plan a small family treat together and let your child do the sums. |
+| 🎯 **Mission: plan a party** (after step 8) | Chooses their money (🪙 coins, $, €, £, ₹ or ¥; the first guess comes from the device's language) and how many friends to invite (3–9). Then: counts the people (+1 for themselves); works out the pizza slices (×) and how many pizzas and juice bottles (rounding **up**, with the usual round-down mistake as a choice); shops for a cake or cupcakes and extras with a budget of 50 coins (500 in ₹, 5000 in ¥); adds up the bill at the checkout (if it's over budget, back to the shop to take something off); works out the change (−); and shares 30 sweets into party bags (÷, with leftovers for the planner). Ends with their own party plan. | Every operation used together on one real problem, and a budget: plan, add up, check, adjust. Earns the 🎉 **Party planner** badge. | Next time you shop, give your child a small budget and a short list. Can they keep a running total and work out the change? |
+
+Class 1–2 see pictures for the counting, slices and sweets. From **Class 5** (and for grown-ups) the plan adds a 🔬 **Go deeper** note: cost per person (a decimal) and the percentage of the budget spent. Every number in the mission comes from the child's own choices, so each party is different. The script, prices and helpers are in `content/practice/party.js`.
 
 ### Part C · Parts and shapes
 _After Part B · open from 5th standard. Fractions, decimals, percentages, area and perimeter._

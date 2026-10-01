@@ -52,6 +52,7 @@ export const BADGES = [
   { id: "wordwiz", emoji: "📖", name: "Word wizard", how: "Finish Part B of Polly's word adventure", test: s => s.ids.has("words-step-8") },
   { id: "sentence", emoji: "💬", name: "Sentence builder", how: "Finish Part B of Polly's sentence adventure", test: s => s.ids.has("sent-step-7") },
   { id: "numbers", emoji: "🔟", name: "Number ninja", how: "Finish Part B of Ollie's number adventure", test: s => s.ids.has("num-step-9") },
+  { id: "party", emoji: "🎉", name: "Party planner", how: "Plan a party within a budget (Ollie's mission)", test: s => s.ids.has("math-mission-party") },
   { id: "maths", emoji: "🧮", name: "Maths master", how: "Finish Part C of Ollie's maths adventure", test: s => s.ids.has("math-step-12") },
   { id: "homerow", emoji: "⌨️", name: "Home row hero", how: "Pass the home row check in typing", test: s => s.ids.has("typ-step-8") },
   { id: "toprow", emoji: "🚀", name: "Top row ace", how: "Pass the top row check in typing", test: s => s.ids.has("typ-step-15") },

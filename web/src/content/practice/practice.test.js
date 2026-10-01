@@ -25,6 +25,7 @@ describe("practice content", () => {
 
     for (const s of j.steps) {
       it(`${act} · ${s.title}: generated questions are well-formed for every class`, () => {
+        if (s.talk || s.mission) return; // their own screens (see party.test.js)
         if (s.kind === "learn") { expect(s.items.length).toBeGreaterThan(5); return; }
         expect(s.count).toBeGreaterThan(3);
         for (let grade = 0; grade <= 12; grade++) {
