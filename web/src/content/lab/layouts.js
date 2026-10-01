@@ -21,7 +21,7 @@ export const LAYOUTS = {
   "lab-1-4": [...LEFT, ["lamp", [0, 0], { dir: 0 }], ["slide", [2, 0], { dir: 1 }], ...BACK_C],
   "lab-1-5": [["battery", [0, 4], { dir: 3 }], W([0, 2], 3, 2), ["slide", [0, 0], { dir: 0 }], ["lamp", [2, 0], { dir: 1 }], ...BACK_C],
   "lab-1-6": [...LEFT, ["slide", [0, 0], { dir: 0 }], ["motor", [2, 2], { dir: 3 }], ...BACK_C],
-  "lab-1-7": [["battery", [0, 2], { dir: 1 }], W([0, 2], 0, 2), W([0, 4], 0, 2), ["lamp", [2, 2], { dir: 1 }], ["slide", [0, 2], { dir: 1 }]],
+  "lab-1-7": [["battery", [0, 2], { dir: 1 }], W([0, 2], 0, 2), W([0, 4], 0, 2), ["lamp", [2, 2], { dir: 1 }], W([2, 2], 0, 2), W([2, 4], 0, 2), ["slide", [4, 2], { dir: 1 }]],
   "lab-1-8": [...LEFT, ["button", [0, 0], { dir: 0 }], ["lamp", [2, 0], { dir: 1 }], ...BACK_C],
 
   // ── Unit 2 ──

@@ -137,6 +137,38 @@ It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/c
 - **Saving:** each child's board and switch settings save automatically on this device.
 - **Examples:** *Light it up*, *Musical doorbell* and *Fan and light together*.
 
+## Made for small hands (after testing "Light it up" with a child)
+
+- **Moving parts:**
+  - Drag a part from anywhere on it. It lifts when touched and follows the finger.
+  - The two posts it will land on glow **green** (free) or **red** (taken, or off the board). It snaps on when let go, or goes back if the spot is red.
+  - ✥ Move explains itself: "Now tap where the first end should go."
+- **Big targets:** every tap goes to the nearest post (well over 44 px), even where the dot itself is small.
+- **Selecting is separate from switching:**
+  - One tap only chooses a part. A small toolbar appears next to it: ON/OFF, Hold (push buttons), ▲/▼, finger, 👏, ⟳ Turn, ⇅ Flip, ✥ Move, 🗑.
+  - A double-tap also flips a switch.
+  - Values (resistor, LED colour, light level, test-clip material) and the meter sit under the tray.
+- **Direction:**
+  - The battery, LEDs and the motor have big markers: a red + and a black −.
+  - ⇅ Flip swaps a part's ends in place.
+  - In guided projects, a part in the right posts but backwards gets "Almost! … its + end should be at A3. Tap ⇅ Flip", with a ⇅ Flip it button.
+- **No jumping:**
+  - The board never scrolls by itself, and tapping it doesn't scroll the page.
+  - The hint sits *under* the board, and nothing above the board changes size while building (tested: the board stays put through every step).
+- **Recovering from mistakes:**
+  - A big ↶ Undo.
+  - Tapping a part in the tray again, ✕ Cancel, or a tap that doesn't fit cancels a half-placed part.
+  - A part can't be dropped on top of another part's body (connectors may cross).
+  - In guided projects a spare part is marked ❓, with "isn't needed… Remove it?" and a 🗑 Remove it button.
+- **Guided feedback:**
+  - The next ghost part pulses, and its tray item nudges.
+  - Each right step gets a ✓ with a sound and a short vibration.
+  - 👀 Show me picks the next part and moves a 👆 finger from its first post to its second.
+- **Tray:** bigger items with pictures. In projects, used-up parts leave the tray ("✓ All parts placed"); in free build they're clearly dimmed.
+- **Extras:**
+  - Phones vibrate when a part snaps on.
+  - 🗣 reads every hint aloud: on by default for Classes 1–2, and anyone can switch it on or off.
+
 ## Projects (release 4, built: units 1–3)
 
 The Circuit Lab tab now opens on **🧩 Projects** (with **🛠️ Free build** beside it). Units 1–3 (24 projects) are open; units 4–11 show as coming soon until their layouts are ready.

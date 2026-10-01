@@ -20,7 +20,17 @@ function Up({ x, y, deg, children, className = "", size = 14 }) {
   return <text x={x} y={y} transform={`rotate(${-deg} ${x} ${y})`} className={className} fontSize={size} textAnchor="middle" dominantBaseline="central">{children}</text>;
 }
 
-export default function PartGlyph({ part, out, input, amps = 0, chip, selected, ghost, dragging, offset = [0, 0], showLabel = true }) {
+// A big, colour-coded end marker: red + and black −, so the direction is clear at a glance.
+function Pole({ x, y, deg, plus }) {
+  return (
+    <g className={`pole ${plus ? "plus" : "minus"}`}>
+      <circle cx={x} cy={y} r={11} />
+      <Up x={x} y={y} deg={deg} size={plus ? 18 : 20} className="pole-sign">{plus ? "+" : "−"}</Up>
+    </g>
+  );
+}
+
+export default function PartGlyph({ part, out, input, amps = 0, chip, selected, ghost, showMe, lifted, dragging, flagged, offset = [0, 0], showLabel = true }) {
   const deg = (part.dir ?? 0) * 90;
   const pins = localPins(part);
   const xs = Object.values(pins).map(p => p[0] * P), ys = Object.values(pins).map(p => p[1] * P);
@@ -29,7 +39,7 @@ export default function PartGlyph({ part, out, input, amps = 0, chip, selected, 
   const pad = wire ? 12 : chipLike ? 22 : 20;
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   const state = String(out ?? "");
-  const cls = [`lab-part k-${KIND[part.type]}`, selected && "selected", ghost && "ghost", dragging && "dragging", state && `s-${state.split(":")[0]}`].filter(Boolean).join(" ");
+  const cls = [`lab-part k-${KIND[part.type]}`, selected && "selected", ghost && "ghost", ghost && showMe && "show-me", lifted && "lifted", dragging && "dragging", flagged && "flagged", state && `s-${state.split(":")[0]}`].filter(Boolean).join(" ");
   const [ax, ay] = part.anchorXY ?? [0, 0];
 
   return (
@@ -43,9 +53,8 @@ export default function PartGlyph({ part, out, input, amps = 0, chip, selected, 
           style={{ animationDuration: `${Math.max(0.15, Math.min(2.4, 0.06 / Math.abs(amps)))}s`, animationDirection: amps < 0 ? "reverse" : "normal" }} />
       )}
       {part.type === "battery" && <>
-        <Up x={14} y={-1} deg={deg} className="sym plus" size={18}>+</Up>
-        <Up x={2 * P - 14} y={-1} deg={deg} className="sym" size={18}>−</Up>
         <Up x={P} y={0} deg={deg} size={20}>🔋</Up>
+        <Pole x={24} y={0} deg={deg} plus /><Pole x={2 * P - 24} y={0} deg={deg} />
       </>}
       {part.type === "slide" && <>
         <line className="lever" x1={12} y1={0} x2={2 * P - 12} y2={0} transform={input === "on" ? "" : `rotate(-24 12 0)`} />
@@ -66,7 +75,7 @@ export default function PartGlyph({ part, out, input, amps = 0, chip, selected, 
         <path className={`led ${state} c-${part.colour}`} d={`M${P - 10} -11 L${P + 10} 0 L${P - 10} 11 Z`} />
         <line className="lever thin" x1={P + 11} y1={-11} x2={P + 11} y2={11} />
         {state === "damage" && <Up x={P} y={-1} deg={deg} size={22}>💥</Up>}
-        <Up x={12} y={-13} deg={deg} className="sym plus" size={12}>+</Up>
+        <Pole x={22} y={0} deg={deg} plus />
       </>}
       {part.type === "resistor" && <>
         <path className="zigzag" d={`M${P - 28} 0 l6 -8 8 16 8 -16 8 16 8 -16 8 16 6 -8`} />
@@ -77,7 +86,7 @@ export default function PartGlyph({ part, out, input, amps = 0, chip, selected, 
         <g className={`fan ${state}`} style={{ transformOrigin: `${P}px 0px` }}>
           <path d={`M${P} 0 L${P - 4} -15 A6 6 0 0 1 ${P + 4} -15 Z M${P} 0 L${P + 15} 6 A6 6 0 0 1 ${P + 10} 12 Z M${P} 0 L${P - 12} 10 A6 6 0 0 1 ${P - 15} 3 Z`} />
         </g>
-        <Up x={12} y={-13} deg={deg} className="sym plus" size={12}>+</Up>
+        <Pole x={20} y={0} deg={deg} plus />
       </>}
       {part.type === "probe" && <>
         <line className="lever" x1={10} y1={0} x2={P - 14} y2={0} /><line className="lever" x1={P + 14} y1={0} x2={2 * P - 10} y2={0} />
@@ -104,6 +113,8 @@ export default function PartGlyph({ part, out, input, amps = 0, chip, selected, 
           {PIN_LABEL[pin] && !wire && (chipLike || part.type === "transistor") && <Up x={px * P} y={py * P} deg={deg} className="pin-label" size={9}>{PIN_LABEL[pin]}</Up>}
         </g>
       ))}
+
+      {flagged && !ghost && <Up x={chipLike ? x1 + 18 : x1} y={chipLike ? y0 - 18 : -26} deg={deg} className="flag" size={20}>❓</Up>}
 
       {/* Label (L1, S1…) */}
       {showLabel && !wire && <Up x={chipLike ? cx : x0 + (x1 - x0) / 2} y={chipLike ? y1 + 30 : -30} deg={deg} className="label" size={11}>{part.id}</Up>}
