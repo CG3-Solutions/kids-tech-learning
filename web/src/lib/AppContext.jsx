@@ -68,7 +68,11 @@ export function AppProvider({ children: kids }) {
     const have = new Set(content.modules.map(m => m.id));
     const extra = SEED.modules.filter(m => !have.has(m.id));
     return {
-      modules: [...content.modules, ...extra].filter(m => m.published !== false).map(m => ({ area: "science", ...m })).sort((a, b) => a.sort - b.sort),
+      // A subject loaded into the database before it had an activity (e.g. "Inside a Computer" before Chip's path)
+      // gets the built-in one, so new learning paths appear without a database update.
+      modules: [...content.modules, ...extra].filter(m => m.published !== false)
+        .map(m => ({ area: "science", ...m, activity: m.activity ?? SEED.modules.find(x => x.id === m.id)?.activity ?? null }))
+        .sort((a, b) => a.sort - b.sort),
       cards: content.cards.filter(c => c.published !== false).sort((a, b) => a.level - b.level || a.sort - b.sort),
       quiz: content.quiz,
     };

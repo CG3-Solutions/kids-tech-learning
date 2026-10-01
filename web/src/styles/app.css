@@ -1080,3 +1080,117 @@ button.kb-key { cursor: pointer }
 .lvl-switch input:checked + .lvl-track { background: var(--good) }
 .lvl-switch input:checked + .lvl-track i { left: 19px }
 .lvl-switch input:focus-visible + .lvl-track { outline: 3px solid var(--wire); outline-offset: 2px }
+
+/* ───────── Concept lessons (Chip's computer path) ───────── */
+.concept { gap: 18px }
+.lesson-dots { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px }
+.lesson-dots button { border: 2px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 12px; font-weight: 700; font-size: .85rem; color: var(--muted) }
+.lesson-dots li.done button { border-color: var(--good); color: var(--ink) }
+.lesson-dots li.on button { border-color: var(--spark); background: color-mix(in srgb, var(--spark) 25%, var(--surface)); color: var(--ink) }
+.lesson-dots button:disabled { cursor: default }
+.hook-choices { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) }
+.strong-lead { color: var(--ink) }
+.like-box { background: color-mix(in srgb, var(--lv2) 12%, var(--surface)); border-left: 5px solid var(--lv2); border-radius: 12px; padding: 12px 16px }
+.like-box p { margin-top: 4px; font-size: 1.05rem }
+.check-opts { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) }
+.check-opt { border: 3px solid var(--line); background: var(--surface); border-radius: 16px; padding: 14px; font-weight: 700; font-size: 1.1rem; text-align: left }
+.check-opt.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, var(--surface)) }
+.check-opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface)) }
+.check-opt.faded { opacity: .55 }
+.check-opt:disabled { cursor: default; color: var(--ink) }
+.check-why { border-radius: 12px; padding: 10px 14px; font-size: 1.05rem }
+.check-why.ok { background: color-mix(in srgb, var(--good) 12%, var(--surface)) }
+.check-why.bad { background: color-mix(in srgb, var(--bad) 10%, var(--surface)) }
+.recap-box { background: color-mix(in srgb, var(--spark) 14%, var(--surface)); border-radius: 16px; padding: 14px 18px }
+.recap-box ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 1.05rem }
+.recap-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) }
+.links-box { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface-2); border-radius: 12px; padding: 10px 14px }
+.link-chip { text-decoration: none; font-weight: 700; border: 2px solid var(--lv4); border-radius: 99px; padding: 4px 12px; background: var(--surface) }
+.link-chip small { font-weight: 400; color: var(--muted) }
+
+/* See it */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; justify-content: center }
+.flow-step { display: flex; align-items: center; gap: 6px }
+.flow-arrow { font-size: 1.4rem; color: var(--line); transition: color .3s }
+.flow-arrow.lit { color: var(--good) }
+.flow-node { position: relative; display: grid; justify-items: center; gap: 2px; min-width: 110px; padding: 12px 10px; border: 3px solid var(--line); border-radius: 16px; background: var(--surface); text-align: center; transition: border-color .3s, transform .3s }
+.flow-node.on { border-color: var(--spark); transform: translateY(-4px); box-shadow: 0 0 0 4px var(--glow) }
+.flow-node.done { border-color: var(--good) }
+.flow-e { font-size: 2rem }
+.flow-node small { color: var(--muted); font-size: .8rem; max-width: 120px }
+.flow-token { position: absolute; top: -14px; right: -10px; background: var(--ink); color: var(--board); border-radius: 99px; padding: 2px 8px; font-weight: 700; animation: pop .3s }
+@keyframes pop { from { transform: scale(.4) } }
+.inside-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) }
+.inside-item { display: grid; justify-items: center; gap: 2px; border: 3px solid var(--line); border-radius: 16px; padding: 10px; background: var(--surface); text-align: center; transition: border-color .3s }
+.inside-item.yes { border-color: var(--good) }
+.inside-e { font-size: 2rem }
+.inside-tag { font-size: .8rem; color: var(--muted); font-weight: 700 }
+.inside-item.yes .inside-tag { color: var(--good) }
+.steps-anim { display: flex; flex-wrap: wrap; gap: 16px; align-items: center }
+.prog { flex: 1 1 260px; background: var(--ink); color: var(--board); border-radius: 14px; padding: 12px 16px; font-family: ui-monospace, Menlo, Consolas, monospace }
+.prog-title { font-size: .85rem; opacity: .75; margin-bottom: 6px }
+.prog ol { margin: 0; padding-left: 22px; display: grid; gap: 4px }
+.prog li { opacity: .55; transition: opacity .3s }
+.prog li.on { opacity: 1; color: var(--spark); font-weight: 700 }
+.prog li.done { opacity: .9 }
+.prog-result { display: grid; justify-items: center; gap: 4px; min-width: 120px; font-size: 2.6rem }
+.prog-result small { font-size: .8rem; color: var(--muted) }
+.power-anim { display: grid; gap: 10px }
+.power-sw { justify-self: start; font-weight: 700; border-radius: 99px; padding: 4px 14px; background: var(--surface-2) }
+.power-sw.on { background: color-mix(in srgb, var(--spark) 35%, var(--surface)) }
+.power-boxes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) }
+.pbox { border: 3px solid var(--line); border-radius: 16px; padding: 12px; background: var(--surface); display: grid; gap: 6px; align-content: start; transition: opacity .3s }
+.pbox.off { opacity: .6; border-style: dashed }
+.pbox small { color: var(--muted) }
+.pitems { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center }
+.pitems > span, .pitem { background: var(--surface-2); border-radius: 10px; padding: 4px 10px; font-weight: 700; display: inline-flex; gap: 6px; align-items: center }
+.layers { display: grid; gap: 6px; max-width: 520px }
+.layer { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; border: 3px solid var(--line); border-radius: 14px; padding: 8px 12px; background: var(--surface); transition: border-color .3s, transform .3s }
+.layer span { grid-row: span 2; font-size: 1.5rem; text-align: center }
+.layer small { color: var(--muted) }
+.layer.on { border-color: var(--spark); transform: translateX(6px) }
+.pixels-anim { display: flex; flex-wrap: wrap; gap: 16px; align-items: center }
+.px-grid { display: grid; grid-template-columns: repeat(5, 36px); gap: 3px }
+.px-grid i, .px-grid button { width: 36px; height: 36px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); padding: 0; transition: background .15s }
+.px-grid .dark { background: var(--ink) }
+.px-grid .light { background: var(--surface) }
+.px-grid.play button { cursor: pointer }
+.px-nums { display: grid; gap: 3px }
+.px-nums code { font: 700 1.1rem/36px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .2em; color: var(--muted) }
+.px-nums code.on { color: var(--ink) }
+
+/* Do it */
+.sort-pool { display: flex; flex-wrap: wrap; gap: 8px }
+.sort-item { display: inline-flex; gap: 6px; align-items: center; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 12px; font-weight: 700 }
+.sort-item span { font-size: 1.3rem }
+.sort-item.sel { border-color: var(--spark); box-shadow: 0 0 0 4px var(--glow) }
+.sort-buckets { display: grid; gap: 10px }
+.bucket { display: grid; gap: 8px; align-content: start; min-height: 110px; border: 3px dashed var(--line); border-radius: 16px; padding: 10px; background: var(--surface-2); text-align: left }
+.bucket.ready { border-color: var(--lv4) }
+.bucket-in { display: flex; flex-wrap: wrap; gap: 4px; font-size: 1.6rem }
+.game-msg { font-weight: 700; background: var(--surface-2); border-radius: 12px; padding: 8px 12px }
+.be-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start }
+.be-prog { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; min-width: 220px }
+.be-prog li.on { color: var(--plus) }
+.be-prog li.done { color: var(--good) }
+.be-line { border: 2px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 10px; font: inherit }
+.be-line.bug { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface)) }
+.be-grid { display: grid; grid-template-columns: repeat(3, 52px); gap: 4px }
+.be-cell { width: 52px; height: 52px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); font-weight: 700; color: var(--muted) }
+.be-cell.on { background: var(--lv4); color: #fff; border-color: var(--lv4) }
+.be-cell:disabled { cursor: default }
+.be-pair { display: flex; gap: 16px }
+.be-pair small { display: block; font-weight: 700; color: var(--muted); margin-bottom: 4px }
+.build-board { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) }
+.build-slot { display: grid; justify-items: center; gap: 4px; border: 3px dashed var(--line); border-radius: 14px; padding: 10px; font-size: 1.8rem }
+.build-slot small { font-size: .8rem; font-weight: 700; color: var(--muted) }
+.build-slot.on { border-style: solid; border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface)) }
+.boot { font-weight: 700; font-size: 1.1rem; background: var(--ink); color: var(--board); border-radius: 12px; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace }
+.order-done { margin: 0; padding-left: 22px; display: grid; gap: 4px; font-weight: 700; min-height: 10px }
+@media (max-width: 560px) {
+  .flow-node { min-width: 84px; padding: 8px 6px }
+  .flow-arrow { font-size: 1rem }
+  .be-grid { grid-template-columns: repeat(3, 44px) } .be-cell { width: 44px; height: 44px }
+  .px-grid { grid-template-columns: repeat(5, 30px) } .px-grid i, .px-grid button { width: 30px; height: 30px }
+  .px-nums code { line-height: 30px }
+}

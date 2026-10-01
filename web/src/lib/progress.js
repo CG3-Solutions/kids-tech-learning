@@ -1,10 +1,12 @@
 import { PUZZLES } from "../content/subjects.js";
 import { JOURNEYS, STEP_IDS } from "../content/journeys.js";
 import { LADDER } from "../content/typing.js";
+import { GLOSSARY_MODULES } from "../content/index.js";
 
 // Items a child can complete in a module: every published card, plus puzzles for the coding module.
 export function moduleItems(module, cards) {
-  const ids = cards.filter(c => c.module_id === module.id && c.published !== false).map(c => c.id);
+  // Glossary cards are reference only: a subject with a learning path counts its steps, not its cards.
+  const ids = GLOSSARY_MODULES.has(module.id) ? [] : cards.filter(c => c.module_id === module.id && c.published !== false).map(c => c.id);
   if (module.activity === "coding") ids.push(...PUZZLES.map(p => `puzzle-${p.id}`));
   if (JOURNEYS[module.activity]) ids.push(...JOURNEYS[module.activity].steps.map(s => s.id));
   return ids;
@@ -49,6 +51,8 @@ export const BADGES = [
   { id: "speed10", emoji: "🏃", name: "Speedy fingers", how: "Climb to 10 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 10 },
   { id: "speed20", emoji: "⚡", name: "Lightning fingers", how: "Climb to 20 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 20 },
   { id: "speed30", emoji: "🚀", name: "Rocket typist", how: "Climb to 30 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 30 },
+  { id: "pcparts", emoji: "💻", name: "Computer explorer", how: "Finish Part B of Chip's computer path", test: s => s.ids.has("comp-step-8") },
+  { id: "netsafe", emoji: "🛡️", name: "Internet safety star", how: "Finish Chip's computer path (staying safe online)", test: s => s.ids.has("comp-step-13") },
   { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },
@@ -84,6 +88,6 @@ export function nextSuggestion(modules, cards, child) {
   if (!ranked.length) return null;
   const { m } = ranked[0];
   const done = new Set(child.progress.map(p => p.item_id));
-  const card = cards.filter(c => c.module_id === m.id && c.published !== false).sort((a, b) => a.sort - b.sort).find(c => !done.has(c.id));
+  const card = GLOSSARY_MODULES.has(m.id) ? null : cards.filter(c => c.module_id === m.id && c.published !== false).sort((a, b) => a.sort - b.sort).find(c => !done.has(c.id));
   return { module: m, card: card ?? null };
 }

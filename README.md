@@ -20,6 +20,7 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 - **Kids:** subject cards with **Read to me**, a treasure hunt, robot puzzles, quizzes, stars and badges.
 - **Adventures** (step-by-step, with a story character, sounds and a map):
   - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
+  - **Chip's computer path** (Inside a Computer): 13 concepts in three parts, from "What is a computer?" to "Staying safe online". Each step has six short screens: Think → Learn → See it → Do it → Check → Recap. The star needs 2 of 3 check questions right. Activities include Be the computer, Power cut, Build a computer and Be the screen. The old cards remain as a read-only Glossary. See `docs/09-computer-course.md`.
   - **Bit's binary adventure** (Binary Magic): 7 steps plus 2 bonus games. See `docs/05-binary-adventure.md`.
   - **Polly the Parrot** (Language): Alphabets (9 steps), Words (10) and Sentences (10). See `docs/06-language-course.md`.
   - **Ollie the Octopus** (Maths): Numbers (12 steps) and Mathematics (16 steps, up to 10th standard). See `docs/07-maths-course.md`.

@@ -10,7 +10,7 @@ const c = card("computer", "pc");
 export const COMPUTER_LEVELS = [
   { id: 0, name: "Big ideas", note: "Start here" },
   { id: 1, name: "Input", note: "How a computer senses" },
-  { id: 2, name: "Brain and memory", note: "How it thinks and remembers" },
+  { id: 2, name: "CPU and memory", note: "How it follows instructions and remembers" },
   { id: 3, name: "Output", note: "How it shows and tells" },
 ];
 export const COMPUTER_CARDS = [
@@ -50,7 +50,7 @@ export const COMPUTER_CARDS = [
     home: ["Computer mouse", "Laptop touchpad"],
     q: "Why is it called a mouse?", a: "The first ones were small with a long wire like a tail!",
     tr: "Move the mouse slowly and watch the arrow follow your hand." }),
-  c("touch", 1, 6, { e: "📱", n: "Touch screen", sh: "Input and output together",
+  c("touch", 3, 14, { e: "📱", n: "Touch screen", sh: "Input AND output",
     what: "A touch screen shows pictures (output) and feels your finger (input) at the same time.",
     like: "A magic slate that can see where you touch.",
     home: ["Mobile phone", "Tablet", "Ticket machines at the metro"],
@@ -62,11 +62,11 @@ export const COMPUTER_CARDS = [
     home: ["Phone camera", "Laptop webcam", "Voice assistants"],
     q: "Which sense is a microphone like?", a: "Hearing, like our ears.",
     tr: "Take a photo on a phone and zoom in. The picture is made of tiny coloured squares (pixels)!" }),
-  c("cpu", 2, 8, { e: "🧠", n: "CPU (processor)", sh: "The brain",
-    what: "The CPU is the computer's brain. It does all the thinking and calculating, billions of tiny steps every second.",
-    like: "The brain in our head, solving sums super fast.",
+  c("cpu", 2, 8, { e: "🧠", n: "CPU (processor)", sh: "Follows instructions, super fast",
+    what: "The CPU follows the program's instructions, billions of tiny steps every second. People call it the computer's brain, but it can't think on its own: it only follows instructions.",
+    like: "A super-fast cook following a recipe exactly. Great at following steps, but it can't invent a new dish by itself.",
     home: ["Inside every laptop and phone", "Games consoles"],
-    q: "How many steps can a CPU do in one second?", a: "Billions! Much faster than any person.",
+    q: "Can the CPU think for itself?", a: "No! It only follows instructions, but it does billions of them every second.",
     tr: "Race a calculator: who can add 2468 + 1357 faster, you or the calculator?" }),
   c("ram", 2, 9, { e: "📝", n: "Memory (RAM)", sh: "Short-term notebook",
     what: "RAM is the computer's short-term memory. It keeps what you are working on right now. When the power goes off, it forgets!",

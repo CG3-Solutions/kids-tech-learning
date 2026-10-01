@@ -89,3 +89,22 @@ export function KeyoFace({ mood = "happy", lamp = true, size = 96 }) {
     </svg>
   );
 }
+
+// Chip the Computer: guides "Inside a Computer" (a friendly monitor with a keyboard smile).
+export function ChipFace({ mood = "happy", lamp = true, size = 96 }) {
+  const mouth = mood === "sad" ? "M40 60 q10 -6 20 0" : mood === "wow" ? "M45 58 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0" : "M38 55 q12 10 24 0";
+  return (
+    <svg className={`bit-face${mood === "cheer" ? " cheer" : ""}`} viewBox="0 0 100 110" width={size} height={size * 1.1} aria-hidden="true">
+      <rect x="8" y="10" width="84" height="64" rx="10" fill="var(--lv4)" stroke="var(--ink)" strokeWidth="4" />
+      <rect x="17" y="18" width="66" height="48" rx="6" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2.5" />
+      {mood === "cheer"
+        ? <path d="M30 40 q6 -7 12 0 M58 40 q6 -7 12 0" fill="none" stroke="var(--ink)" strokeWidth="4" strokeLinecap="round" />
+        : <><rect x="31" y="32" width="9" height="11" rx="3" fill="var(--ink)" /><rect x="60" y="32" width="9" height="11" rx="3" fill="var(--ink)" /></>}
+      <path d={mouth} fill={mood === "wow" ? "var(--ink)" : "none"} stroke="var(--ink)" strokeWidth="4" strokeLinecap="round" />
+      <rect x="44" y="74" width="12" height="10" fill="var(--ink)" />
+      <rect x="20" y="84" width="60" height="18" rx="5" fill="var(--surface-2)" stroke="var(--ink)" strokeWidth="3" />
+      {[26, 36, 46, 56, 66].map(x => <rect key={x} x={x} y="89" width="7" height="5" rx="1.5" fill="var(--ink)" opacity=".55" />)}
+      {lamp && <circle cx="84" cy="66" r="3.5" fill="var(--good)" className="bit-glow" />}
+    </svg>
+  );
+}
