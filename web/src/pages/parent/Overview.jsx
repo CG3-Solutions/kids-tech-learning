@@ -34,7 +34,7 @@ export default function Overview() {
           const d = data[c.id]; if (!d) return null;
           const mins = minutesOn(c.id, today);
           const limit = c.daily_limit_min;
-          const sugg = nextSuggestion(published.modules.filter(m => !m.coming_soon), published.cards, d);
+          const sugg = nextSuggestion(published.modules.filter(m => !m.coming_soon), published.cards, d, c);
           const badges = badgeState(d, published.modules).filter(b => b.earned).length;
           return (
             <section key={c.id} className="pc-card">

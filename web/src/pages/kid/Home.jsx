@@ -15,19 +15,19 @@ export function Crumbs({ items }) {
 }
 
 // Where to pick up: the subject of the most recent activity, else a suggestion.
-function continueTarget(published, data) {
+function continueTarget(published, data, learner) {
   const last = [...data.progress].sort((a, b) => (b.done_at ?? "").localeCompare(a.done_at ?? ""))[0];
   const live = published.modules.filter(m => !m.coming_soon);
   const m = last && live.find(x => x.id === last.module_id);
   if (m && moduleStats(m, published.cards, data).pct < 100) return { module: m, label: "Continue" };
-  const s = nextSuggestion(live, published.cards, data);
+  const s = nextSuggestion(live, published.cards, data, learner);
   return s ? { module: s.module, label: last ? "Try next" : "Start here" } : null;
 }
 
 export default function Home() {
   const { activeChild, childData, published } = useApp();
   if (!published) return null;
-  const target = continueTarget(published, childData);
+  const target = continueTarget(published, childData, activeChild);
   const earned = badgeState(childData, published.modules).filter(b => b.earned);
   return (
     <div className="stack page">
@@ -81,7 +81,7 @@ export default function Home() {
         <div className="row"><h2 className="sec">My badges</h2><span className="spacer" /><Link className="btn ghost" to="/learn/badges">See all</Link></div>
         {earned.length
           ? <div className="badge-strip">{earned.map(b => <span key={b.id} className="badge-chip" title={b.name}>{b.emoji} {b.name}</span>)}</div>
-          : <p className="muted">Finish your first card to earn a badge!</p>}
+          : <p className="muted">Finish your first step to earn a badge!</p>}
       </section>
     </div>
   );

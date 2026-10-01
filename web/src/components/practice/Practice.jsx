@@ -6,10 +6,12 @@ import { sfx } from "../../lib/sfx.js";
 import { speak } from "../../lib/speech.js";
 
 const valueOf = o => (typeof o === "object" ? o.value : o);
-const labelOf = o => (typeof o === "object" ? o.label : o);
+// Shown text uses a true minus sign: "-17" → "−17" (answers are still compared as numbers).
+export const pretty = t => String(t).replace(/(^|[\s(=:,/])-(?=\d)/g, "$1−");
+const labelOf = o => pretty(typeof o === "object" ? o.label : o);
 const sameNumber = (a, b) => Number.isFinite(a) && Math.abs(a - b) < 1e-6;
 const PRAISE = ["Yes! ⭐", "Brilliant! ⭐", "Super! ⭐", "Correct! ⭐", "Well done! ⭐", "You got it! ⭐"];
-const fmt = (q, v) => `${q.unit ?? ""}${v}`;
+const fmt = (q, v) => pretty(`${q.unit ?? ""}${v}`);
 // Automated browser tests read the answer from the page, only when a test-only flag is set.
 const testHook = (q, label) => { try { return localStorage.getItem("sparklab.e2e") === "1" ? { "data-answer": JSON.stringify({ type: q.type, answer: q.answer, label }) } : {}; } catch { return {}; } };
 
@@ -112,10 +114,10 @@ export default function Practice({ spec, grade, onComplete, Face }) {
         <div className="progress"><i style={{ width: `${(i / spec.count) * 100}%` }} /></div>
         <span className="muted">Question {i + 1} of {spec.count}</span>
       </div>
-      <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"} say={bubbleSay}>{bubble}</Guide>
+      <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"} say={bubbleSay}>{pretty(bubble)}</Guide>
       <div className="q-card" {...testHook(q, answerText)}>
         <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}`}>
-          {q.prompt}
+          {pretty(q.prompt)}
           <button className="btn ghost small hear" onClick={() => speak(q.say ?? q.prompt, { force: true })} aria-label="Read the question aloud">🔊</button>
         </div>
         <Visual v={q.visual} />

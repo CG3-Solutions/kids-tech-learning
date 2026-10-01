@@ -1240,3 +1240,40 @@ button.kb-key { cursor: pointer }
 .voice-test p { margin: 0; font-weight: 600 }
 .voice-test p.ok { color: var(--good) }
 .voice-test p.bad { color: var(--bad) }
+
+/* ───────── Lesson header (Q1) ───────── */
+.step-head { display: flex; align-items: center; gap: 12px }
+.step-title { flex: 1; min-width: 0 }
+.step-title h3 { margin: 0 }
+.map-btn, .sound-btn { flex: none }
+/* Grid children may shrink below their content's width (a one-line title must not widen the page). */
+.page > *, .journey > *, .panel > * { min-width: 0 }
+/* Phones: inside a step, the page header (breadcrumb, subject title, tabs) steps aside so the
+   question and its answers fit on one screen. ← Map brings it all back. */
+@media (max-width: 600px) {
+  .page:has(> .in-step) > .crumbs, .page:has(> .in-step) > .mod-head, .page:has(> .in-step) > .tabs { display: none }
+  .page:has(> .in-step) { gap: 10px }
+  .step-head { gap: 8px }
+  .step-head .part-name, .sound-btn .label { display: none }
+  .sound-btn { align-self: flex-start }
+  .map-btn, .sound-btn { padding: 8px 12px; min-height: 44px }
+  .step-title h3 { font-size: 1.1rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .step-title .eyebrow { font-size: .72rem }
+  /* Section buttons (Cards, the adventure, Quiz…) wrap instead of running off the screen. */
+  .tabs { flex-wrap: wrap; overflow-x: visible }
+  /* Number pad: answer box and ✓ Check side by side, keys in two rows of six. */
+  .numpad { grid-template-columns: 1fr auto; grid-template-areas: "show go" "keys keys"; width: 100%; gap: 8px; align-items: stretch }
+  .numpad .num-display { grid-area: show; font-size: 1.8rem; padding: 4px 10px }
+  .numpad > .btn { grid-area: go; padding-inline: 18px }
+  .numpad .keys { grid-area: keys; grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; gap: 6px }
+  .numpad .key { padding: 10px 0; font-size: 1.3rem; min-width: 0; overflow: hidden }
+  .v-count { font-size: 1.45rem; gap: 4px 8px }
+  /* Answers and pictures a little smaller, so most questions fit without scrolling. */
+  .choice { padding: 10px 14px; font-size: 1.12rem; min-width: 96px }
+  .v-frac { width: 118px }
+  .v-rect { width: min(290px, 100%) }
+  .q-card { gap: 10px }
+  .practice-top { gap: 4px }
+  .hear-row .btn.small { padding: 3px 9px; font-size: .82rem }
+  .tabs a, .tabs button { padding: 6px 12px; font-size: .95rem }
+}

@@ -50,19 +50,23 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
   // Free-play steps (`quiet`) earn their star without leaving the activity.
   const complete = () => { onStepDone(step.id); sfx.tada(); if (!step.quiet) setCelebrate(true); };
   const go = id => { hush(); setCelebrate(false); setOpen(id); window.scrollTo({ top: 0 }); };
-  const muteBtn = <button className="btn ghost" onClick={() => setMuted(!muted)} aria-pressed={muted}>{muted ? "🔇 Sound off" : "🔊 Sound on"}</button>;
+  // On phones the label is hidden and only the icon shows (see .sound-btn in app.css).
+  const muteBtn = <button className="btn ghost sound-btn" onClick={() => setMuted(!muted)} aria-pressed={muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"}>
+    <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span><span className="label">{muted ? " Sound off" : " Sound on"}</span></button>;
 
   if (step) {
     const part = parts.find(p => p.id === step.part);
     return (
-      <div className="stack journey">
-        <div className="row">
-          <button className="btn ghost" onClick={() => go(null)}>← Map</button>
-          <div>
-            <div className="eyebrow">{step.bonus ? "Bonus" : `${part ? `${part.title} · ` : ""}Step ${stepNo(step)} of ${main.length}`}</div>
-            <h3 style={{ margin: 0 }}>{step.emoji} {step.title}</h3>
+      // `in-step`: on phones the page header (breadcrumb, subject title, tabs) is hidden so the
+      // question fits on screen; ← Map leads back to all of it.
+      <div className="stack journey in-step">
+        <div className="step-head">
+          <button className="btn ghost map-btn" onClick={() => go(null)}>← Map</button>
+          <div className="step-title">
+            <div className="eyebrow">{step.bonus ? "Bonus" : <>{part && <span className="part-name">{part.title} · </span>}Step {stepNo(step)} of {main.length}</>}</div>
+            <h3>{step.emoji} {step.title}</h3>
           </div>
-          <span className="spacer" />{muteBtn}
+          {muteBtn}
         </div>
         {celebrate ? (
           <div className="panel celebrate">
