@@ -130,6 +130,7 @@ describe("typing engine", () => {
     expect(weakKeys(mergeKeys(sessions)).map(w => w.key)).toEqual(["d", "a"]);
     const sum = typingSummary(sessions);
     expect(sum.bestWpm).toBe(20); // tapping on a screen isn't a speed record
+    expect(typingSummary([...sessions, { wpm: 3000, accuracy: 100, seconds: 5, keys: {} }]).bestWpm).toBe(20); // nor is a robot
     expect(sum.accuracy).toBe(95);
     expect(sum.minutes).toBe(2);
   });

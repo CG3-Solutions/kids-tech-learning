@@ -4,6 +4,8 @@ import { Keyboard, Hands } from "./Keyboard.jsx";
 import { goalFor, lessonText, starsFor } from "../../content/typing.js";
 import { finished, pause, press, results, startTyping, weakKeys } from "../../lib/typing.js";
 import { sfx } from "../../lib/sfx.js";
+import { useKeys } from "./useKeys.js";
+import { Burst, Ladder, Speedometer, Streak } from "./Visuals.jsx";
 import { hush } from "../../lib/speech.js";
 
 const isTouchOnly = () => typeof window !== "undefined" && window.matchMedia?.("(hover: none) and (pointer: coarse)").matches;
@@ -12,7 +14,7 @@ const goalText = g => `${g.acc}% accuracy${g.wpm ? ` and ${g.wpm} words a minute
 const show = c => (c === " " ? "space" : c === ";" ? ";" : c.toUpperCase());
 
 // The text to type: done letters, the cursor, and what's still to come.
-function TextStrip({ s, big }) {
+export function TextStrip({ s, big }) {
   const words = useMemo(() => s.text.match(/[^ ]+ ?| /g) ?? [], [s.text]);
   let i = 0;
   return (
@@ -30,7 +32,7 @@ function TextStrip({ s, big }) {
   );
 }
 
-function Results({ lesson, mode, r, stars, next, onNext, onAgain, onBack }) {
+function Results({ lesson, mode, r, stars, best, streak, next, onNext, onAgain, onBack }) {
   const kids = mode !== "pro";
   const g = goalFor(lesson, mode);
   const passed = stars > 0;
@@ -39,13 +41,16 @@ function Results({ lesson, mode, r, stars, next, onNext, onAgain, onBack }) {
   const say = passed
     ? `${["", "Good job", "Great typing", "Amazing"][stars]}! ${r.wpm} words a minute, and ${r.accuracy} percent right. ${stars} ${stars === 1 ? "star" : "stars"}!`
     : `Nice try! ${r.accuracy < g.acc ? "Go a bit slower and press each key carefully." : "Keep a steady rhythm."} Let's try again.`;
+  const record = passed && best > 0 && r.wpm > best;
   return (
     <div className="stack type-results">
+      <Burst on={passed} />
+      {record && <p className="type-record" role="status">🎉 New personal best: {r.wpm} words a minute (was {best})</p>}
       {kids && <Guide Face={KeyoFace} mood={passed ? "cheer" : "sad"} say={say}>{passed ? `${"⭐".repeat(stars)} ${say.split("!")[0]}!` : say}</Guide>}
       <div className="kpis type-kpis">
         <div className="kpi"><span>Speed</span><b>{r.wpm}</b><small>words a minute{g.wpm ? ` · goal ${g.wpm}` : ""}</small></div>
         <div className="kpi"><span>Accuracy</span><b>{pct(r.accuracy)}</b><small>goal {g.acc}%</small></div>
-        <div className="kpi"><span>Time</span><b>{r.seconds < 60 ? `${r.seconds}s` : `${Math.floor(r.seconds / 60)}m ${r.seconds % 60}s`}</b><small>{r.chars} keys · {r.errors} {r.errors === 1 ? "mistake" : "mistakes"}</small></div>
+        <div className="kpi"><span>Time</span><b>{r.seconds < 60 ? `${r.seconds}s` : `${Math.floor(r.seconds / 60)}m ${r.seconds % 60}s`}</b><small>{r.chars} keys · best streak {streak} · {r.errors} {r.errors === 1 ? "mistake" : "mistakes"}</small></div>
         <div className="kpi"><span>Result</span><b>{passed ? "⭐".repeat(stars) : "Not yet"}</b><small>{passed ? "lesson passed" : `need ${goalText(g)}`}</small></div>
       </div>
       {why && <p className="type-why" role="status">{why}</p>}
@@ -60,12 +65,11 @@ function Results({ lesson, mode, r, stars, next, onNext, onAgain, onBack }) {
 }
 
 // One typing lesson: a short intro, the typing screen, then results.
-export default function TypingLesson({ lesson, mode, taught, next, onFinish, onNext, onBack }) {
+export default function TypingLesson({ lesson, mode, taught, next, best = 0, onFinish, onNext, onBack }) {
   const kids = mode !== "pro";
   const [run, setRun] = useState(0);
   const [phase, setPhase] = useState("intro");
   const [s, setS] = useState(() => startTyping(lessonText(lesson, mode)));
-  const [caps, setCaps] = useState(false);
   const [done, setDone] = useState(null);
   const input = useRef("keyboard");
   const touchOnly = useMemo(isTouchOnly, []);
@@ -87,33 +91,13 @@ export default function TypingLesson({ lesson, mode, taught, next, onFinish, onN
     update(n);
   }, [kids]);
 
-  // Keys come from the whole page while typing, so the learner doesn't have to click a box first.
-  useEffect(() => {
-    if (phase === "done") return;
-    const onKey = e => {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
-      if (e.target?.closest?.("input, textarea, select, [contenteditable], [role=dialog], dialog")) return;
-      if (phase === "intro") { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); begin(); } return; }
-      if (e.key.length !== 1) return;
-      e.preventDefault();
-      if (e.repeat) return;
-      const capsOn = e.getModifierState?.("CapsLock") ?? false;
-      setCaps(capsOn);
-      // Caps Lock turns every letter into a capital; tell the learner instead of counting mistakes.
-      if (capsOn && e.key !== e.key.toLowerCase()) return;
-      hit(e.key, "keyboard");
-    };
-    const onHide = () => { if (document.hidden) update(pause(cur.current)); };
-    window.addEventListener("keydown", onKey);
-    document.addEventListener("visibilitychange", onHide);
-    return () => { window.removeEventListener("keydown", onKey); document.removeEventListener("visibilitychange", onHide); };
-  }, [phase, hit]); // eslint-disable-line react-hooks/exhaustive-deps
+  const caps = useKeys({ active: phase === "typing", waiting: phase === "intro", onChar: k => hit(k, "keyboard"), onStart: begin, onHide: () => update(pause(cur.current)) });
 
   useEffect(() => {
     if (phase !== "typing" || !finished(s)) return;
     const r = results(s);
     const stars = starsFor(lesson, mode, r);
-    setDone({ r, stars });
+    setDone({ r, stars, best, streak: s.bestStreak });
     setPhase("done");
     if (stars) sfx.tada(); else sfx.oops();
     onFinish({ r, stars, input: input.current });
@@ -139,25 +123,33 @@ export default function TypingLesson({ lesson, mode, taught, next, onFinish, onN
   }
 
   if (phase === "done") {
-    return <Results lesson={lesson} mode={mode} r={done.r} stars={done.stars} next={next} onNext={onNext} onAgain={again} onBack={onBack} />;
+    return <Results lesson={lesson} mode={mode} r={done.r} stars={done.stars} best={done.best} streak={done.streak} next={next} onNext={onNext} onAgain={again} onBack={onBack} />;
   }
 
   return (
     <div className={`stack type-screen ${kids ? "kids" : "pro"}`} key={run}>
-      <div className="type-stats" aria-live="off">
-        {kids ? (
-          <div className="type-progress" aria-label={`${progress}% done`}><i style={{ width: `${progress}%` }} /></div>
-        ) : (
-          <>
-            <span><b>{live.wpm}</b> wpm</span>
+      {kids ? (
+        <div className="type-play">
+          <Ladder value={s.pos / s.text.length} wobble={!!s.wrong} />
+          <div className="stack" style={{ gap: 10, minWidth: 0 }}>
+            <div className="type-stats"><Streak n={s.streak} /></div>
+            {caps && <p className="type-note" role="alert">Caps Lock is on. Press the Caps Lock key to turn it off.</p>}
+            <TextStrip s={s} big />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="type-stats pro" aria-live="off">
+            <Speedometer wpm={live.wpm} best={best} goal={g.wpm ?? 0} />
             <span><b>{live.accuracy}</b>% accuracy</span>
             <span><b>{live.seconds}</b>s</span>
+            <Streak n={s.streak} />
             <div className="type-progress" aria-label={`${progress}% done`}><i style={{ width: `${progress}%` }} /></div>
-          </>
-        )}
-      </div>
-      {caps && <p className="type-note" role="alert">Caps Lock is on. Press the Caps Lock key to turn it off.</p>}
-      <TextStrip s={s} big={kids} />
+          </div>
+          {caps && <p className="type-note" role="alert">Caps Lock is on. Press the Caps Lock key to turn it off.</p>}
+          <TextStrip s={s} />
+        </>
+      )}
       <Keyboard next={nextKey} wrong={s.wrong} taught={taught} onTap={touchOnly ? c => hit(c, "touch") : null} />
       <Hands next={nextKey} mode={mode} />
     </div>

@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { KeyoFace } from "../../components/journey/Guide.jsx";
 import { isUnlocked } from "../../components/journey/Journey.jsx";
 import TypingLesson from "./TypingLesson.jsx";
-import { TYPING_JOURNEY, TYPING_PARTS, defaultMode, starsFor } from "../../content/typing.js";
+import SpeedLadder from "./SpeedLadder.jsx";
+import Games from "./Games.jsx";
+import { TYPING_JOURNEY, TYPING_PARTS, LADDER, defaultMode, starsFor, gamesOpen, gamePool } from "../../content/typing.js";
 import { typingSummary, fmtMinutes } from "../../lib/typing.js";
 import { useApp } from "../../lib/AppContext.jsx";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
@@ -28,6 +30,7 @@ function bestStars(sessions) {
 export default function TypingCourse() {
   const { activeChild, childData, markDone, addTypingSession, setChildState } = useApp();
   const [open, setOpen] = useState(null);
+  const [section, setSection] = useState("lessons"); // lessons | ladder | games
   const [muted, setM] = useState(isMuted());
   useEffect(() => onMuteChange(setM), []);
 
@@ -47,7 +50,21 @@ export default function TypingCourse() {
   // Keys the learner has met so far (shown bright on the keyboard).
   const taught = useMemo(() => new Set(lesson ? [...lesson.pool, " "] : []), [lesson]);
   const go = id => { hush(); setOpen(id); window.scrollTo({ top: 0 }); };
-  const setMode = m => setChildState("typing", { ...(childData.state?.typing ?? {}), mode: m });
+  const typingState = childData.state?.typing ?? {};
+  const setMode = m => setChildState("typing", { ...typingState, mode: m });
+  const climbed = typingState.ladder ?? 0;
+  const playOpen = gamesOpen(done, mode);
+  const pool = useMemo(() => gamePool(done, mode), [done, mode]);
+  const save = (id, { r, won, input }) => addTypingSession({ lesson_id: id, mode, input, wpm: r.wpm, accuracy: r.accuracy, seconds: r.seconds, chars: r.chars, errors: r.errors, passed: won, keys: r.keys });
+  const ladderResult = ({ rung, target, r, won, input }) => {
+    save(`ladder-${target}`, { r, won, input });
+    if (won && rung + 1 > climbed) setChildState("typing", { ...typingState, ladder: rung + 1 });
+  };
+  const gameResult = (id, data, res) => {
+    save(`game-${id}`, res);
+    setChildState("typing", { ...typingState, games: { ...(typingState.games ?? {}), [id]: data } });
+  };
+  const SECTIONS = [["lessons", "📚 Lessons"], ["ladder", "🪜 Speed ladder"], ["games", "🎮 Games"]];
 
   const finish = ({ r, stars: st, input }) => {
     addTypingSession({ lesson_id: lesson.id, mode, input, wpm: r.wpm, accuracy: r.accuracy, seconds: r.seconds, chars: r.chars, errors: r.errors, passed: st > 0, keys: r.keys });
@@ -70,7 +87,7 @@ export default function TypingCourse() {
           <span className="spacer" />{muteBtn}
         </div>
         <div className="panel">
-          <TypingLesson key={lesson.id} lesson={lesson} mode={mode} taught={taught} next={next}
+          <TypingLesson key={lesson.id} lesson={lesson} mode={mode} taught={taught} next={next} best={sum.bestWpm}
             onFinish={finish} onNext={() => go(next.id)} onBack={() => go(null)} />
         </div>
         {lesson.parent && (
@@ -80,6 +97,29 @@ export default function TypingCourse() {
             <p><b>Tip:</b> {lesson.parent}</p>
           </details>
         )}
+      </div>
+    );
+  }
+
+  if (section !== "lessons") {
+    const title = section === "ladder" ? "🪜 Speed ladder" : "🎮 Typing games";
+    return (
+      <div className="stack journey typing">
+        <div className="row">
+          <button className="btn ghost" onClick={() => { hush(); setSection("lessons"); }}>← Typing</button>
+          <h3 style={{ margin: 0 }}>{title}</h3>
+          <span className="spacer" />{muteBtn}
+        </div>
+        <div className="panel">
+          {!playOpen ? (
+            <div className="stack">
+              <p className="lead">🔒 Pass the <b>Home row check</b> (lesson 8) to unlock the speed ladder and games. They use only keys you've learned.</p>
+              <div className="row"><button className="btn primary" onClick={() => setSection("lessons")}>Go to the lessons</button></div>
+            </div>
+          ) : section === "ladder"
+            ? <SpeedLadder mode={mode} pool={pool} climbed={climbed} onResult={ladderResult} />
+            : <Games mode={mode} pool={pool} bestWpm={sum.bestWpm} saved={typingState.games} onSave={(id, data, res) => gameResult(id, data, res)} />}
+        </div>
       </div>
     );
   }
@@ -106,10 +146,19 @@ export default function TypingCourse() {
         <p className="muted small-note">{MODES.find(m => m[0] === mode)[2]}</p>
       </fieldset>
 
+      <nav className="seg type-sections" aria-label="Typing sections">
+        {SECTIONS.map(([v, l]) => (
+          <button key={v} type="button" className={section === v ? "on" : ""} aria-pressed={section === v} onClick={() => { hush(); setSection(v); }}>
+            {l}{v !== "lessons" && !playOpen ? " 🔒" : ""}
+          </button>
+        ))}
+      </nav>
+
       <div className="kpis wide">
         <div className="kpi"><span>Lessons</span><b>{lessonsDone}/{steps.length}</b><small>passed</small></div>
         <div className="kpi"><span>Best speed</span><b>{sum.bestWpm || "—"}</b><small>words a minute</small></div>
         <div className="kpi"><span>Accuracy</span><b>{sum.accuracy == null ? "—" : `${sum.accuracy}%`}</b><small>last 5 lessons</small></div>
+        <div className="kpi"><span>Speed ladder</span><b>{climbed ? LADDER[climbed - 1] : "—"}</b><small>{climbed ? `rung ${climbed} of ${LADDER.length}` : "not started"}</small></div>
         <div className="kpi"><span>Practice</span><b>{fmtMinutes(sum)}</b><small>typing time</small></div>
       </div>
 
@@ -139,7 +188,7 @@ export default function TypingCourse() {
           </ol>
         </section>
       ))}
-      <p className="muted">Coming next: the bottom row, capitals and punctuation, numbers and symbols, smart practice on your weakest keys, and timed tests.</p>
+      <p className="muted">Coming next: the bottom row, capitals and punctuation, numbers and symbols, and smart practice on your weakest keys.</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { PUZZLES } from "../content/subjects.js";
 import { JOURNEYS, STEP_IDS } from "../content/journeys.js";
+import { LADDER } from "../content/typing.js";
 
 // Items a child can complete in a module: every published card, plus puzzles for the coding module.
 export function moduleItems(module, cards) {
@@ -42,6 +43,9 @@ export const BADGES = [
   { id: "maths", emoji: "🧮", name: "Maths master", how: "Finish Part C of Ollie's maths adventure", test: s => s.ids.has("math-step-12") },
   { id: "homerow", emoji: "⌨️", name: "Home row hero", how: "Pass the home row check in typing", test: s => s.ids.has("typ-step-8") },
   { id: "toprow", emoji: "🚀", name: "Top row ace", how: "Pass the top row check in typing", test: s => s.ids.has("typ-step-15") },
+  { id: "speed10", emoji: "🏃", name: "Speedy fingers", how: "Climb to 10 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 10 },
+  { id: "speed20", emoji: "⚡", name: "Lightning fingers", how: "Climb to 20 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 20 },
+  { id: "speed30", emoji: "🚀", name: "Rocket typist", how: "Climb to 30 words a minute on the typing speed ladder", test: s => s.typingSpeed >= 30 },
   { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },
@@ -62,6 +66,7 @@ export function badgeState(child, modules) {
     modulesTouched: new Set(child.progress.filter(p => !p.item_id.startsWith("activity-")).map(p => p.module_id)).size,
     moduleCount: modules.length,
     huntTicks: Object.values(child.state?.hunt ?? {}).filter(Boolean).length,
+    typingSpeed: LADDER[(child.state?.typing?.ladder ?? 0) - 1] ?? 0,
     stars: starCount(child),
   };
   return BADGES.map(b => ({ ...b, earned: b.test(s) }));

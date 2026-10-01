@@ -29,7 +29,35 @@ Anyone can switch modes at the top of the course page. Each mode has its own goa
 
 The text is new every time and uses **only keys learned so far**: drills of the new keys, then real words (including Indian words such as *dal*, *roti*, *diwali*, *goa*).
 
+**In-lesson encouragement:**
+- **Kids mode:** Keyo climbs a ladder as the lesson goes on and wobbles on a mistake (never falls).
+- **Pro mode:** a speedometer shows live speed with your personal best and the lesson's goal.
+- **Both modes:** a 🔥 streak flame appears after 10 keys in a row without a mistake and grows with the streak. Results show the best streak, and a personal best gets confetti.
+
 Badges: ⌨️ **Home row hero** (pass lesson 8) and 🚀 **Top row ace** (pass lesson 15). Parents get a milestone email for each.
+
+## 🪜 Speed ladder
+Rungs at 5, 8, 10, 12, 15, 20, 25, 30, 35, 40, 50 and 60 words a minute. Each rung is a **1-minute test**: reach that speed with **at least 90% accuracy** to climb. A fast run with too many mistakes doesn't count.
+
+During the test, a **pacer** races alongside, typing at exactly the target speed. Stay ahead of it to climb. The clock starts with the first key.
+
+Badges: 🏃 **Speedy fingers** (10 wpm), ⚡ **Lightning fingers** (20 wpm) and 🚀 **Rocket typist** (30 wpm), each with a parent email.
+
+## 🎮 Games
+| Game | How it works | Builds |
+|---|---|---|
+| 🎈 **Balloon Pop** | Letters float up on balloons; type one to pop it before it flies away. | Finding keys fast |
+| 🚀 **Word Rocket** | Every word adds fuel, every mistake leaks a little. Fill the tank before the countdown ends. | Word speed |
+| 🏎️ **Typing Race** | Race a ghost of your own best run (a pacer the first time). | Beating your record |
+| ⏱️ **Beat the Clock** | 60 seconds. 20 keys in a row without a mistake score ×2, then ×3 and ×4. | Steady rhythm |
+
+**Rules that keep it healthy:**
+- **Unlocking:** in Kids mode, the speed ladder and games unlock after the **Home row check**. In Pro mode they are open from the start.
+- **Keys:** games use only the keys learned so far.
+- **Adaptive pace:** games start a little below the learner's speed. Word Rocket asks for 7% more after a launch and 5% less after a miss. Balloon Pop gets faster with every 5 pops and starts the next game at a pace that fits.
+- **Mistakes never help:** a wrong key leaks rocket fuel and breaks the streak and combo, so smashing keys doesn't work.
+- **Gentle for kids:** Kids mode never says "game over". Balloons rise slowly, Word Rocket gets 75 seconds and Keyo cheers every result. Pro mode adds 3 lives in Balloon Pop and faster starts.
+- **Time and settings:** game time counts toward screen time, and sounds follow the sound button. Confetti is hidden for people who turn on "reduce motion" on their device.
 
 ## Tips for parents and teachers
 - **Accuracy first, speed later.** A child who types slowly and correctly will get fast; one who rushes builds bad habits.
@@ -45,6 +73,6 @@ Badges: ⌨️ **Home row hero** (pass lesson 8) and 🚀 **Top row ace** (pass 
 
 ## Coming next
 - **Release 2:** the bottom row, capitals and punctuation, numbers and symbols; smart practice on each learner's weakest keys; timed tests; progress charts; adult learner accounts.
-- **Release 3:** games (Letter Rain, Word Rocket, Typing Race) and certificates.
+- **Release 3:** certificates, and leaderboards for a family or class.
 - **Release 4:** schools: teacher accounts, classes, assignments and class reports.
 - **Later:** Hindi typing (InScript).

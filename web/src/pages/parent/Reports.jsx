@@ -9,9 +9,7 @@ import { AREAS } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
 import { typingSummary, fmtMinutes } from "../../lib/typing.js";
-import { ALL_STEPS } from "../../content/journeys.js";
-
-const LESSON = Object.fromEntries(ALL_STEPS.map(s => [s.id, s]));
+import { sessionTitle } from "../../content/typing.js";
 const keyName = c => (c === ";" ? ";" : c.toUpperCase());
 
 // Typing numbers for one child: speed, accuracy, keys to practise and recent lessons.
@@ -36,7 +34,7 @@ function TypingReport({ sessions }) {
             {sessions.slice(0, 8).map(t => (
               <tr key={t.id}>
                 <td>{fmtWhen(t.created_at)}</td>
-                <td>{LESSON[t.lesson_id]?.title ?? t.lesson_id}</td>
+                <td>{sessionTitle(t.lesson_id)}</td>
                 <td>{t.mode === "pro" ? "Pro" : "Kids"}{t.input === "touch" ? " · tapped" : ""}</td>
                 <td>{t.wpm} wpm</td>
                 <td>{t.accuracy}%</td>
