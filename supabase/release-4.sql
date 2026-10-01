@@ -88,16 +88,17 @@ drop policy if exists "teacher reads typing state" on public.child_state;
 create policy "teacher reads typing state" on public.child_state for select using (key = 'typing' and public.teaches_child(child_id));
 
 -- A parent joins their own child to a class by its code. Returns the class id and name.
+-- (Written without SELECT … INTO so the Supabase SQL editor doesn't mistake it for creating a table.)
 create or replace function public.join_class(code text, cid uuid)
 returns table (id uuid, name text)
 language plpgsql security definer set search_path = public as $$
-declare cls public.classes;
+declare
+  found_id uuid := (select c.id from public.classes c where c.join_code = upper(trim(code)));
 begin
   if not public.owns_child(cid) then raise exception 'Child not found.'; end if;
-  select * into cls from public.classes c where c.join_code = upper(trim(code));
-  if cls.id is null then raise exception 'No class has that code. Check it with the teacher.'; end if;
-  insert into public.class_members (class_id, child_id) values (cls.id, cid) on conflict do nothing;
-  return query select cls.id, cls.name;
+  if found_id is null then raise exception 'No class has that code. Check it with the teacher.'; end if;
+  insert into public.class_members (class_id, child_id) values (found_id, cid) on conflict do nothing;
+  return query select c.id, c.name from public.classes c where c.id = found_id;
 end;
 $$;
 revoke all on function public.join_class(text, uuid) from public;
