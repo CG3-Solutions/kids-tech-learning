@@ -134,3 +134,79 @@ describe("maths questions teach something (Q2)", () => {
     expect(many("math-step-4", 5).every(q => q.answer === q.visual.a - q.visual.b && q.answer > 0)).toBe(true);
   });
 });
+
+describe("language banks (Q3)", async () => {
+  const D = await import("./languageData.js");
+  const { levelOf, pickAt } = await import("./language.js");
+  const all = (bank) => Object.values(bank).flat();
+  const steps = id => [...JOURNEYS.alphabets.steps, ...JOURNEYS.words.steps, ...JOURNEYS.sentences.steps].find(s => s.id === id);
+  const many = (id, grade, n = 200) => Array.from({ length: n }, () => steps(id).gen(grade));
+
+  it("levels follow the class, with review from one level down", () => {
+    expect([1, 3, 4, 7, 8, 12].map(levelOf)).toEqual([0, 0, 1, 1, 2, 2]);
+    const counts = [0, 0, 0];
+    for (let i = 0; i < 400; i++) counts[pickAt({ 0: ["a"], 1: ["b"], 2: ["c"] }, 10)[1]]++;
+    expect(counts[0]).toBe(0);
+    expect(counts[2]).toBeGreaterThan(counts[1]);
+    expect(pickAt({ 1: ["x"] }, 2)[0]).toBe("x"); // a bank that starts at level 1 still works for younger children
+  });
+  it("banks are bigger than before and have no repeats", () => {
+    const size = b => all(b).length;
+    expect(size(D.BUILD)).toBeGreaterThanOrEqual(55);
+    expect(size(D.PICTURE)).toBeGreaterThanOrEqual(90);
+    expect(size(D.HOMOPHONES)).toBeGreaterThanOrEqual(40);
+    expect(size(D.SPELLING)).toBeGreaterThanOrEqual(55);
+    expect(size(D.SPEECH)).toBeGreaterThanOrEqual(12);
+    for (const bank of [D.BUILD, D.PICTURE, D.SPELLING, D.PLURALS, D.MISSING, D.HOMOPHONES, D.TENSES, D.CAPITALS]) {
+      const keys = all(bank).map(x => JSON.stringify(Array.isArray(x) ? x[0] : x));
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+  it("one right answer: no word belongs to two pairs in the same level (opposites, synonyms)", () => {
+    for (const bank of [D.OPPOSITES, D.SYNONYMS]) for (const pairs of Object.values(bank)) {
+      const ws = pairs.flat();
+      expect(new Set(ws).size, ws.join(",")).toBe(ws.length);
+    }
+    for (const fams of Object.values(D.RHYMES)) { const ws = fams.flat(); expect(new Set(ws).size).toBe(ws.length); }
+  });
+  it("plural choices are real mistakes, never the right answer twice", () => {
+    for (const [one, many, ...wrong] of all(D.PLURALS)) {
+      expect(wrong).toHaveLength(2);
+      expect(wrong).not.toContain(many);
+      expect(new Set([many, ...wrong]).size).toBe(3);
+      expect(wrong.join(" ")).not.toMatch(/en$|een /); // no invented "-en" words like "gooseen"
+    }
+  });
+  it("multiple-choice items include their answer, with useful hints for sound-alike words", () => {
+    for (const [s, a, opts] of [...all(D.MISSING), ...all(D.TENSES)]) { expect(opts, s).toContain(a); expect(s).toContain("___"); }
+    for (const [s, a, opts, hint] of all(D.HOMOPHONES)) { expect(opts, s).toContain(a); expect(hint?.length, s).toBeGreaterThan(8); }
+    for (const [s, a, opts] of D.JOINERS[2]) expect(opts, s).toContain(a);
+    for (const [s, a] of D.JOINERS[0]) expect(D.JOIN_WORDS).toContain(a);
+    for (const [, w, k] of all(D.WORD_KINDS)) expect(D.KINDS[k], w).toBeTruthy();
+    for (const [s, subj, pred] of D.SUBJECTS[1]) expect(`${subj} ${pred}.`).toBe(s);
+    for (const [right, ...wrong] of [...all(D.PUNCT), ...all(D.VOICE).map(x => x.slice(1)), ...all(D.SPEECH).map(x => x.slice(1)), ...all(D.SPELLING)]) {
+      expect(wrong).not.toContain(right); expect(new Set(wrong).size).toBe(wrong.length);
+    }
+  });
+  it("ordering puzzles never start already solved", () => {
+    for (const id of ["abc-step-7", "abc-step-9", "words-step-2", "sent-step-1"]) for (const g of [2, 5, 9]) for (const q of many(id, g, 150)) {
+      expect(q.tiles.join("|"), `${id} g${g}`).not.toBe(q.answer.join("|"));
+    }
+  });
+  it("dictionary order: same first letter from Class 4, deeper letters from Class 8", () => {
+    for (const q of many("abc-step-9", 5)) expect(new Set(q.answer.map(w => w[0])).size).toBe(1);
+    for (const q of many("abc-step-9", 9)) { expect(new Set(q.answer.map(w => w.slice(0, 2))).size).toBe(1); expect([...q.answer].sort()).toEqual(q.answer); }
+  });
+  it("what comes next never offers a letter that is already shown", () => {
+    for (const q of many("abc-step-5", 2)) {
+      const shown = q.prompt.split(/\s+/).filter(x => x !== "_");
+      for (const o of q.options) if (o !== q.answer) expect(shown).not.toContain(o);
+    }
+  });
+  it("older children get harder words", () => {
+    const young = new Set(D.PICTURE[0].map(x => x[0]));
+    const g10 = many("words-step-1", 10).map(q => q.answer);
+    expect(g10.filter(w => young.has(w)).length).toBe(0);
+    expect(many("words-step-6", 2).every(q => all({ 0: D.SPELLING[0] }).some(x => x[0] === q.answer))).toBe(true);
+  });
+});
