@@ -45,6 +45,7 @@ export const BADGES = [
   { id: "first", emoji: "✨", name: "First spark", how: "Learn your first card", test: s => s.items >= 1 },
   { id: "ten", emoji: "🔟", name: "Ten cards", how: "Learn 10 cards", test: s => s.cards >= 10 },
   { id: "circuit", emoji: "🔌", name: "Circuit builder", how: "Finish Part A: circuit basics", test: s => s.ids.has("circuit-step-5") || s.ids.has("activity-circuit") },
+  { id: "doorbell", emoji: "🔔", name: "Doorbell builder", how: "Build, test and fix a doorbell (Volt's mission)", test: s => s.ids.has("circuit-mission-bell") },
   { id: "gates", emoji: "🚦", name: "Logic gatekeeper", how: "Finish Part B: switches that think", test: s => s.ids.has("circuit-step-12") },
   { id: "computer", emoji: "🖥️", name: "Computer builder", how: "Finish Part C: the adder and memory", test: s => s.ids.has("circuit-step-15") },
   { id: "abc", emoji: "🔠", name: "Alphabet star", how: "Finish Polly's alphabet adventure", test: s => s.ids.has("abc-step-9") },

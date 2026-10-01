@@ -1356,3 +1356,10 @@ button.kb-key { cursor: pointer }
 .key-screen .glyph i.on { background: #7CFFB2; box-shadow: 0 0 6px #7CFFB2 }
 .deeper-note { background: color-mix(in srgb, var(--lv4) 12%, var(--surface)); border-left: 5px solid var(--lv4); border-radius: 0 12px 12px 0; padding: 10px 14px; margin: 0 }
 @media (prefers-reduced-motion: reduce) { .wire b { animation: none } }
+
+/* Volt's doorbell mission */
+.ghost-wire { stroke-dasharray: 8 8; opacity: .45 }
+.bell-btn { font: inherit; font-weight: 800; font-size: 1.1rem; padding: 16px 22px; border-radius: 999px; border: 3px solid var(--ink); background: var(--spark); color: var(--ink); box-shadow: 0 5px 0 var(--ink); user-select: none; -webkit-user-select: none; touch-action: none; -webkit-touch-callout: none; cursor: pointer; max-width: 100% }
+.bell-btn.held { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink) }
+.bell-house { font-size: 4rem; text-align: center; line-height: 1.1 }
+.bell-btn.door { font-size: 1rem; padding: 12px 16px }

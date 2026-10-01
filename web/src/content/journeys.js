@@ -1,6 +1,6 @@
 // Every step-by-step adventure, keyed by the subject's `activity`. Plain data (no React),
 // so progress, badges and parent reports can use it.
-import { CIRCUIT_JOURNEY, CIRCUIT_PARTS } from "./circuits.js";
+import { CIRCUIT_PATH, CIRCUIT_PARTS } from "./circuits.js";
 import { BINARY_JOURNEY } from "./subjects.js";
 import { ALPHABET_JOURNEY, ALPHABET_PARTS, WORDS_JOURNEY, WORDS_PARTS, SENTENCES_JOURNEY, SENTENCES_PARTS } from "./practice/language.js";
 import { TYPING_JOURNEY, TYPING_PARTS } from "./typing.js";
@@ -14,7 +14,7 @@ export const JOURNEYS = {
   numbers: { name: "🔟 Ollie's number adventure", guide: "maths", steps: NUMBERS_JOURNEY, parts: NUMBERS_PARTS, intro: "Count, compare and understand big numbers." },
   mathematics: { name: "➕ Ollie's maths adventure", guide: "maths", steps: MATHS_JOURNEY, parts: MATHS_PARTS, intro: "From adding apples to algebra and Pythagoras." },
   computer: { name: "💻 Chip's computer path", guide: "computer", steps: COMPUTER_PATH, parts: COMPUTER_PARTS, intro: "How computers work, one step at a time." },
-  circuit: { name: "🔌 Volt's circuits & gates", guide: "circuits", steps: CIRCUIT_JOURNEY, parts: CIRCUIT_PARTS },
+  circuit: { name: "🔌 Volt's circuits & gates", guide: "circuits", steps: CIRCUIT_PATH, parts: CIRCUIT_PARTS, intro: "Build a doorbell, then gates that add and remember." },
   binary: { name: "🔢 Bit's binary adventure", guide: "binary", steps: BINARY_JOURNEY, parts: [] },
   typing: { name: "⌨️ Keyo's typing course", guide: "typing", steps: TYPING_JOURNEY, parts: TYPING_PARTS, intro: "Touch typing, finger by finger." },
 };
