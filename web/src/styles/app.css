@@ -1546,3 +1546,58 @@ button.kb-key { cursor: pointer }
 .proj-card { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px }
 .proj-card p { margin: 4px 0 0 }
 .lab-unit-head > div { flex: 1 1 200px; min-width: 0 }
+
+/* ───────── Circuit Lab: easier for small hands ───────── */
+/* The hint keeps one height so the board never jumps when the words change. */
+.lab-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-height: 4.6em; line-height: 1.35 }
+.lab-hint > span:first-child { flex: 1 1 220px }
+.lab-hint-actions { display: flex; gap: 6px; flex-wrap: wrap }
+.lab-hint-actions .btn { min-height: 40px }
+.lab-hint.warn { background: color-mix(in srgb, var(--spark) 20%, var(--surface)); border: 2px solid var(--spark) }
+@media (min-width: 980px) { .lab-hint { min-height: 3.2em } }
+.lab-undo { font-weight: 800; min-width: 96px !important; font-size: 1.05rem }
+.lab-stage { position: relative; margin: 0 auto; max-width: none }
+.lab-stage .lab-board { width: 100% }
+.lab-post { r: 8px }
+/* Picking up, dragging and landing */
+.lab-part.lifted:not(.dragging) .body { filter: drop-shadow(0 6px 4px rgba(0, 0, 0, .28)) }
+.lab-part.dragging { opacity: .82; filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .3)) }
+.lab-landing { fill: none; stroke-width: 5; pointer-events: none }
+.lab-landing.ok { stroke: var(--good); fill: color-mix(in srgb, var(--good) 25%, transparent) }
+.lab-landing.bad { stroke: var(--bad); fill: color-mix(in srgb, var(--bad) 25%, transparent) }
+/* + and − markers */
+.lab-part .pole circle { stroke: #fff; stroke-width: 2.5 }
+.lab-part .pole.plus circle { fill: #D7261E }
+.lab-part .pole.minus circle { fill: #16161A }
+.lab-part text.pole-sign { fill: #fff; font-weight: 900 }
+.lab-part.flagged .body { stroke: var(--spark); stroke-width: 4; stroke-dasharray: 7 5 }
+.lab-part text.flag { fill: var(--ink) }
+/* Guide: the next part pulses; "Show me" makes it solid with a finger */
+.lab-part.ghost { animation: lab-ghost 1.1s ease-in-out infinite alternate }
+.lab-part.ghost.show-me { animation: none; opacity: .85 }
+@keyframes lab-ghost { from { opacity: .22 } to { opacity: .6 } }
+.lab-tray-item.next { animation: lab-nudge 1s ease-in-out infinite alternate }
+@keyframes lab-nudge { from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--lv4) 30%, transparent) } to { box-shadow: 0 0 0 7px color-mix(in srgb, var(--lv4) 45%, transparent) } }
+.lab-cheer { font-size: 34px; font-weight: 900; fill: var(--good); paint-order: stroke; stroke: var(--surface); stroke-width: 6px; animation: lab-pop 1.2s ease-out forwards; pointer-events: none }
+@keyframes lab-pop { 0% { opacity: 0; transform: translateY(8px) } 20% { opacity: 1 } 75% { opacity: 1 } 100% { opacity: 0; transform: translateY(-14px) } }
+.lab-hand { pointer-events: none }
+/* The small toolbar next to the chosen part */
+.lab-float { position: absolute; z-index: 5; display: flex; gap: 4px; padding: 4px; background: var(--surface); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .22); transform: translateY(-100%); white-space: nowrap; max-width: calc(100% - 8px); flex-wrap: wrap }
+.lab-float.below { transform: none }
+.lab-fbtn { min-width: 44px; min-height: 44px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; font-size: 1.25rem; font-weight: 800; cursor: pointer; display: grid; place-items: center; padding: 0 6px; touch-action: none; user-select: none; -webkit-user-select: none }
+.lab-fbtn.sw { min-width: 64px; font-size: 1rem; background: var(--ink); color: var(--board); border-color: var(--ink) }
+.lab-fbtn.sw.on { background: var(--good); border-color: var(--good); color: #fff }
+.lab-fbtn.danger { color: var(--bad) }
+.lab-fbtn.pulse { border-color: var(--spark); animation: lab-nudge .8s ease-in-out infinite alternate }
+/* Bigger, clearer tray */
+.lab-tray-item { min-height: 64px }
+.lab-tray-item .em { font-size: 1.7rem }
+.lab-tray-item:disabled { opacity: .3; filter: grayscale(1) }
+.lab-tray-done { align-self: center; color: var(--good); font-weight: 700; padding: 6px 10px }
+@media (max-width: 979px) { .lab-tray-item { width: 92px; min-height: 76px } .lab-tray-item .em { font-size: 1.6rem } .lab-tray-item .nm { font-size: .8rem } }
+@media (prefers-reduced-motion: reduce) { .lab-part.ghost, .lab-tray-item.next, .lab-fbtn.pulse { animation: none } .lab-part.ghost { opacity: .45 } }
+/* Nothing above the board changes size while building: the hint sits under the board. */
+.lab { grid-template-areas: "toolbar" "act" "board" "hint" "tray" "insp" "desc" "ex" }
+@media (min-width: 980px) { .lab { grid-template-areas: "tray toolbar" "tray act" "tray board" "tray hint" "tray insp" "tray desc" "tray ex" } }
+.lab-hint { min-height: 0 }
+@media (max-width: 979px) { .lab .lab-toolbar .lab-zoom { display: none } .lab .lab-toolbar .lab-undo { min-width: 84px !important; padding: 6px 10px } }

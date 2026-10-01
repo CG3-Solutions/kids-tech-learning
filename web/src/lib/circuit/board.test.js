@@ -3,7 +3,8 @@ import { COLS, ROWS, pinPosts, coveredPosts, fits, makePart, endOptions, nextId,
 import { evaluate } from "./engine.js";
 import { KIT } from "../../content/lab/parts.js";
 import { EXAMPLES } from "../../content/lab/examples.js";
-import { buildBoard, turned } from "./board.js";
+import { buildBoard, turned, flipped, clashes, reversedOf, strays, samePlace } from "./board.js";
+import { LAYOUTS } from "../../content/lab/layouts.js";
 
 // Build a board step by step, like a child: makePart for each piece.
 function build(steps) {
@@ -151,5 +152,35 @@ describe("turning", () => {
     expect(Object.values(pinPosts(turned(turned(turned(turned(chip))))))).toEqual(Object.values(pinPosts(chip)));
     const wire = { type: "wire", at: [0, 0], dir: 0, len: 3 }; // middle between posts: turns around its first end
     expect(turned(wire).at).toEqual([0, 0]);
+  });
+});
+
+describe("flip, clashes, almost-right and spare parts", () => {
+  it("flip swaps the ends in place", () => {
+    const bat = { type: "battery", at: [0, 2], dir: 1 }; // + A3, − A5
+    expect(pinPosts(flipped(bat))).toEqual({ "+": [0, 4], "−": [0, 2] });
+    expect(pinPosts(flipped(flipped(bat)))).toEqual(pinPosts(bat));
+  });
+  it("parts can share an end but not sit on each other", () => {
+    const board = buildBoard([["battery", [0, 2], { dir: 1 }], ["wire", [0, 2], { dir: 0, len: 2 }]]);
+    expect(clashes(board, { uid: "x", type: "lamp", at: [2, 2], dir: 1 })).toBe(false);       // shares nothing
+    expect(clashes(board, { uid: "x", type: "slide", at: [0, 2], dir: 1 })).toBe(true);       // right on top of the battery
+    expect(clashes(board, { uid: "x", type: "lamp", at: [0, 4], dir: 0 })).toBe(false);       // touches the battery's end only
+    expect(clashes(board, { uid: "x", type: "lamp", at: [0, 3], dir: 0 })).toBe(true);        // across the battery's middle
+    expect(clashes(board, { uid: "x", type: "wire", at: [0, 3], dir: 0, len: 2 })).toBe(false); // connectors may cross
+  });
+  it("no guided layout has parts sitting on each other", () => {
+    for (const [id, steps] of Object.entries(LAYOUTS)) {
+      const board = buildBoard(steps);
+      for (const p of board) expect(clashes(board, p), `${id}: ${p.id}`).toBe(false);
+    }
+  });
+  it("spots a part that's in the right posts but backwards, and parts the guide doesn't need", () => {
+    const guide = buildBoard(LAYOUTS["lab-1-1"]);
+    const backwards = flipped(guide[0]);
+    expect(samePlace(backwards, guide[0])).toBe(false);
+    expect(reversedOf([backwards], guide[0])).toBe(backwards);
+    const extra = { ...guide[1], uid: "extra", at: [6, 0], dir: 1 };
+    expect(strays([backwards, extra], guide)).toEqual([extra]);
   });
 });

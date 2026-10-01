@@ -159,9 +159,8 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
         <summary>🎯 What it must do</summary>
         <ul>{checkLines(project).map((l, i) => <li key={i}>{l}</li>)}</ul>
       </details>
-      {(board.length > 0 || fixIt) && (
-        <button className="btn ghost" onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }}>↺ Start again</button>
-      )}
+      {/* Always shown (just disabled), so the row above the board never changes size. */}
+      <button className="btn ghost" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }}>↺ Start again</button>
     </>
   );
 

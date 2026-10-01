@@ -145,6 +145,27 @@ export function turned(part) {
   return { ...part, dir, at: [cx - dy, cy + dx] };
 }
 
+// Flip a part end for end where it stands (two-pin parts and connectors): ⇅ Flip.
+export function flipped(part) {
+  const pins = Object.values(pinPosts(part));
+  if (pins.length !== 2) return turned(turned(part));
+  return { ...part, at: pins[1], dir: ((part.dir ?? 0) + 2) % 4 };
+}
+// Parts with a + end, where the direction matters: these get the ⇅ Flip button.
+export const HAS_DIRECTION = new Set(["battery", "led", "motor"]);
+
+// Would `part` sit on top of another part's body? Ends may share a post (that's how parts join),
+// but two parts can't both cover the same post unless it's an end of both. Connectors may cross.
+export function clashes(parts, part) {
+  if (part.type === "wire") return false;
+  const mine = coveredPosts(part).map(key), myPins = new Set(Object.values(pinPosts(part)).map(key));
+  return parts.some(o => {
+    if (o.uid === part.uid || o.type === "wire") return false;
+    const theirPins = new Set(Object.values(pinPosts(o)).map(key));
+    return coveredPosts(o).map(key).some(k => mine.includes(k) && !(myPins.has(k) && theirPins.has(k)));
+  });
+}
+
 // Is part `p` where the guide part `g` should go? Same type and the same posts for each pin
 // (two-pin parts that work either way round, and connectors, may face either way).
 const EITHER_WAY = new Set(["wire", "lamp", "resistor", "slide", "button", "speaker", "ldr", "touch", "probe", "piezo"]);
@@ -155,6 +176,16 @@ export function samePlace(p, g) {
   if (same || !EITHER_WAY.has(g.type)) return same;
   const [x, y] = Object.values(a).map(key).sort(), [u, w] = Object.values(b).map(key).sort();
   return x === u && y === w;
+}
+
+// A part in the right posts but facing the wrong way round (e.g. a battery with + and − swapped).
+export function reversedOf(parts, g) {
+  const want = Object.values(pinPosts(g)).map(key).sort().join("|");
+  return parts.find(p => p.type === g.type && !samePlace(p, g) && Object.values(pinPosts(p)).map(key).sort().join("|") === want) ?? null;
+}
+// Parts on the board that aren't part of the guided layout (and aren't just facing the wrong way).
+export function strays(parts, guide) {
+  return parts.filter(p => !guide.some(g => samePlace(p, g) || reversedOf([p], g)));
 }
 
 // Build a board from [type, at, options] steps (examples and tests). Returns null if a step doesn't fit.
