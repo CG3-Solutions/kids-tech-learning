@@ -85,7 +85,7 @@ function ClassDetail({ cls, onDeleted }) {
         <p className="muted">Share the code with parents. They add their child under <b>Learners → Join a class</b>. You'll see only typing results: lessons, speed, accuracy and tests.</p>
         <div className="kpis wide">
           <div className="kpi"><span>Students</span><b>{rows.length}</b><small>joined</small></div>
-          <div className="kpi"><span>Average best speed</span><b>{rows.length ? avg : "—"}</b><small>words a minute</small></div>
+          <div className="kpi"><span>Average best speed</span><b>{avg || "—"}</b><small>words a minute</small></div>
           <div className="kpi"><span>Tasks</span><b>{assignments.length}</b><small>set</small></div>
         </div>
       </section>
