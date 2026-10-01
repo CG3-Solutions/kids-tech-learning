@@ -3,7 +3,7 @@ import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
 import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice } from "../../lib/voice.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
-import { neuralAvailable, neuralEnabled, setNeuralEnabled } from "../../lib/neuralVoice.js";
+import { neuralAvailable, neuralEnabled, setNeuralEnabled, testNeural, neuralLastError, explain } from "../../lib/neuralVoice.js";
 
 export default function VoiceSound() {
   const { api, children, loadAccount, setError } = useApp();
@@ -12,6 +12,13 @@ export default function VoiceSound() {
   useEffect(() => onMuteChange(setM), []);
   const [speed, setSpeed] = useState(voiceSpeed().id);
   const [natural, setNatural] = useState(neuralEnabled());
+  const [test, setTest] = useState(() => (neuralLastError() ? { ok: false, error: explain(new Error(neuralLastError())) } : null));
+  const runTest = async () => {
+    setTest({ busy: true });
+    const r = await testNeural();
+    setTest(r);
+    if (r.ok) { const a = new Audio(r.url); a.play().catch(() => {}); }
+  };
   // Device voices arrive a moment after the page loads in some browsers.
   const [voices, setVoices] = useState(() => window.speechSynthesis?.getVoices?.() ?? []);
   useEffect(() => {
@@ -54,6 +61,12 @@ export default function VoiceSound() {
             ? "Lessons are read by Google's Indian English voices: clear, with stress and pauses, the same on every device. Lines with your child's name use this device's voice, so names are never sent."
             : "Available when you're signed in (not in the demo). Until then, this device's voice is used."}</small></span>
           <input id="nv" type="checkbox" role="switch" disabled={!neuralAvailable()} checked={natural && neuralAvailable()} onChange={e => { setNeuralEnabled(e.target.checked); setNatural(e.target.checked); }} /><span className="switch" aria-hidden="true" /></label>
+        {neuralAvailable() && natural && (
+          <div className="voice-test">
+            <button className="btn small" disabled={test?.busy} onClick={runTest}>{test?.busy ? "Testing…" : "▶ Test natural voice"}</button>
+            {test && !test.busy && <p className={test.ok ? "ok" : "bad"} role="status">{test.ok ? "✓ Natural voices are working." : `✗ ${test.error}`}</p>}
+          </div>
+        )}
         <div className="toggle-row"><span><b>Speaking speed</b><small>Slower helps younger children and new English speakers. Children can also tap 🐢 Slowly on any line.</small></span>
           <div className="seg" role="radiogroup" aria-label="Speaking speed">
             {SPEEDS.map(sp => <button key={sp.id} role="radio" aria-checked={speed === sp.id} className={speed === sp.id ? "on" : ""}

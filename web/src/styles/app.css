@@ -1236,3 +1236,7 @@ button.kb-key { cursor: pointer }
 .hear-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px }
 .hear-row .talking { border-color: var(--spark); box-shadow: 0 0 0 3px var(--glow) }
 .tips { display: grid; gap: 6px; padding-left: 20px }
+.voice-test { display: grid; gap: 6px; padding: 4px 0 12px; border-bottom: 1px solid var(--line) }
+.voice-test p { margin: 0; font-weight: 600 }
+.voice-test p.ok { color: var(--good) }
+.voice-test p.bad { color: var(--bad) }
