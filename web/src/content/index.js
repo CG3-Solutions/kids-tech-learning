@@ -26,6 +26,7 @@ export const SEED = {
 
 export const ACTIVITIES = {
   circuit: { title: "Circuits & gates", emoji: "🔌" },
+  lab: { title: "Circuit Lab", emoji: "🧪" },
   binary: { title: "Bit's adventure", emoji: "🤖" },
   coding: { title: "Robot puzzles", emoji: "🧩" },
   hunt: { title: "Treasure hunt", emoji: "🔎" },
@@ -42,6 +43,6 @@ export const ACTIVITIES = {
 export const GLOSSARY_MODULES = new Set(["computer"]);
 
 // Extra activities shown on some modules alongside their main one.
-export const EXTRA_ACTIVITIES = { electricity: ["hunt", "machines"] };
+export const EXTRA_ACTIVITIES = { electricity: ["lab", "hunt", "machines"] };
 
 export const AVATARS = ["🦊", "🐯", "🐼", "🐸", "🦁", "🐵", "🐨", "🦄", "🐙", "🐧", "🦖", "🐝"];

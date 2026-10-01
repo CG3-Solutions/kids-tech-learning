@@ -91,6 +91,7 @@ export function solve(c, inputs = {}, drive = {}) {
       const P = p.pins, val = inputOf(p, inputs);
       switch (p.type) {
         case "battery": thevenin(P["+"], P["−"], MODEL.battery.volts, MODEL.battery.ohms); break;
+        case "wire": cond(P.a, P.b, 1 / MODEL.switchOhms); break;
         case "slide": if (val === "on") cond(P.a, P.b, 1 / MODEL.switchOhms); break;
         case "button": if (val === "down") cond(P.a, P.b, 1 / MODEL.switchOhms); break;
         case "changeover": cond(P.com, P[val === "down" ? "down" : "up"], 1 / MODEL.switchOhms); break;
@@ -152,6 +153,7 @@ export function solve(c, inputs = {}, drive = {}) {
     let amps = 0;
     switch (p.type) {
       case "battery": amps = (MODEL.battery.volts - across(P["+"], P["−"])) / MODEL.battery.ohms; break; // out of +
+      case "wire": amps = across(P.a, P.b) / MODEL.switchOhms; break;
       case "slide": amps = val === "on" ? across(P.a, P.b) / MODEL.switchOhms : 0; break;
       case "button": amps = val === "down" ? across(P.a, P.b) / MODEL.switchOhms : 0; break;
       case "lamp": amps = across(P.a, P.b) / MODEL.lamp.ohms; break;

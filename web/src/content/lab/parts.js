@@ -5,11 +5,14 @@
 
 // The virtual kit: how many of each part a project may use.
 export const KIT = {
-  battery: 1, slide: 2, button: 2, changeover: 2, lamp: 2, led: 3, resistor: 3, ldr: 1, motor: 1,
+  wire: 40, battery: 1, slide: 2, button: 2, changeover: 2, lamp: 2, led: 3, resistor: 3, ldr: 1, motor: 1,
   speaker: 1, piezo: 1, melody: 1, siren: 1, fx: 1, touch: 1, probe: 1, transistor: 1,
 };
 
 export const PARTS = {
+  wire: { name: "Connector", emoji: "➖", pins: ["a", "b"], explorer: true,
+    say: "A metal strip that joins two posts, so electricity can go from one to the other.",
+    model: "0.001 Ω. On the board, connectors come 1 to 6 posts long; in the circuit notation, nets that share a name are already joined." },
   battery: { name: "Battery pack", emoji: "🔋", pins: ["+", "−"], explorer: true,
     say: "Two 1.5 V cells make 3 volts. The battery pushes electricity out of + and back into −.",
     model: "3 V source with 0.5 Ω inside. More than 1 A out of it is a short circuit: flagged, and the board switches off." },

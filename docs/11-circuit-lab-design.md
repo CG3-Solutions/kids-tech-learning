@@ -33,7 +33,7 @@ The Circuit Lab lets children build real electronic circuits on screen: pick par
 | 🧪 Test clips | a b | air, spoon, coin, foil, key, pencil, salt water, tap water, wet/dry soil, finger, paper, plastic, rubber, wood | | 1 |
 | 🔺 Transistor (NPN) | c b e | | | 1 |
 
-Plus connector strips (1–6 posts long) and two flying leads, which are just wire.
+Plus connectors, 1–6 posts long, which are just wire. (Flying leads, which can join posts that aren't in a line, are planned.)
 
 Every part's electrical model is written in `web/src/content/lab/parts.js` (`model`). Here are the ones that matter most:
 - **Bulb:** about 10 Ω. Below 60 mA it doesn't glow; 60–220 mA is dim; above that it's on.
@@ -103,7 +103,41 @@ What the simulation found in the release 1 projects, now fixed:
 - The light-beam projects now use the sensor's *lit by the lamp* setting, so the bulb really makes the beam.
 - The sunny-day fan's 10 kΩ resistor did nothing, so it was removed.
 
-## The board and the child's experience (releases 3–4)
+## The board (release 3, built)
+
+It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/components/lab/` (screen and part drawings) and `web/src/lib/circuit/board.js` (the board logic, unit-tested).
+
+- **Board:** 7 × 9 posts, labelled A–G and 1–9.
+  - Each post is a point in the circuit; a connector joins two posts.
+  - A part's pins snap onto posts. Two-pin parts span two posts; chips are 3 × 3 with their pins on the edges.
+  - A new part sits one layer above anything it overlaps.
+  - Parts are labelled like a circuit diagram: B1, S1, L1, D1, MEL1…
+- **Building by tapping:**
+  - Pick a part in the tray, then tap a post for one end. The posts where the other end can go glow; tap one. A connector can be 1–6 posts long.
+  - Chips and other many-pin parts go down with one tap and turn into the board if needed.
+  - The tray shows how many of each part are left in the kit.
+- **Changing a build:**
+  - Tap a part to choose it. Tapping a switch also flips it; press and hold a push button to press it.
+  - Drag a part to move it.
+  - The chosen part's panel has its controls: switch, press, two-way position, light level, finger on/off, material in the test clips, 👏 clap, resistor value and LED colour. It also has ⟳ Turn, ✥ Move and 🗑 Remove.
+  - Undo and redo cover up to 50 steps.
+- **Live:**
+  - The engine runs about 20 times a second. Current flows along connectors (speed shows strength, direction shows which way) and bulbs glow dim or bright.
+  - LEDs light in their colour, flash with the chips, or show damage. Fans spin slow, fast or backwards.
+  - Speakers show sound waves while chips play their synthesized sounds.
+  - A short circuit dims the board and says what to fix.
+- **🔬 Meter:** current through the chosen part and the voltage across it. It's on by default from Class 9 and for grown-ups, and anyone can turn it on.
+- **Phones first:**
+  - The tray sits right under the board, so a child can pick a part and tap the board without scrolling. Picking a part scrolls the board into view, below the sticky top bar.
+  - Zoom with the buttons or by pinching. When zoomed in, dragging empty board scrolls it.
+  - On desktop the tray is a column on the left and the board fits the screen height.
+- **Keyboard and screen readers:**
+  - Arrow keys move a cursor over the posts and Enter taps. R turns, Delete removes, Escape cancels, Ctrl+Z / Ctrl+Y undo and redo.
+  - "Describe my circuit" lists, in words, what is joined to what and what each part is doing. Changes are announced politely.
+- **Saving:** each child's board and switch settings save automatically on this device.
+- **Examples:** *Light it up*, *Musical doorbell* and *Fan and light together*.
+
+## The child's experience in projects (release 4)
 
 - **A board with posts in a grid.**
   - Parts snap between posts. Connector strips come in lengths 1–6. Parts can stack in layers, like real kits.
@@ -144,7 +178,7 @@ What the simulation found in the release 1 projects, now fixed:
 |---|---|---|
 | 1 | Study map + project specs (done) | Study map, baseline design, kit, notation, 100 projects as data, tests, these documents |
 | 2 | Simulation engine (done) | Solver, part models, chip behaviours, sound; all 100 reference circuits pass their checks |
-| 3 | Board + free build | Grid, snapping, layers, tray, undo, zoom, autosave, live current and outputs |
+| 3 | Board + free build (done) | Grid, snapping, layers, tray, undo, zoom, autosave, live current and outputs |
 | 4 | Project player + units 1–3 | Guided/Challenge modes, behaviour marking, predict and explain, badges (24 projects) |
 | 5 | Units 5–6 | Motion and sound (20 projects) |
 | 6 | Units 4 and 7 | Conductors and sensors, clap button and optional microphone (22 projects) |

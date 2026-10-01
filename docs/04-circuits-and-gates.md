@@ -67,3 +67,13 @@ _After step 4 · open from 4th standard. Build any circuit you like, with parts 
 
 ## The big idea
 A switch is ON or OFF, just like a bit (1 or 0) in **Binary Magic**. Wire switches together cleverly and they make decisions (gates). Gates can add numbers (the adder) and remember them (the latch). A computer is billions of tiny switches wired this way.
+
+## 🧪 Circuit Lab (free build)
+The **Circuit Lab** tab is a board where your child builds real circuits from a kit of parts, and sees them work:
+- **Parts:** batteries, connectors, switches and buttons, bulbs and LEDs, a motor with a fan, a speaker, sensors (light, touch, test clips, a clap sensor) and sound chips.
+- **Building:** pick a part from the tray, then tap two posts to snap it on. Tap switches to flip them; press and hold buttons.
+- **What they see:** current flows along the wires, bulbs glow, fans spin and chips play tunes and sirens. A short circuit is caught with a warning, safely.
+- **Help:** "Describe my circuit" explains what's connected, and the 🔬 meter shows the current and voltage.
+
+Try the examples together, then ask your child to change one thing and predict what will happen before switching on. Guided projects (100 of them) come next, in the same lab.
+
