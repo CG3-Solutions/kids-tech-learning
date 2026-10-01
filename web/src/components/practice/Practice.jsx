@@ -111,7 +111,7 @@ export default function Practice({ spec, grade, onComplete, Face }) {
       <div className="q-card" {...testHook(q, answerText)}>
         <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}`}>
           {q.prompt}
-          <button className="btn ghost small hear" onClick={() => speak(q.say ?? q.prompt)} aria-label="Read the question aloud">🔊</button>
+          <button className="btn ghost small hear" onClick={() => speak(q.say ?? q.prompt, { force: true })} aria-label="Read the question aloud">🔊</button>
         </div>
         <Visual v={q.visual} />
         {q.type === "choice" && (
@@ -134,7 +134,7 @@ export default function Practice({ spec, grade, onComplete, Face }) {
 export function LearnCards({ spec, onComplete, Face }) {
   const [open, setOpen] = useState(null);
   const [seen, setSeen] = useState(new Set());
-  const show = it => { setOpen(it); setSeen(s => new Set(s).add(it.big)); speak(it.say); sfx.click(); };
+  const show = it => { setOpen(it); setSeen(s => new Set(s).add(it.big)); speak(it.say, { force: true }); sfx.click(); };
   const all = seen.size === spec.items.length;
   return (
     <div className="step-body">
@@ -145,7 +145,7 @@ export function LearnCards({ spec, onComplete, Face }) {
           <span className="lb-letter">{open.big}<small>{open.small}</small></span>
           <span className="lb-emoji" aria-hidden="true">{open.emoji}</span>
           <span className="lb-word"><b>{open.big}</b>{open.word.slice(1)}</span>
-          <button className="btn ghost small" onClick={() => speak(open.say)}>🔊 Hear again</button>
+          <button className="btn ghost small" onClick={() => speak(open.say, { force: true })}>🔊 Hear again</button>
         </div>
       )}
       <div className="learn-grid">
