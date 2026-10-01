@@ -41,12 +41,12 @@ export function projectsMarkdown() {
     out.push("| # | Project | Level | Big question | Parts | Checks | Ideas |");
     out.push("|---|---|---|---|---|---|---|");
     for (const p of PROJECTS.filter(x => x.unit === u.n)) {
-      const title = `${p.emoji} **${p.title}**${p.safety ? " ⚠️" : ""}${p.game ? " 🎮" : ""}`;
+      const title = `${p.emoji} **${p.title}**${p.safety ? " ⚠️" : ""}${p.game ? " 🎮" : ""}${p.start ? " 🔧" : ""}`;
       out.push(`| ${p.id.replace("lab-", "")} | ${cell(title)} | ${LEVEL[p.level]} | ${cell(p.brief ?? p.q)} | ${cell(partsLine(p))} | ${cell(checksLine(p))} | ${cell(p.concepts.map(c => CONCEPTS[c]).join(", "))} |`);
     }
   }
   out.push("");
-  out.push("⚠️ = shows a safety lesson (a short circuit or an unprotected LED) that is safe in the lab and must never be tried with real parts. 🎮 = a game.");
+  out.push("⚠️ = shows a safety lesson (a short circuit or an unprotected LED) that is safe in the lab and must never be tried with real parts. 🎮 = a game. 🔧 = fix-it: the child starts from a broken circuit and repairs it.");
   out.push("");
   return out.join("\n");
 }
