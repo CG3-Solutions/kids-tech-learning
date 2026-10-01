@@ -7,7 +7,9 @@ import { GAMES } from "../../content/typing.js";
 import { nextTarget } from "../../lib/typing.js";
 
 // Where each game starts for a new player: a little below their speed, so the first round feels possible.
-const startTarget = (mode, bestWpm) => Math.max(mode === "pro" ? 10 : 4, Math.round((bestWpm || (mode === "pro" ? 15 : 5)) * 0.9));
+// Capped at MAX_TARGET, a very fast human speed, so a glitchy record can't make a game impossible.
+export const MAX_TARGET = 120;
+export const startTarget = (mode, bestWpm) => Math.min(MAX_TARGET, Math.max(mode === "pro" ? 10 : 4, Math.round((bestWpm || (mode === "pro" ? 15 : 5)) * 0.9)));
 
 // The games menu and the open game. `saved` is the learner's game progress; `onSave(game, data, result)` stores it.
 export default function Games({ mode, pool, bestWpm, saved, onSave }) {
@@ -22,12 +24,12 @@ export default function Games({ mode, pool, bestWpm, saved, onSave }) {
       onResult={({ r, won, input, pops, level }) => onSave("balloon", { level, best: Math.max(s.best ?? 0, pops) }, { r, won, input })} />;
   }
   if (open === "rocket") {
-    const s = st("rocket"), target = s.target ?? startTarget(mode, bestWpm);
+    const s = st("rocket"), target = Math.min(MAX_TARGET, s.target ?? startTarget(mode, bestWpm));
     return <WordRocket key={target} mode={mode} pool={pool} target={target} onBack={back}
       onResult={({ r, won, input }) => onSave("rocket", { target: nextTarget(target, won, mode === "pro" ? 8 : 3), launches: (s.launches ?? 0) + (won ? 1 : 0) }, { r, won, input })} />;
   }
   if (open === "race") {
-    const s = st("race"), ghost = s.best ?? startTarget(mode, bestWpm);
+    const s = st("race"), ghost = Math.min(MAX_TARGET, s.best ?? startTarget(mode, bestWpm));
     return <TypingRace key={ghost} mode={mode} pool={pool} ghostWpm={ghost} isBest={!!s.best} onBack={back}
       onResult={({ r, won, input }) => onSave("race", { best: won ? Math.max(r.wpm, s.best ?? 0) : s.best }, { r, won, input })} />;
   }

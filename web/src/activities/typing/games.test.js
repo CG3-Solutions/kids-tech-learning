@@ -5,6 +5,7 @@ import { comboOf } from "./games/BeatTheClock.jsx";
 import { fuelOf } from "./games/WordRocket.jsx";
 import { target, balloonPace } from "./games/BalloonPop.jsx";
 import { badgeState } from "../../lib/progress.js";
+import { startTarget, MAX_TARGET } from "./Games.jsx";
 import { findMilestones } from "../../lib/milestones.js";
 import { SEED } from "../../content/index.js";
 
@@ -69,6 +70,12 @@ describe("ladder and games content", () => {
 });
 
 describe("game rules", () => {
+  it("game targets start a little below your speed and stay humanly possible", () => {
+    expect(startTarget("kids", 0)).toBe(5);
+    expect(startTarget("kids", 20)).toBe(18);
+    expect(startTarget("pro", 0)).toBe(14);
+    expect(startTarget("pro", 3000)).toBe(MAX_TARGET);
+  });
   it("Beat the Clock combo grows every 20 keys in a row, up to ×4", () => {
     expect([0, 19, 20, 39, 40, 60, 200].map(comboOf)).toEqual([1, 1, 2, 2, 3, 4, 4]);
   });
