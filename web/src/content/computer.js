@@ -307,4 +307,16 @@ export function conceptQuestion(key) {
   return q ? { ...q, key, conceptId: id } : null;
 }
 
+// Chip's whole path: the 13 lessons above, plus an opening conversation and the mission (the finale of
+// Part B, once every part the letter travels through has been met). COMPUTER_JOURNEY stays the
+// lessons only: review, Chip's quiz and the parent report use it.
+export const KEY_TALK = { id: "comp-talk-key", part: "A", talk: true, emoji: "💬", title: "How does a letter reach the screen?", blurb: "Chip asks you some questions.",
+  learned: "When you press a key, a team of parts passes the letter along, as ONs and OFFs, in less time than a blink.",
+  parent: "Press a key together and ask: how does the letter get to the screen? Let your child guess before you explain." };
+export const KEY_MISSION = { id: "comp-mission-key", part: "B", mission: true, emoji: "🎯", title: "Mission: follow a key press", blurb: "From your finger to the screen.",
+  learned: "A key press closes a switch; the code travels to the computer; the CPU follows the app's instructions; memory keeps the text as numbers; the letter is drawn as pixels; the screen lights them up.",
+  parent: "Ask your child to explain the trip of a letter from the keyboard to the screen, stop by stop. Can they name all six?" };
+const at8 = COMPUTER_JOURNEY.findIndex(s => s.id === "comp-step-8") + 1;
+export const COMPUTER_PATH = [KEY_TALK, ...COMPUTER_JOURNEY.slice(0, at8), KEY_MISSION, ...COMPUTER_JOURNEY.slice(at8)];
+
 export const COMPUTER_STEP_IDS = COMPUTER_JOURNEY.map(s => s.id);

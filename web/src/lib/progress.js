@@ -63,6 +63,7 @@ export const BADGES = [
   { id: "pcparts", emoji: "💻", name: "Computer explorer", how: "Finish Part B of Chip's computer path", test: s => s.ids.has("comp-step-8") },
   { id: "netsafe", emoji: "🛡️", name: "Internet safety star", how: "Finish Chip's computer path (staying safe online)", test: s => s.ids.has("comp-step-13") },
   { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
+  { id: "keypress", emoji: "⌨️", name: "Key press detective", how: "Follow a key press from keyboard to screen (Chip's mission)", test: s => s.ids.has("comp-mission-key") },
   { id: "thankyou", emoji: "🙏", name: "Computer talker", how: "Say THANK YOU to a computer in binary (Bit's mission)", test: s => s.ids.has("binary-step-10") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },

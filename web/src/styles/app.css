@@ -1325,3 +1325,34 @@ button.kb-key { cursor: pointer }
   .byte-row { grid-template-columns: 2.8em 2.2em auto; }
   .byte-row code { display: none }
 }
+
+/* ───────── Chip's mission: follow a key press ───────── */
+.mini-kb { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 6px; justify-items: center; background: var(--surface-2); border-radius: 16px; padding: 12px 8px }
+.mini-kb-row { display: flex; gap: 4px; width: 100%; justify-content: center }
+.mini-key { flex: 0 1 46px; min-width: 0; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); font-family: var(--f-display); font-weight: 700; font-size: clamp(.95rem, 3.6vw, 1.25rem); box-shadow: 0 3px 0 var(--ink); padding: 0 }
+.mini-key:active, .mini-key.on { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); background: var(--spark) }
+.key-trail { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px }
+.key-trail li { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; background: var(--surface-2); border: 2px solid transparent; opacity: .55; text-align: center }
+.key-trail li span { font-size: 1.4rem }
+.key-trail li small { font-size: .68rem; font-weight: 700; line-height: 1.1 }
+.key-trail li.done { opacity: 1; border-color: var(--good) }
+.key-trail li.on { opacity: 1; border-color: var(--spark); background: color-mix(in srgb, var(--spark) 18%, var(--surface)) }
+.stop-vis { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; background: var(--surface-2); border-radius: 16px; padding: 16px; font-family: var(--f-display); font-weight: 700 }
+.stop-vis .arrow { font-size: 1.6rem; color: var(--muted) }
+.key-cap { display: grid; place-items: center; width: 64px; height: 64px; border: 3px solid var(--ink); border-radius: 12px; background: var(--surface); font-size: 2rem; box-shadow: 0 5px 0 var(--ink) }
+.key-cap.pressed { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); background: var(--spark) }
+.switch-closed { font-family: ui-monospace, monospace; font-size: 1.4rem; color: var(--good) }
+.wire { display: flex; gap: 6px; padding: 10px 14px; border-radius: 999px; background: var(--ink); font-family: ui-monospace, monospace; font-size: 1.4rem }
+.wire b { color: #7CFFB2; animation: travel 1.6s ease-in-out infinite }
+@keyframes travel { 0%, 100% { transform: translateX(-4px); opacity: .5 } 50% { transform: translateX(4px); opacity: 1 } }
+.mini-prog { margin: 0; padding: 14px 14px 14px 36px; background: var(--surface-2); border-radius: 16px; font-family: ui-monospace, monospace; font-weight: 700; display: grid; gap: 6px }
+.mem-box b { font-size: 1.6rem }
+.font-letter { font-family: Georgia, serif; font-size: 3.2rem; line-height: 1 }
+.glyph { display: grid; grid-template-columns: repeat(5, 14px); gap: 3px }
+.glyph i { width: 14px; height: 14px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 25%, var(--surface)) }
+.glyph i.on { background: var(--spark); box-shadow: 0 0 6px var(--glow) }
+.key-screen { display: flex; align-items: center; justify-content: space-between; gap: 14px }
+.key-screen .glyph i { background: #1B2B44 }
+.key-screen .glyph i.on { background: #7CFFB2; box-shadow: 0 0 6px #7CFFB2 }
+.deeper-note { background: color-mix(in srgb, var(--lv4) 12%, var(--surface)); border-left: 5px solid var(--lv4); border-radius: 0 12px 12px 0; padding: 10px 14px; margin: 0 }
+@media (prefers-reduced-motion: reduce) { .wire b { animation: none } }

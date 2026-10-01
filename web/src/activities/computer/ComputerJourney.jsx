@@ -2,7 +2,8 @@ import { useState } from "react";
 import Journey from "../../components/journey/Journey.jsx";
 import { ChipFace } from "../../components/journey/Guide.jsx";
 import ConceptLesson from "../../components/concept/ConceptLesson.jsx";
-import { COMPUTER_JOURNEY, COMPUTER_PARTS } from "../../content/computer.js";
+import { COMPUTER_JOURNEY, COMPUTER_PATH, COMPUTER_PARTS } from "../../content/computer.js";
+import { KeyTalk, KeyMission } from "./KeyMission.jsx";
 import { depthFor } from "../../content/computerDeep.js";
 import { useApp } from "../../lib/AppContext.jsx";
 import { ReviewBanner, ReviewSession, useReviewStore } from "./Review.jsx";
@@ -30,12 +31,14 @@ const VIEWS = Object.fromEntries(COMPUTER_JOURNEY.map(s => {
   View.displayName = `Concept(${s.id})`;
   return [s.id, View];
 }));
+VIEWS["comp-talk-key"] = KeyTalk;
+VIEWS["comp-mission-key"] = KeyMission;
 
 // "Inside a Computer": Chip's learning path, one concept at a time, with spaced review of missed questions.
 export default function ComputerJourney({ done, grade, onStepDone }) {
   const [reviewing, setReviewing] = useState(false);
   if (reviewing) return <div className="panel"><ReviewSession onClose={() => setReviewing(false)} /></div>;
-  return <Journey title="Chip's computer path" intro="How computers work, one step at a time. Pass each check to open the next step. Tap “Go deeper” in any step for the next level." Face={ChipFace}
-    steps={COMPUTER_JOURNEY} parts={COMPUTER_PARTS} views={VIEWS} done={done} grade={grade} onStepDone={onStepDone}
+  return <Journey title="Chip's computer path" intro="How does a letter get from your finger to the screen? Meet every part of a computer, then follow a key press on your mission. Tap “Go deeper” in any lesson for the next level." Face={ChipFace}
+    steps={COMPUTER_PATH} parts={COMPUTER_PARTS} views={VIEWS} done={done} grade={grade} onStepDone={onStepDone}
     top={<ReviewBanner onStart={() => setReviewing(true)} />} />;
 }
