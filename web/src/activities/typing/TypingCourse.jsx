@@ -4,7 +4,9 @@ import { isUnlocked } from "../../components/journey/Journey.jsx";
 import TypingLesson from "./TypingLesson.jsx";
 import SpeedLadder from "./SpeedLadder.jsx";
 import Games from "./Games.jsx";
-import { TYPING_JOURNEY, TYPING_PARTS, LADDER, defaultMode, starsFor, gamesOpen, gamePool } from "../../content/typing.js";
+import TypingTests from "./TypingTests.jsx";
+import TypingProgress from "./TypingProgress.jsx";
+import { TYPING_JOURNEY, TYPING_PARTS, LADDER, defaultMode, starsFor, gamesOpen, gamePool, smartLesson } from "../../content/typing.js";
 import { typingSummary, fmtMinutes } from "../../lib/typing.js";
 import { useApp } from "../../lib/AppContext.jsx";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
@@ -30,7 +32,8 @@ function bestStars(sessions) {
 export default function TypingCourse() {
   const { activeChild, childData, markDone, addTypingSession, setChildState } = useApp();
   const [open, setOpen] = useState(null);
-  const [section, setSection] = useState("lessons"); // lessons | ladder | games
+  const [section, setSection] = useState("lessons"); // lessons | ladder | tests | games | progress
+  const [smart, setSmart] = useState(null);           // a smart-practice lesson, while open
   const [muted, setM] = useState(isMuted());
   useEffect(() => onMuteChange(setM), []);
 
@@ -46,10 +49,10 @@ export default function TypingCourse() {
   const lessonsDone = steps.filter(s => done.has(s.id)).length;
 
   const idx = steps.findIndex(s => s.id === open);
-  const lesson = steps[idx];
+  const lesson = smart ?? steps[idx];
   // Keys the learner has met so far (shown bright on the keyboard).
   const taught = useMemo(() => new Set(lesson ? [...lesson.pool, " "] : []), [lesson]);
-  const go = id => { hush(); setOpen(id); window.scrollTo({ top: 0 }); };
+  const go = id => { hush(); setSmart(null); setOpen(id); window.scrollTo({ top: 0 }); };
   const typingState = childData.state?.typing ?? {};
   const setMode = m => setChildState("typing", { ...typingState, mode: m });
   const climbed = typingState.ladder ?? 0;
@@ -64,30 +67,32 @@ export default function TypingCourse() {
     save(`game-${id}`, res);
     setChildState("typing", { ...typingState, games: { ...(typingState.games ?? {}), [id]: data } });
   };
-  const SECTIONS = [["lessons", "📚 Lessons"], ["ladder", "🪜 Speed ladder"], ["games", "🎮 Games"]];
+  const SECTIONS = [["lessons", "📚 Lessons"], ["ladder", "🪜 Speed ladder"], ["tests", "⏱️ Tests"], ["games", "🎮 Games"], ["progress", "📈 My progress"]];
+  const LOCKED = new Set(["ladder", "tests", "games"]); // need the home row first (Kids mode)
+  const openSmart = weak => { hush(); setSmart(smartLesson(weak, pool)); setOpen("practice-smart"); setSection("lessons"); window.scrollTo({ top: 0 }); };
 
   const finish = ({ r, stars: st, input }) => {
     addTypingSession({ lesson_id: lesson.id, mode, input, wpm: r.wpm, accuracy: r.accuracy, seconds: r.seconds, chars: r.chars, errors: r.errors, passed: st > 0, keys: r.keys });
-    if (st > 0) markDone("typing", lesson.id);
+    if (st > 0 && !smart) markDone("typing", lesson.id);
   };
   const muteBtn = <button className="btn ghost" onClick={() => setMuted(!muted)} aria-pressed={muted}>{muted ? "🔇 Sound off" : "🔊 Sound on"}</button>;
 
   if (lesson) {
     const part = TYPING_PARTS.find(p => p.id === lesson.part);
     const doneNow = new Set([...done, lesson.id]);
-    const next = steps.slice(idx + 1).find((_, k) => unlocked(idx + 1 + k, doneNow));
+    const next = smart ? null : steps.slice(idx + 1).find((_, k) => unlocked(idx + 1 + k, doneNow));
     return (
       <div className="stack journey typing">
         <div className="row">
           <button className="btn ghost" onClick={() => go(null)}>← Lessons</button>
           <div>
-            <div className="eyebrow">{part.title} · Lesson {idx + 1} of {steps.length}</div>
+            <div className="eyebrow">{smart ? "Made for you" : `${part.title} · Lesson ${idx + 1} of ${steps.length}`}</div>
             <h3 style={{ margin: 0 }}>{lesson.emoji} {lesson.title}</h3>
           </div>
           <span className="spacer" />{muteBtn}
         </div>
         <div className="panel">
-          <TypingLesson key={lesson.id} lesson={lesson} mode={mode} taught={taught} next={next} best={sum.bestWpm}
+          <TypingLesson key={smart ? `smart-${smart.keys.join("")}` : lesson.id} lesson={lesson} mode={mode} taught={taught} next={next} best={sum.bestWpm}
             onFinish={finish} onNext={() => go(next.id)} onBack={() => go(null)} />
         </div>
         {lesson.parent && (
@@ -102,7 +107,7 @@ export default function TypingCourse() {
   }
 
   if (section !== "lessons") {
-    const title = section === "ladder" ? "🪜 Speed ladder" : "🎮 Typing games";
+    const title = SECTIONS.find(x => x[0] === section)[1];
     return (
       <div className="stack journey typing">
         <div className="row">
@@ -111,13 +116,15 @@ export default function TypingCourse() {
           <span className="spacer" />{muteBtn}
         </div>
         <div className="panel">
-          {!playOpen ? (
+          {LOCKED.has(section) && !playOpen ? (
             <div className="stack">
-              <p className="lead">🔒 Pass the <b>Home row check</b> (lesson 8) to unlock the speed ladder and games. They use only keys you've learned.</p>
+              <p className="lead">🔒 Pass the <b>Home row check</b> (lesson 8) to unlock the speed ladder, tests and games. They use only keys you've learned.</p>
               <div className="row"><button className="btn primary" onClick={() => setSection("lessons")}>Go to the lessons</button></div>
             </div>
-          ) : section === "ladder"
-            ? <SpeedLadder mode={mode} pool={pool} climbed={climbed} onResult={ladderResult} />
+          ) : section === "ladder" ? <SpeedLadder mode={mode} pool={pool} climbed={climbed} onResult={ladderResult} />
+            : section === "tests" ? <TypingTests mode={mode} pool={pool} name={activeChild?.name ?? ""} sessions={sessions}
+                onResult={({ minutes, r, won, input }) => save(`test-${minutes}`, { r, won, input })} />
+            : section === "progress" ? <TypingProgress sessions={sessions} me={activeChild?.id} mode={mode} onSmart={openSmart} canSmart={sessions.length > 0} />
             : <Games mode={mode} pool={pool} bestWpm={sum.bestWpm} saved={typingState.games} onSave={(id, data, res) => gameResult(id, data, res)} />}
         </div>
       </div>
@@ -149,7 +156,7 @@ export default function TypingCourse() {
       <nav className="seg type-sections" aria-label="Typing sections">
         {SECTIONS.map(([v, l]) => (
           <button key={v} type="button" className={section === v ? "on" : ""} aria-pressed={section === v} onClick={() => { hush(); setSection(v); }}>
-            {l}{v !== "lessons" && !playOpen ? " 🔒" : ""}
+            {l}{LOCKED.has(v) && !playOpen ? " 🔒" : ""}
           </button>
         ))}
       </nav>
@@ -188,7 +195,6 @@ export default function TypingCourse() {
           </ol>
         </section>
       ))}
-      <p className="muted">Coming next: the bottom row, capitals and punctuation, numbers and symbols, and smart practice on your weakest keys.</p>
     </div>
   );
 }

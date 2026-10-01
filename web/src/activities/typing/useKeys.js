@@ -21,7 +21,7 @@ export function useKeys({ active = true, waiting = false, onChar, onStart, onHid
       if (e.repeat) return;
       const capsOn = e.getModifierState?.("CapsLock") ?? false;
       setCaps(capsOn);
-      if (capsOn && e.key !== e.key.toLowerCase()) return;
+      if (capsOn && /^[a-z]$/i.test(e.key)) return; // touch typists use Shift, not Caps Lock
       fns.current.onChar?.(e.key);
     };
     const hide = () => { if (document.hidden) fns.current.onHide?.(); };

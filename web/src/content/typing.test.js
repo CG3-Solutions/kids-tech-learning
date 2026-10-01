@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TYPING_JOURNEY, TYPING_PARTS, FINGER_OF, HOME_KEYS, KEYBOARD, WORDS, lessonText, wordsFor, starsFor, defaultMode, sayKey } from "./typing.js";
+import { TYPING_JOURNEY, TYPING_PARTS, FINGER_OF, HOME_KEYS, KEYBOARD, WORDS, lessonText, wordsFor, starsFor, defaultMode, sayKey, baseOf, fingerOf, shiftSide } from "./typing.js";
 import { startTyping, press, pause, results, finished, mergeKeys, weakKeys, typingSummary, GAP_CAP } from "../lib/typing.js";
 import { JOURNEYS, STEP_IDS } from "./journeys.js";
 import { SEED } from "./index.js";
@@ -46,16 +46,35 @@ describe("typing course content", () => {
       const text = lessonText(s, mode);
       const ok = new Set([...s.pool, " "]);
       for (const c of text) expect(ok.has(c), `${s.id} ${mode}: "${c}" in "${text}"`).toBe(true);
-      for (const c of s.keys.filter(c => c !== " ")) expect(text.includes(c), `${s.id} needs ${c}`).toBe(true);
+      for (const c of s.keys.filter(c => c !== " ")) expect(text.includes(c), `${s.id} needs ${c}: ${text}`).toBe(true);
       expect(text).toBe(text.trim());
       expect(text).not.toMatch(/ {2}/);
       expect(text.length).toBeGreaterThan(mode === "kids" ? 30 : 90);
-      expect(text.length).toBeLessThan(mode === "kids" ? 90 : 220);
+      expect(text.length, `${s.id} ${mode}`).toBeLessThan(mode === "kids" ? 170 : 300);
     }
   });
 
+  it("stages 4 to 6: whole sentences, capitals, numbers and symbols", () => {
+    const by = id => TYPING_JOURNEY.find(s => s.id === id);
+    expect(TYPING_JOURNEY).toHaveLength(33);
+    for (let n = 0; n < 30; n++) {
+      expect(lessonText(by("typ-step-25"), "kids")).toMatch(/^[A-Z][^]*\.$/);  // sentences start with a capital and end with a full stop
+      expect(lessonText(by("typ-step-27"), "pro")).toMatch(/[?']/);
+      expect(lessonText(by("typ-step-30"), "kids")).toMatch(/\d/);
+      expect(lessonText(by("typ-step-21"), "kids")).toMatch(/[bcmnvxz]/);
+    }
+    // Capitals lessons use the Shift on the other hand.
+    expect(by("typ-step-23").keys.every(c => shiftSide(c) === "left")).toBe(true);
+    expect(by("typ-step-24").keys.every(c => shiftSide(c) === "right")).toBe(true);
+    expect(baseOf("?")).toBe("/");
+    expect(baseOf("@")).toBe("2");
+    expect(fingerOf("A")).toBe("lp");
+    expect(sayKey("A")).toBe("capital ay");
+    expect(sayKey("?")).toBe("question mark");
+  });
+
   it("word lessons have enough real words", () => {
-    for (const s of TYPING_JOURNEY.filter(x => x.kind !== "keys")) expect(wordsFor(s.pool).length, s.id).toBeGreaterThan(15);
+    for (const s of TYPING_JOURNEY.filter(x => x.kind === "words" || x.kind === "check")) expect(wordsFor(s.pool).length, s.id).toBeGreaterThan(15);
     expect(WORDS.every(w => /^[a-z]+$/.test(w))).toBe(true);
   });
 

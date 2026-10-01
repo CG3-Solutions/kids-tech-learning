@@ -17,14 +17,15 @@ export function windowed(s, before = 24, size = 130) {
 
 // Typing against a clock. The clock starts at the first key and stops while the tab is hidden.
 // - `seconds`: time limit. `length`: a fixed text length (a race) or null for endless text.
+// - `textFn(pool, length)`: where the text comes from (words by default).
 // - `onPress(before, after)` sees every key (for scores and combos).
 // - `endWhen(s)`: another way to finish early (e.g. the rocket's tank is full).
 // - `top({ s, elapsed, left })`: the picture above the text (track, rocket, ladder…).
 // - `onEnd({ s, r, elapsed, input })` is called once.
-export default function TimedRun({ pool, mode, seconds, length = null, endWhen, onPress, top, onEnd, intro, taught }) {
+export default function TimedRun({ pool, mode, seconds, length = null, endWhen, onPress, top, onEnd, intro, taught, textFn = streamText }) {
   const kids = mode !== "pro";
   const [phase, setPhase] = useState("ready");
-  const [s, setS] = useState(() => startTyping(streamText(pool, length ?? 160)));
+  const [s, setS] = useState(() => startTyping(textFn(pool, length ?? 160)));
   const [elapsed, setElapsed] = useState(0);
   const cur = useRef(s), time = useRef(0), ended = useRef(false), input = useRef("keyboard");
   const touchOnly = useMemo(() => window.matchMedia?.("(hover: none) and (pointer: coarse)").matches, []);
@@ -44,7 +45,7 @@ export default function TimedRun({ pool, mode, seconds, length = null, endWhen, 
     let n = press(cur.current, k, performance.now());
     if (n.wrong && kids) sfx.bump();
     onPress?.(cur.current, n);
-    if (!length && n.text.length - n.pos < 60) n = extend(n, streamText(pool, 100));
+    if (!length && n.text.length - n.pos < 60) n = extend(n, textFn(pool, 100));
     cur.current = n; setS(n);
     if ((length && finished(n)) || endWhen?.(n)) end();
   };

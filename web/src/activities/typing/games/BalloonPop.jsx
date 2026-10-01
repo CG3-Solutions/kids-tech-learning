@@ -4,6 +4,7 @@ import { CountdownRing, Streak } from "../Visuals.jsx";
 import { Keyboard } from "../Keyboard.jsx";
 import { useKeys, useFrame } from "../useKeys.js";
 import { sfx } from "../../../lib/sfx.js";
+import { baseOf } from "../../../content/typing.js";
 
 const SECONDS = 60;
 const COLORS = ["lv0", "lv1", "lv2", "lv3", "lv4"];
@@ -24,7 +25,8 @@ export function target(balloons, key) {
 // Balloon Pop: letters float up on balloons; type a letter to pop it before it flies away.
 export default function BalloonPop({ mode, pool, level, best, onResult, onBack }) {
   const kids = mode !== "pro";
-  const letters = useMemo(() => pool.filter(c => c !== " "), [pool]);
+  // Plain keys only (no capitals or symbols), so every balloon is one key press.
+  const letters = useMemo(() => pool.filter(c => c !== " " && baseOf(c) === c), [pool]);
   const pace0 = useMemo(() => balloonPace(mode, level), [mode, level]);
   const [phase, setPhase] = useState("ready");
   const [balloons, setBalloons] = useState([]);
