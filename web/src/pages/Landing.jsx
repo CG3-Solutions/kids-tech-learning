@@ -10,7 +10,7 @@ export default function Landing() {
   return (
     <>
       <TopBar variant="public">
-        {user ? <Link className="btn primary" to="/profiles">Open Spark Lab</Link> : <Link className="btn" to="/login">Parent sign in</Link>}
+        {user ? <Link className="btn" to="/parent">👪 Parent dashboard</Link> : <Link className="btn" to="/login">👪 Parent sign in</Link>}
       </TopBar>
       <main className="wrap stack">
         <section className="hero">
@@ -18,11 +18,19 @@ export default function Landing() {
             <div className="eyebrow">For learners from 1st to 12th standard, and grown-ups learning to type</div>
             <h1>How do machines <em>really</em> work?</h1>
             <p className="lead">Spark Lab teaches language, maths, electricity, computers, binary, coding and touch typing with story guides, hands-on games and quizzes. Parents follow each child's progress.</p>
-            <div className="row">
-              <Link className="btn primary big" to={user ? "/profiles" : "/login"}>{user ? "Start learning" : "Get started free"}</Link>
-              <Link className="btn big" to={user ? "/profiles" : "/login"} onClick={() => setIntent("typing")}>⌨️ Adults: learn to type</Link>
-              <a className="btn big ghost" href="#subjects">See the subjects</a>
-            </div>
+            {user ? (
+              <div className="row">
+                <Link className="btn primary big" to="/profiles">🧒 Kids' mode: start learning</Link>
+                <Link className="btn big" to="/parent">👪 Parent dashboard</Link>
+              </div>
+            ) : (
+              <div className="row">
+                <Link className="btn primary big" to="/login">👪 Parents: sign in or sign up free</Link>
+                <Link className="btn big" to="/login" onClick={() => setIntent("typing")}>⌨️ Adults: learn to type</Link>
+                <a className="btn big ghost" href="#subjects">See the subjects</a>
+              </div>
+            )}
+            <p className="muted small-note">{user ? "Kids' mode is for children. The Parent dashboard (settings, reports, screen time) asks a grown-up question first." : "Only grown-ups have accounts. After signing in, open Kids' mode on this device for your children: no email or password for them."}</p>
           </div>
           <div className="hero-board" aria-hidden="true">{TILES.map(([e, c], i) => <div key={i} style={{ "--c": c }}>{e}</div>)}</div>
         </section>

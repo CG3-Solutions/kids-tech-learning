@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
+import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { AVATARS } from "../content/index.js";
 
@@ -48,45 +49,68 @@ const INTENT = "sparklab.intent";
 export const setIntent = v => { try { localStorage.setItem(INTENT, v); } catch { /* private mode */ } };
 const takeIntent = () => { try { const v = localStorage.getItem(INTENT); localStorage.removeItem(INTENT); return v; } catch { return null; } };
 
+// Kids' mode: the learner picker. Children pick their own profile here; everything for grown-ups
+// (adding learners, settings, reports) is in the Parent dashboard, behind the grown-up check.
 export default function Profiles() {
   const { api, children, chooseChild, loadAccount, setError } = useApp();
   const nav = useNavigate();
   const [intent] = useState(takeIntent);
-  const [adding, setAdding] = useState(intent === "typing" ? "adult" : false); // false | "child" | "adult"
+  const [adding, setAdding] = useState(intent === "typing" ? "adult" : false); // the "Adults: learn to type" sign-up
+  const [asking, setAsking] = useState(false);
   const open = c => { chooseChild(c.id); nav(c.learner === "adult" ? "/learn/typing" : "/learn"); };
   const me = children.find(c => c.learner === "adult");
   useEffect(() => { if (intent === "typing" && me) open(me); }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toParent = () => (gatePassed() ? nav("/parent") : setAsking(true));
 
   const add = async data => {
-    try { const c = await api.addChild(data); await loadAccount(); open(c); } catch (e) { setError(e.message); }
+    try { const c = await api.addChild(data); await loadAccount(); passGate(); open(c); } catch (e) { setError(e.message); }
   };
+  const kids = children.filter(c => c.learner !== "adult"), grown = children.filter(c => c.learner === "adult");
 
   return (
     <>
-      <TopBar variant="public"><Link className="btn" to="/parent">👪 Grown-ups</Link></TopBar>
+      <TopBar variant="public"><button className="btn" onClick={toParent}>👪 Parent dashboard <span className="hide-sm">&amp; settings</span></button></TopBar>
       <main className="wrap">
         <div className="who">
-          <h1>{children.length ? "Who's learning today?" : "Add your first learner"}</h1>
-          {!adding && (
-            <div className="kids">
-              {children.map(c => (
-                <button key={c.id} className="kid" onClick={() => open(c)}>
-                  <span className="face">{c.avatar}</span>{c.name}{c.learner === "adult" && <small className="tag">Grown-up</small>}
-                </button>
-              ))}
-              <button className="kid add" onClick={() => setAdding("child")}><span className="face">＋</span>Add child</button>
-              {!children.some(c => c.learner === "adult") && <button className="kid add" onClick={() => setAdding("adult")}><span className="face">⌨️</span>Add myself</button>}
-            </div>
-          )}
-          {adding && (
+          <div className="mode-chip kids">🧒 Kids' mode</div>
+          {adding ? (
             <div className="panel" style={{ width: "min(480px, 100%)" }}>
-              {adding === "adult" && <h2 className="sec" style={{ marginBottom: 10 }}>Your typing profile</h2>}
-              <ChildForm adult={adding === "adult"} onSave={add} onCancel={() => setAdding(false)} saveLabel={adding === "adult" ? "Start typing" : "Add"} />
+              <h2 className="sec" style={{ marginBottom: 10 }}>Your typing profile</h2>
+              <ChildForm adult onSave={add} onCancel={() => setAdding(false)} saveLabel="Start typing" />
+            </div>
+          ) : children.length ? (
+            <>
+              <h1>Who's learning today?</h1>
+              <div className="kids">
+                {kids.map(c => (
+                  <button key={c.id} className="kid" onClick={() => open(c)}>
+                    <span className="face">{c.avatar}</span>{c.name}
+                  </button>
+                ))}
+                {grown.map(c => (
+                  <button key={c.id} className="kid grown" onClick={() => open(c)}>
+                    <span className="face">{c.avatar}</span>{c.name}<small className="tag">Grown-up · typing</small>
+                  </button>
+                ))}
+              </div>
+              <p className="muted">To add a child, change settings or see reports, open the <button className="linklike" onClick={toParent}>Parent dashboard</button>.</p>
+            </>
+          ) : (
+            <div className="stack" style={{ justifyItems: "center", gap: 12 }}>
+              <h1>No learners yet</h1>
+              <p className="lead">A grown-up adds children in the Parent dashboard. It takes a minute: just a first name and an animal.</p>
+              <button className="btn primary big" onClick={toParent}>👪 Open the Parent dashboard</button>
             </div>
           )}
-          {!children.length && !adding && <p className="muted">Children don't need an email. Just a first name and an animal. Grown-ups can add themselves to learn typing.</p>}
         </div>
       </main>
+      {asking && (
+        <div className="overlay" onClick={e => e.target === e.currentTarget && setAsking(false)}>
+          <div style={{ width: "min(440px, 100%)" }}>
+            <ParentGate onPass={() => { setAsking(false); nav("/parent"); }} onCancel={() => setAsking(false)} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

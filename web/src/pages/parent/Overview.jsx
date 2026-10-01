@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { lockGate } from "../../components/ParentGate.jsx";
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp, localDay } from "../../lib/AppContext.jsx";
 import { useFamily } from "../../lib/useFamily.js";
@@ -8,12 +9,19 @@ import { ordinal } from "../Profiles.jsx";
 
 export default function Overview() {
   const { children, published, profile } = useApp();
+  const nav = useNavigate();
   const { data, loading, minutesOn } = useFamily(7);
   const today = localDay();
   const ready = published && !loading;
   const feed = ready ? timeline(children.filter(c => data[c.id]).map(c => ({ child: c, data: data[c.id] })), published, 12) : [];
   return (
     <ParentLayout title={`Hello${profile?.display_name ? `, ${profile.display_name}` : ""}`}>
+      {children.length > 0 && (
+        <div className="kids-mode-card">
+          <div><b>🧒 Handing the device to your child?</b><p className="muted">Kids' mode shows only lessons and games. Getting back here needs a grown-up question.</p></div>
+          <button className="btn primary" onClick={() => { lockGate(); nav("/profiles"); }}>Start kids' mode</button>
+        </div>
+      )}
       {!children.length && (
         <div className="empty">
           <h2>Add your first child</h2>
