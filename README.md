@@ -32,7 +32,7 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 - **Kid navigation:** four areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech · ⌨️ Typing), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch learner · Parent dashboard & settings · Sign out.
 - **Parent dashboard** (behind the parent password): Overview · Learners · Progress reports (7-day learning time, subjects, adventures, typing speed and weak keys, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
 - **Screen time:** a daily limit per child, counting active time only, with a 5-minute warning, a "Time's up" screen, and "+15 minutes" for grown-ups.
-- **Voices:** four kid-friendly voices (Bright girl, Cheerful boy, Friendly robot, Calm teacher), chosen by default from the child's gender and changeable per child, with a preview button.
+- **Voices:** four voices (Bright girl, Cheerful boy, Clear teacher, Friendly robot), chosen by default from the child's gender and changeable per child, with a preview button. Lines are read sentence by sentence with key words stressed, with 🐢 Slowly and Stop buttons and a speaking-speed setting. Optional natural voices: Google's Indian English neural voices (see below).
 - **Email:** milestone emails (badges, finished subjects) and an 8 pm daily summary, sent by a Supabase Edge Function through Resend.
 - **Admins:** create and edit subjects, cards (every field, including circuit symbols) and quiz questions, save drafts, publish, and load the starter content.
 - **Demo mode:** without Supabase settings, the app runs fully in the browser (saved in localStorage). This is useful for trying it out and for development.
@@ -94,6 +94,17 @@ Parents choose milestone emails and/or a daily summary under **Parent area → N
    - `APP_URL`: `https://cg3-solutions.github.io/kids-tech-learning/`
 4. **Database → Extensions:** enable `pg_net` and `pg_cron`.
 5. **SQL Editor:** open `supabase/notifications-setup.sql`, replace `YOUR-PROJECT-REF` and `YOUR-NOTIFY-SECRET`, and run it. Milestone emails go out as they happen; the daily summary goes out at 8 pm India time.
+
+## Natural voices (optional, release 5)
+Lessons can be read by Google's Indian English neural voices: clearer, with stressed words and pauses, and the same on every phone. Each line is recorded once and then played from storage, so it costs very little. Lines with a child's or parent's name always use the device's own voice: names are never sent to Google. Without this setup (and in the demo), the device's voice is used.
+
+1. **Google Cloud:** create a project, enable the **Cloud Text-to-Speech API** (needs a billing account; there is a monthly free allowance), and set a budget alert under **Billing → Budgets & alerts**. Create an **API key** under **APIs & Services → Credentials** and restrict it to the Cloud Text-to-Speech API.
+2. **Supabase → SQL Editor:** run `supabase/release-5.sql` once. It adds the public `tts` storage bucket for the recordings and the usage table for the limits. It's safe to re-run.
+3. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `tts`, paste `supabase/functions/tts/index.ts`, and deploy. Leave **"Verify JWT" on**: only signed-in parents' apps can use it.
+4. **Edge Functions → Secrets:** add `GOOGLE_TTS_KEY` (the API key). Optional limits: `TTS_DAILY_CHARS` (per family per day, default 20000) and `TTS_MONTHLY_CHARS` (whole app, default 900000).
+5. Parents can turn natural voices off under **Parent dashboard → Voice & sound**.
+
+If a limit is reached or Google is unavailable, the app quietly uses the device voice. Changing `VERSION` in both `supabase/functions/tts/index.ts` and `web/src/lib/neuralVoice.js` re-records every line.
 
 ## GitHub Pages
 In **Settings → Pages**, set **Source** to **GitHub Actions**. After that, every push to `main` deploys automatically.

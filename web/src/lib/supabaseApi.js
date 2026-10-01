@@ -20,6 +20,15 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
     mode: "supabase",
     freshSignIn,
     features: { google, passwords: true },
+    // Natural voices: recorded lines live in the public "tts" bucket; the "tts" function makes missing ones.
+    tts: {
+      publicUrl: path => sb.storage.from("tts").getPublicUrl(path).data.publicUrl,
+      async synth(body) {
+        const { data, error } = await sb.functions.invoke("tts", { body });
+        if (error) { const e = new Error(error.message); e.status = error.context?.status; throw e; }
+        return data;
+      },
+    },
 
     async getUser() { const { data } = await sb.auth.getSession(); return data.session?.user ?? null; },
     onAuth(fn) { const { data } = sb.auth.onAuthStateChange((_e, session) => fn(session?.user ?? null)); return () => data.subscription.unsubscribe(); },
