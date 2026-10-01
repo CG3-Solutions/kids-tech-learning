@@ -1231,3 +1231,8 @@ button.kb-key { cursor: pointer }
 .status-pill.strong { background: color-mix(in srgb, var(--good) 16%, var(--surface)); color: var(--good) }
 .missed-list { display: grid; gap: 8px; padding-left: 18px }
 .missed-list li > span { display: block }
+
+/* Read-aloud controls */
+.hear-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px }
+.hear-row .talking { border-color: var(--spark); box-shadow: 0 0 0 3px var(--glow) }
+.tips { display: grid; gap: 6px; padding-left: 20px }

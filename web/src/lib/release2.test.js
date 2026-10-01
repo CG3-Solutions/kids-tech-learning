@@ -40,7 +40,7 @@ describe("voices", () => {
     expect(VOICES).toHaveLength(4);
     expect(defaultVoiceFor("girl")).toBe("bright");
     expect(defaultVoiceFor("boy")).toBe("cheerful");
-    expect(voiceOf({ gender: "unspecified" }).id).toBe("robot");
+    expect(voiceOf({ gender: "unspecified" }).id).toBe("teacher"); // clear, natural voice by default
     expect(voiceOf({ gender: "boy", voice: "teacher" }).id).toBe("teacher");
   });
 });

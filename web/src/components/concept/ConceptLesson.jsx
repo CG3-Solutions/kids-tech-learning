@@ -58,12 +58,15 @@ function DepthBar({ depth, depths, setDepth }) {
   );
 }
 
+// "A super-fast helper" → "a super-fast helper" after "It's like" (but keep "CPU…" as it is).
+const lowerFirst = t => (/^[A-Z][a-z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
+
 function Explain({ spec, Face, onNext, depthBar }) {
   const e = spec.explain;
   return (
     <div className="stack">
       {depthBar}
-      <Guide Face={Face} say={`${e.text.join(" ")} It's like ${e.like}`}>{e.text[0]}</Guide>
+      <Guide Face={Face} say={`${e.text.join(" ")} It's like ${lowerFirst(e.like)}`}>{e.text[0]}</Guide>
       {e.text.slice(1).map(t => <p key={t} className="lead strong-lead">{t}</p>)}
       <div className="like-box"><b>It's like…</b><p>{e.like}</p></div>
       <div><button className="btn primary big" onClick={onNext}>See it →</button></div>
