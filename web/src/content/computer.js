@@ -1,7 +1,9 @@
 // "Inside a Computer" as a learning path: 12 concepts in 3 parts, guided by Chip the computer.
 // Every concept is one lesson of six short screens (see components/concept/ConceptLesson.jsx):
 //   hook → explain → see it (animation) → do it (activity) → check (3 questions, 2 to pass) → recap.
-// Pitched at Class 1–3 (C1). Plain data, so tests, progress and parent reports can use it.
+// The base text is pitched at Class 1–3; computerDeep.js adds Class 4–7 and 8–12 versions.
+// Plain data, so tests, progress and parent reports can use it.
+import { DEEP } from "./computerDeep.js";
 
 export const COMPUTER_PARTS = [
   { id: "A", title: "Part A · What computers are", who: "Everyone starts here", note: "What makes something a computer, and how instructions make it work." },
@@ -291,6 +293,6 @@ export const COMPUTER_JOURNEY = [
     learned: "Keep private details private, be kind, and tell a grown-up if something feels wrong.",
     parent: "Agree on family rules together: which apps are allowed, no chatting with strangers, and always telling you if something feels wrong, with no punishment for telling.",
   }),
-];
+].map(s => ({ ...s, deeper: DEEP[s.id] })); // Class 4–7 and 8–12 versions (computerDeep.js)
 
 export const COMPUTER_STEP_IDS = COMPUTER_JOURNEY.map(s => s.id);

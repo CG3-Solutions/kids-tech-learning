@@ -2,16 +2,18 @@ import Journey from "../../components/journey/Journey.jsx";
 import { ChipFace } from "../../components/journey/Guide.jsx";
 import ConceptLesson from "../../components/concept/ConceptLesson.jsx";
 import { COMPUTER_JOURNEY, COMPUTER_PARTS } from "../../content/computer.js";
+import { depthFor } from "../../content/computerDeep.js";
 import { useApp } from "../../lib/AppContext.jsx";
 
-// Keeps each concept's check results (for parents now, and for spaced review later):
-// { "comp-step-3": { best: 3, last: 2, tries: 2, at: "2026-10-01T…" } }
+// Keeps each concept's check results (for parents now, and for spaced review later), with the best
+// score at each depth: { "comp-step-3": { best: 3, last: 2, tries: 2, depth: "mid", byDepth: { base: 3, mid: 2 }, at: "…" } }
 function useConceptRecord() {
   const { childData, setChildState } = useApp();
-  return (id, score, total) => {
+  return (id, score, total, depth = "base") => {
     const all = childData.state?.concepts ?? {};
-    const prev = all[id] ?? { best: 0, tries: 0 };
-    setChildState("concepts", { ...all, [id]: { best: Math.max(prev.best, score), last: score, total, tries: prev.tries + 1, at: new Date().toISOString() } });
+    const prev = all[id] ?? { best: 0, tries: 0, byDepth: {} };
+    const byDepth = { ...(prev.byDepth ?? {}), [depth]: Math.max(prev.byDepth?.[depth] ?? 0, score) };
+    setChildState("concepts", { ...all, [id]: { best: Math.max(prev.best, score), last: score, total, tries: prev.tries + 1, depth, byDepth, at: new Date().toISOString() } });
   };
 }
 
@@ -19,7 +21,9 @@ function useConceptRecord() {
 const VIEWS = Object.fromEntries(COMPUTER_JOURNEY.map(s => {
   const View = ({ onComplete }) => {
     const record = useConceptRecord();
-    return <ConceptLesson spec={s} Face={ChipFace} onComplete={onComplete} onCheck={(score, total) => record(s.id, score, total)} />;
+    const { activeChild } = useApp();
+    return <ConceptLesson spec={s} Face={ChipFace} level={depthFor(activeChild)} onComplete={onComplete}
+      onCheck={(score, total, depth) => record(s.id, score, total, depth)} />;
   };
   View.displayName = `Concept(${s.id})`;
   return [s.id, View];
@@ -27,6 +31,6 @@ const VIEWS = Object.fromEntries(COMPUTER_JOURNEY.map(s => {
 
 // "Inside a Computer": Chip's learning path, one concept at a time.
 export default function ComputerJourney({ done, grade, onStepDone }) {
-  return <Journey title="Chip's computer path" intro="How computers work, one step at a time. Pass each check to open the next step." Face={ChipFace}
+  return <Journey title="Chip's computer path" intro="How computers work, one step at a time. Pass each check to open the next step. Tap “Go deeper” in any step for the next level." Face={ChipFace}
     steps={COMPUTER_JOURNEY} parts={COMPUTER_PARTS} views={VIEWS} done={done} grade={grade} onStepDone={onStepDone} />;
 }
