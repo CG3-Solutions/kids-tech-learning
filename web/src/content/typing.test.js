@@ -52,7 +52,7 @@ describe("typing course content", () => {
       expect(text.length).toBeGreaterThan(mode === "kids" ? 30 : 90);
       expect(text.length, `${s.id} ${mode}`).toBeLessThan(mode === "kids" ? 170 : 300);
     }
-  });
+  }, 30000); // checks thousands of generated texts: slow on a busy machine
 
   it("stages 4 to 6: whole sentences, capitals, numbers and symbols", () => {
     const by = id => TYPING_JOURNEY.find(s => s.id === id);

@@ -1285,3 +1285,43 @@ button.kb-key { cursor: pointer }
   .maze .cell { border-radius: 8px; font-size: 1.15rem }
   .tabs a, .tabs button { padding: 6px 12px; font-size: .95rem }
 }
+
+/* ───────── Conversation lessons (talk with the guide) ───────── */
+.convo { display: grid; gap: 12px }
+.convo-turn { display: grid; gap: 8px }
+.convo-row { display: flex; gap: 8px; align-items: flex-end }
+.convo-row.me { justify-content: flex-end }
+.convo-face { flex: none; width: 44px }
+.convo-face .bit-face { width: 44px; height: auto }
+.convo-row.bot > .convo-bubble:first-child { margin-left: 52px }
+.convo-bubble { position: relative; max-width: min(560px, 88%); border-radius: 18px; padding: 10px 14px; font-size: 1.1rem; font-weight: 600; line-height: 1.4 }
+.convo-bubble.bot { background: var(--surface-2); border: 2px solid var(--line); border-bottom-left-radius: 6px; padding-right: 40px }
+.convo-bubble.me { background: color-mix(in srgb, var(--spark) 28%, var(--surface)); border: 2px solid color-mix(in srgb, var(--spark) 60%, var(--line)); border-bottom-right-radius: 6px }
+.convo-bubble.reply { padding-right: 14px }
+.convo-bubble.reply.good { border-color: var(--good) }
+.convo-bubble.reply.gentle { border-color: color-mix(in srgb, var(--spark) 60%, var(--line)) }
+.convo-hear { position: absolute; right: 6px; top: 6px; border: 0; background: none; font-size: 1rem; padding: 4px; cursor: pointer }
+.convo-pic { margin-top: 8px; font-size: 1.6rem; letter-spacing: .04em; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere }
+.convo-choices { display: grid; gap: 8px; justify-items: end; padding-left: 52px }
+.convo-choice { text-align: left; font-size: 1.05rem; max-width: 100%; white-space: normal }
+.convo-next { display: flex; justify-content: center; padding-top: 4px }
+
+/* ───────── Bit's mission ───────── */
+.pc-screen { background: #0E1A2B; color: #7CFFB2; border-radius: 14px; border: 6px solid #2A3B55; padding: 14px 16px; min-height: 64px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; box-shadow: inset 0 0 18px rgba(0,0,0,.5) }
+.pc-screen-text { font-size: clamp(1.6rem, 6vw, 2.4rem); font-weight: 700; letter-spacing: .12em; white-space: pre-wrap; min-height: 1.2em }
+.pc-cursor { animation: blink 1s steps(1) infinite; margin-left: 2px }
+.pc-screen-reply { margin-top: 8px; color: #FFE08A; font-size: 1.15rem; font-family: var(--f-display) }
+@keyframes blink { 50% { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .pc-cursor { animation: none } }
+.byte-cards .bignum { font-size: 1.4rem }
+.byte-list { display: grid; gap: 6px }
+.byte-row { display: grid; grid-template-columns: 3.4em 2.4em auto 1fr; gap: 8px; align-items: center; background: var(--surface-2); border-radius: 10px; padding: 6px 10px }
+.byte-row code { font-size: .95rem; letter-spacing: .08em; text-align: right }
+.name-input { font: inherit; font-size: 1.6rem; font-weight: 700; text-align: center; border: 3px solid var(--ink); border-radius: 14px; padding: 8px 12px; background: var(--surface); color: var(--ink); width: min(360px, 100%); justify-self: center }
+@media (max-width: 600px) {
+  .convo-bubble { font-size: 1rem; max-width: 92% }
+  .convo-row.bot > .convo-bubble:first-child { margin-left: 0 }
+  .convo-choices { padding-left: 24px }
+  .byte-row { grid-template-columns: 2.8em 2.2em auto; }
+  .byte-row code { display: none }
+}
