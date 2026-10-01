@@ -15,7 +15,7 @@ const fmt = (q, v) => pretty(`${q.unit ?? ""}${v}`);
 // Automated browser tests read the answer from the page, only when a test-only flag is set.
 const testHook = (q, label) => { try { return localStorage.getItem("sparklab.e2e") === "1" ? { "data-answer": JSON.stringify({ type: q.type, answer: q.answer, label }) } : {}; } catch { return {}; } };
 
-function NumberPad({ value, setValue, onSubmit, allowNegative, disabled }) {
+export function NumberPad({ value, setValue, onSubmit, allowNegative, disabled }) {
   const press = k => {
     if (disabled) return;
     sfx.click();

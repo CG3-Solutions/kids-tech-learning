@@ -211,3 +211,13 @@ export const MATHS_JOURNEY = [
       return { type: "number", prompt: u === "c" ? "Find the longest side (hypotenuse)." : "Find the missing side.", visual: { kind: "triangle", a, b, c, unknown: u }, answer: u === "c" ? c : a, hint: u === "c" ? `√(${a}² + ${b}²)` : `√(${c}² − ${b}²)` }; } },
 ];
 export const MATHS_PARTS = P_MATH;
+
+// Ollie's party: a conversation before step 1, and the mission at the end of Part B (after money problems).
+export const PARTY_TALK = { id: "math-talk-party", ...M1, talk: true, emoji: "💬", title: "How can maths plan a party?", blurb: "Ollie asks you some questions.",
+  learned: "Maths helps plan real things: adding the guests, taking away to see what's missing, multiplying for food, and staying within a budget.",
+  parent: "Plan a small family treat together: how many people, how much food, and what it costs. Let your child do the sums." };
+export const PARTY_MISSION = { id: "math-mission-party", ...M2, mission: true, emoji: "🎯", title: "Mission: plan a party", blurb: "Guests, food, budget and change.",
+  learned: "Planning a party uses every operation: add the guests, multiply the food, round up when sharing out, add the bill, check it fits the budget, subtract for change and divide into party bags.",
+  parent: "Next time you shop, give your child a small budget and a short list. Can they keep a running total and work out the change?" };
+const at8 = MATHS_JOURNEY.findIndex(s => s.id === "math-step-8") + 1;
+export const MATHS_PATH = [PARTY_TALK, ...MATHS_JOURNEY.slice(0, at8), PARTY_MISSION, ...MATHS_JOURNEY.slice(at8)];

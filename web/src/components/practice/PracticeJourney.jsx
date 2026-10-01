@@ -2,6 +2,10 @@ import Journey from "../journey/Journey.jsx";
 import { PollyFace, OllieFace } from "../journey/Guide.jsx";
 import Practice, { LearnCards } from "./Practice.jsx";
 import { JOURNEYS } from "../../content/journeys.js";
+import { PartyTalk, PartyMission } from "./PartyMission.jsx";
+
+// Conversation and mission steps have their own screens.
+const CUSTOM = { "math-talk-party": PartyTalk, "math-mission-party": PartyMission };
 
 const FACES = { alphabets: PollyFace, words: PollyFace, sentences: PollyFace, numbers: OllieFace, mathematics: OllieFace };
 const TITLES = { alphabets: "Polly's alphabet adventure", words: "Polly's word adventure", sentences: "Polly's sentence adventure", numbers: "Ollie's number adventure", mathematics: "Ollie's maths adventure" };
@@ -9,6 +13,7 @@ const TITLES = { alphabets: "Polly's alphabet adventure", words: "Polly's word a
 // One component per step, made once. (Making them during render would give React a new
 // component type every time the app updates, which restarts the step from question 1.)
 const VIEWS = Object.fromEntries(Object.keys(FACES).map(act => [act, Object.fromEntries(JOURNEYS[act].steps.map(s => {
+  if (CUSTOM[s.id]) return [s.id, CUSTOM[s.id]];
   const Face = FACES[act];
   const View = props => (s.kind === "learn" ? <LearnCards spec={s} Face={Face} {...props} /> : <Practice spec={s} Face={Face} {...props} />);
   View.displayName = `Step(${s.id})`;
