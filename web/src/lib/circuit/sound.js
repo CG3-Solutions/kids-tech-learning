@@ -108,6 +108,8 @@ export function createSoundPlayer({ makeContext } = {}) {
       }
       if (master) master.gain.setTargetAtTime(level, ctx.currentTime, 0.02);
     },
+    // Browsers only allow sound after a tap: call this from a tap or key press.
+    unlock() { const a = context(); try { a?.resume?.(); } catch { /* fine */ } },
     stopAll() { for (const id of Object.keys(voices)) { voices[id].stop(); delete voices[id]; } if (master) master.gain.value = 0; },
     get active() { return Object.keys(voices); },
   };
