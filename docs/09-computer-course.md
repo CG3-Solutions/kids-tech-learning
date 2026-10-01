@@ -33,8 +33,26 @@ Stars come only from passing checks. The old cards are now a **📚 Glossary** t
 
 Badges: 💻 **Computer explorer** (finish Part B) and 🛡️ **Internet safety star** (finish step 13). Each sends a milestone email.
 
-## Depth
-This release is pitched at **Class 1–3**. The next release adds Class 4–7 and 8–12 versions of every concept (for example, the CPU's fetch → decode → execute cycle, and then cores and cache). The child's class picks the depth, with a **Go deeper** button.
+## Depth by class
+Every concept has three depths. The **Learn** text, the **Check** questions and extra **Recap** points change with the depth; the hook, animation and activity are shared.
+
+| Concept | Class 1–3 | Class 4–7 | Class 8–12 |
+|---|---|---|---|
+| What is a computer? | Follows instructions; fan vs washing machine | Programmable machines; embedded computers | Stored-program (von Neumann) design; microcontrollers to supercomputers |
+| Programs and bugs | Instructions in order; a bug is a mistake | Languages; sequence, selection, loops; debugging | Compilers and interpreters; syntax, runtime and logic errors |
+| Input → Process → Output | The three steps | IPOS (storage) and feedback | Data vs information; the hardware path |
+| Input devices | Keyboard, mouse, touch, camera, mic | Sensors (temperature, GPS, accelerometer), scanners | Analogue-to-digital conversion; drivers and ports |
+| Output devices | Screen, speaker, printer; touch screen is both | Resolution; 3D printers; actuators | GPU and refresh rate (Hz); digital-to-analogue |
+| The CPU | Follows instructions fast; can't think | Fetch → decode → execute; GHz | Control unit, ALU, registers; cores and cache; transistors |
+| Memory and storage | Desk vs cupboard; power cut | Bits, bytes, KB–GB; RAM vs storage sizes | Volatile vs non-volatile; SSD vs HDD; memory hierarchy |
+| Build a computer | Parts and the motherboard | Buses, power supply, system on a chip | Booting (firmware, POST); bottlenecks |
+| Hardware and software | Touch vs instructions | System vs application software; firmware | Open source vs proprietary; abstraction layers |
+| Operating system and apps | The OS opens apps | Memory, files, devices, security; multitasking | Kernel, scheduling, virtual memory; CLI vs GUI |
+| Files and data | Numbers, pixels, folders | Bits, RGB, file extensions | File size, lossless vs lossy compression; ASCII/Unicode |
+| Networks and the internet | Computers joined; packets | LAN/WAN, IP addresses, routers | TCP/IP, HTTP(S), DNS; web vs internet; clients and servers |
+| Staying safe online | Private details, tell a grown-up | Strong passwords, 2-step, phishing, digital footprint | Malware, social engineering, 2FA; India's DPDP Act 2023; helpline 1930 |
+
+**Which depth a child sees:** Class 1–3 start at the first depth, Class 4–7 at the second, Class 8–12 and grown-ups at the third. Any learner can tap **Go deeper** or **Simpler** on the Learn screen, or **Go deeper** after the recap. Passing the check at any depth earns the star. The best score at each depth is kept for parents and for review later.
 
 ## For parents and teachers
 - **Do the activities together** the first time. "Be the computer" and "Power cut" work well as real-life games too.

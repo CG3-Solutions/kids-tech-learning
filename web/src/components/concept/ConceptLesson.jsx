@@ -37,10 +37,34 @@ function Hook({ spec, Face, onNext }) {
   );
 }
 
-function Explain({ spec, Face, onNext }) {
+// The concept at a depth: 0 = Class 1–3 (the base), 1 = Class 4–7, 2 = Class 8–12.
+// Deeper levels replace the Learn text and the Check questions, and add recap points.
+export const DEPTH_IDS = ["base", "mid", "high"];
+export const DEPTH_LABELS = ["Class 1–3", "Class 4–7", "Class 8–12"];
+export const depthsOf = spec => [0, ...[1, 2].filter(d => spec.deeper?.[DEPTH_IDS[d]])];
+export function atDepth(spec, d) {
+  const deep = d > 0 ? spec.deeper?.[DEPTH_IDS[d]] : null;
+  if (!deep) return spec;
+  return { ...spec, explain: { text: deep.text, like: deep.like ?? spec.explain.like }, check: deep.check, recap: { ...spec.recap, points: [...spec.recap.points, ...deep.points] } };
+}
+
+function DepthBar({ depth, depths, setDepth }) {
+  if (depths.length < 2) return null;
+  const i = depths.indexOf(depth);
+  return (
+    <div className="depth-bar">
+      <span className="depth-chip">📚 Level: <b>{DEPTH_LABELS[depth]}</b></span>
+      {i > 0 && <button className="btn ghost small" onClick={() => setDepth(depths[i - 1])}>⬆ Simpler</button>}
+      {i < depths.length - 1 && <button className="btn small" onClick={() => setDepth(depths[i + 1])}>Go deeper ⬇ <small>({DEPTH_LABELS[depths[i + 1]]})</small></button>}
+    </div>
+  );
+}
+
+function Explain({ spec, Face, onNext, depthBar }) {
   const e = spec.explain;
   return (
     <div className="stack">
+      {depthBar}
       <Guide Face={Face} say={`${e.text.join(" ")} It's like ${e.like}`}>{e.text[0]}</Guide>
       {e.text.slice(1).map(t => <p key={t} className="lead strong-lead">{t}</p>)}
       <div className="like-box"><b>It's like…</b><p>{e.like}</p></div>
@@ -103,7 +127,7 @@ function Check({ spec, Face, onPass, onAgain, onResult }) {
   );
 }
 
-function Recap({ spec, onFinish }) {
+function Recap({ spec, onFinish, onDeeper, deeperLabel }) {
   const r = spec.recap;
   return (
     <div className="stack">
@@ -121,12 +145,19 @@ function Recap({ spec, onFinish }) {
           {spec.links.map(l => <Link key={l.to} className="link-chip" to={`/learn/${l.to}`} onClick={hush}>{l.label} <small>({l.why})</small></Link>)}
         </div>
       )}
-      <div><button className="btn primary big" onClick={onFinish}>Finish the step ⭐</button></div>
+      <div className="row">
+        <button className="btn primary big" onClick={onFinish}>Finish the step ⭐</button>
+        {onDeeper && <button className="btn" onClick={onDeeper}>Go deeper ⬇ <small>({deeperLabel})</small></button>}
+      </div>
     </div>
   );
 }
 
-export default function ConceptLesson({ spec, Face, onComplete, onCheck }) {
+// `level`: the depth to start at (from the learner's class). The star needs the check passed at any depth.
+export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, level = 0 }) {
+  const depths = depthsOf(base);
+  const [depth, setDepthState] = useState(depths.includes(level) ? level : depths.filter(d => d <= level).at(-1) ?? 0);
+  const spec = useMemo(() => atDepth(base, depth), [base, depth]);
   const [at, setAt] = useState(0);
   const [doitDone, setDoitDone] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -137,6 +168,9 @@ export default function ConceptLesson({ spec, Face, onComplete, onCheck }) {
   const move = n => { setReached(r => Math.max(r, n)); go(n); };
   const canGo = n => n <= reached && (n < 5 || checked);
   const body = useMemo(() => ({ spec, Face }), [spec, Face]);
+  const setDepth = d => { hush(); setDepthState(d); };
+  const depthBar = <DepthBar depth={depth} depths={depths} setDepth={setDepth} />;
+  const deeper = depths[depths.indexOf(depth) + 1];
   return (
     <div className="stack concept">
       <ol className="lesson-dots" aria-label="Lesson steps">
@@ -147,7 +181,7 @@ export default function ConceptLesson({ spec, Face, onComplete, onCheck }) {
         ))}
       </ol>
       {key === "hook" && <Hook {...body} onNext={() => move(1)} />}
-      {key === "explain" && <Explain {...body} onNext={() => move(2)} />}
+      {key === "explain" && <Explain {...body} depthBar={depthBar} onNext={() => move(2)} />}
       {key === "see" && (
         <div className="stack">
           <SeeIt see={spec.see} />
@@ -161,8 +195,9 @@ export default function ConceptLesson({ spec, Face, onComplete, onCheck }) {
             {!doitDone && <span className="muted">Finish the activity first</span>}</div>
         </div>
       )}
-      {key === "check" && <Check {...body} onResult={(s, t) => { if (s >= PASS) setChecked(true); onCheck?.(s, t); }} onPass={() => move(5)} onAgain={() => go(1)} />}
-      {key === "recap" && <Recap spec={spec} onFinish={onComplete} />}
+      {key === "check" && <Check key={depth} {...body} onResult={(s, t) => { if (s >= PASS) setChecked(true); onCheck?.(s, t, DEPTH_IDS[depth]); }} onPass={() => move(5)} onAgain={() => go(1)} />}
+      {key === "recap" && <Recap spec={spec} onFinish={onComplete} deeperLabel={deeper != null ? DEPTH_LABELS[deeper] : null}
+        onDeeper={deeper != null ? () => { setDepth(deeper); setReached(r => Math.max(r, 1)); go(1); } : null} />}
     </div>
   );
 }

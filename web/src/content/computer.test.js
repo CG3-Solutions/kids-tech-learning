@@ -87,3 +87,52 @@ describe("Chip's computer path", () => {
     }
   });
 });
+
+describe("depth by class (C2)", async () => {
+  const { DEEP, depthFor, DEPTHS } = await import("./computerDeep.js");
+  const { atDepth, depthsOf, DEPTH_LABELS } = await import("../components/concept/ConceptLesson.jsx");
+  it("every concept has Class 4–7 and Class 8–12 versions with 3 good check questions", () => {
+    expect(DEPTHS.map(d => d.label)).toEqual(DEPTH_LABELS);
+    for (const s of COMPUTER_JOURNEY) {
+      expect(depthsOf(s), s.id).toEqual([0, 1, 2]);
+      for (const d of ["mid", "high"]) {
+        const v = DEEP[s.id][d];
+        expect(v.text.length, `${s.id} ${d}`).toBeGreaterThanOrEqual(2);
+        expect(v.text.length).toBeLessThanOrEqual(3);
+        expect(v.points.length).toBeGreaterThanOrEqual(1);
+        expect(v.check).toHaveLength(3);
+        for (const q of v.check) {
+          expect(q.answer).toBeLessThan(q.options.length);
+          expect(new Set(q.options).size, q.q).toBe(q.options.length);
+          expect(q.why, q.q).toBeTruthy();
+        }
+      }
+    }
+  });
+  it("a deeper level replaces the learn text and checks and adds recap points", () => {
+    const cpu = COMPUTER_JOURNEY.find(s => s.title === "The CPU");
+    expect(atDepth(cpu, 0)).toBe(cpu);
+    const mid = atDepth(cpu, 1), high = atDepth(cpu, 2);
+    expect(mid.explain.text.join(" ")).toMatch(/fetch .*decode.*execute/i);
+    expect(high.explain.text.join(" ")).toMatch(/cores/);
+    expect(high.explain.text.join(" ")).toMatch(/cache/);
+    expect(mid.check).not.toEqual(cpu.check);
+    expect(high.recap.points.length).toBe(cpu.recap.points.length + DEEP[cpu.id].high.points.length);
+    expect(mid.explain.like).toBe(cpu.explain.like);
+    const mem = atDepth(COMPUTER_JOURNEY.find(s => s.title === "Memory and storage"), 2);
+    expect(mem.explain.text.join(" ")).toMatch(/SSD/);
+  });
+  it("the learner's class picks the starting depth; grown-ups start at the top", () => {
+    expect([1, 2, 3].map(g => depthFor({ grade: g }))).toEqual([0, 0, 0]);
+    expect([4, 7].map(g => depthFor({ grade: g }))).toEqual([1, 1]);
+    expect([8, 12].map(g => depthFor({ grade: g }))).toEqual([2, 2]);
+    expect(depthFor({ grade: null })).toBe(0);
+    expect(depthFor({ learner: "adult" })).toBe(2);
+  });
+  it("deeper text also reads cleanly aloud", () => {
+    const EMOJI = /\p{Extended_Pictographic}/u;
+    for (const s of COMPUTER_JOURNEY) for (const d of ["mid", "high"]) {
+      for (const t of [...DEEP[s.id][d].text, ...DEEP[s.id][d].check.map(q => q.q)]) expect(EMOJI.test(speechText(t)), t).toBe(false);
+    }
+  });
+});

@@ -1194,3 +1194,5 @@ button.kb-key { cursor: pointer }
   .px-grid { grid-template-columns: repeat(5, 30px) } .px-grid i, .px-grid button { width: 30px; height: 30px }
   .px-nums code { line-height: 30px }
 }
+.depth-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.depth-chip { background: color-mix(in srgb, var(--lv4) 14%, var(--surface)); border: 2px solid color-mix(in srgb, var(--lv4) 40%, var(--line)); border-radius: 99px; padding: 4px 12px; font-size: .9rem }
