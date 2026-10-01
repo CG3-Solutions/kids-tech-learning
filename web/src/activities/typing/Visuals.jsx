@@ -33,7 +33,7 @@ export function Streak({ n }) {
 
 // Speedometer for Pro mode: the needle shows live speed, the tick shows the personal best.
 export function Speedometer({ wpm, best = 0, goal = 0 }) {
-  const max = Math.max(40, Math.ceil((Math.max(best, goal, wpm) * 1.3) / 10) * 10);
+  const max = Math.min(250, Math.max(40, Math.ceil((Math.max(best, goal, wpm) * 1.3) / 10) * 10));
   const ang = v => Math.PI * (1 - Math.min(v, max) / max); // 0 → left, max → right
   const pt = (v, r) => [60 + r * Math.cos(ang(v)), 62 - r * Math.sin(ang(v))];
   const [nx, ny] = pt(wpm, 40);

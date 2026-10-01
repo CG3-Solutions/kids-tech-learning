@@ -85,9 +85,12 @@ export function weakKeys(keys, limit = 5) {
 
 export const fmtMinutes = sum => (sum.seconds > 0 && sum.minutes === 0 ? "under 1 min" : `${sum.minutes} min`);
 
+// Faster than any human has typed (the record is about 216): a stuck key or a typing robot.
+export const MAX_HUMAN_WPM = 250;
+
 // Summary for parents and the course page. Speed records only come from real keyboards.
 export function typingSummary(sessions) {
-  const real = sessions.filter(s => s.input !== "touch");
+  const real = sessions.filter(s => s.input !== "touch" && s.wpm <= MAX_HUMAN_WPM);
   const recent = sessions.slice(0, 5);
   return {
     sessions: sessions.length,
