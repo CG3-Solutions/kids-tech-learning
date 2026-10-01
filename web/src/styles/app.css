@@ -1053,3 +1053,4 @@ button.kb-key { cursor: pointer }
 .check-row { display: flex; gap: 10px; align-items: flex-start }
 .check-row input { width: 20px; height: 20px; margin-top: 3px; flex: none }
 .kid .tag { display: block; margin: 4px auto 0; width: max-content }
+.trend .chart-tip { top: 30px }
