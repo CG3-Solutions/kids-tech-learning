@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createApi } from "./api.js";
 import { local } from "./storage.js";
 import { setVoice, voiceOf } from "./voice.js";
+import { setNeural, setPrivateNames } from "./neuralVoice.js";
 import { SEED } from "../content/index.js";
 import { findMilestones } from "./milestones.js";
 
@@ -50,6 +51,10 @@ export function AppProvider({ children: kids }) {
     } catch (e) { setError(e.message); }
   }, [api, user, loadContent]);
   useEffect(() => { loadAccount(); }, [loadAccount]);
+
+  // Natural voices need a signed-in Supabase account; names are never sent to the voice service.
+  useEffect(() => { setNeural(api?.tts && user ? api.tts : null); }, [api, user]);
+  useEffect(() => { setPrivateNames([...children.map(c => c.name), profile?.display_name, ...(profile?.display_name ?? "").split(/\s+/)]); }, [children, profile?.display_name]);
 
   const activeChild = children.find(c => c.id === activeId) ?? null;
   useEffect(() => { setVoice(voiceOf(activeChild)); }, [activeChild?.id, activeChild?.voice, activeChild?.gender]); // eslint-disable-line react-hooks/exhaustive-deps

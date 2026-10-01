@@ -3,6 +3,7 @@
 // so presets only nudge pitch, speak a little slower, and the best natural voice on the device is chosen.
 import { local } from "./storage.js";
 import { speechPlan } from "./speechPlan.js";
+import { neuralOn, hasPrivate, neuralUrl, neuralFailed } from "./neuralVoice.js";
 
 export const VOICES = [
   { id: "bright", name: "Bright girl", emoji: "👧", gender: "f", pitch: 1.12, rate: 0.92 },
@@ -64,44 +65,93 @@ let timer = null, lastText = "", lastAt = 0, keep = [], run = 0;
 const GAP_MS = 140;
 const STRESS_RATE = 0.8, STRESS_PITCH = 0.08; // a stressed word: slower and a little higher, like a teacher
 
+// One <audio> element for natural (recorded) voices.
+let audio = null;
+const getAudio = () => {
+  if (!audio && typeof Audio !== "undefined") { audio = new Audio(); audio.preload = "auto"; }
+  return audio;
+};
+// Phones only allow sound after a tap. The first tap anywhere "unlocks" the audio element, so later
+// lines (which start after loading) can play.
+const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+try {
+  const unlock = () => {
+    const a = getAudio(); if (!a) return;
+    if (!a.src) { a.src = SILENCE; a.play().then(() => a.pause()).catch(() => {}); }
+    window.removeEventListener("pointerdown", unlock, true);
+  };
+  window.addEventListener("pointerdown", unlock, true);
+} catch { /* ignore */ }
+
+const NEURAL_WAIT_MS = 2500; // longer than this to get a recording: use the device voice for this line
+
 export function hushVoice() {
   clearTimeout(timer); timer = null; run++;
   try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+  try { if (audio && !audio.paused) audio.pause(); } catch { /* ignore */ }
   if (speaking) setSpeaking(null);
 }
 
-// Reads `raw` sentence by sentence. Stressed words are their own short utterance, said slower.
+// The device voice: sentence by sentence, stressed words as their own short utterance, said slower.
+function speakDevice(preset, raw, plan, slow, mine) {
+  const ss = window.speechSynthesis;
+  if (!ss) return;
+  ss.cancel();
+  const v = pickDeviceVoice(preset);
+  const rate = preset.rate * voiceSpeed().rate * (slow ? 0.8 : 1);
+  // Too many stressed words in one sentence sounds choppy: then read it in one go.
+  const chunks = plan.flatMap(parts => (parts.filter(p => p.stress).length > 2 ? [{ t: parts.map(p => p.t).join(""), stress: false }] : parts));
+  keep = chunks.map((c, i) => {
+    const u = new SpeechSynthesisUtterance(c.t);
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-IN";
+    u.rate = Math.max(0.5, rate * (c.stress ? STRESS_RATE : 1));
+    u.pitch = Math.min(2, preset.pitch + (c.stress ? STRESS_PITCH : 0));
+    if (i === 0) u.onstart = () => { if (mine === run) setSpeaking(raw); };
+    if (i === chunks.length - 1) u.onend = u.onerror = () => { if (mine === run) { keep = []; setSpeaking(null); } };
+    return u; // kept so the browser doesn't drop speech when the utterance is garbage-collected
+  });
+  keep.forEach(u => ss.speak(u));
+}
+
+// The natural voice: play the recorded line. Resolves true if it started playing.
+async function speakNeural(preset, raw, plan, slow, mine) {
+  const a = getAudio();
+  if (!a) return false;
+  const url = await Promise.race([neuralUrl(preset.id, plan), new Promise((_, no) => setTimeout(() => no(new Error("slow")), NEURAL_WAIT_MS))]);
+  if (mine !== run) return true; // a newer line has started; nothing to do
+  a.src = url;
+  a.playbackRate = voiceSpeed().rate * (slow ? 0.8 : 1);
+  a.onplaying = () => { if (mine === run) setSpeaking(raw); };
+  a.onended = a.onerror = () => { if (mine === run) setSpeaking(null); };
+  await a.play();
+  return true;
+}
+
+// Reads `raw` in the preset's voice: the natural voice when it's on and the line has no names,
+// otherwise (or if that fails) the device voice.
 // opts.force: say it even if it was just said. opts.slow: extra slow ("Say it slowly").
 export function speakWith(preset, raw, { force = false, slow = false } = {}) {
   try {
-    const ss = window.speechSynthesis;
     const plan = speechPlan(raw);
-    if (!ss || !plan.length) return false;
+    const ss = window.speechSynthesis;
+    const natural = neuralOn() && !hasPrivate(raw);
+    if (!plan.length || (!ss && !natural)) return false;
     const key = JSON.stringify(plan);
     const now = Date.now();
     if (!force && key === lastText && now - lastAt < 2500) return true;
     lastText = key; lastAt = now;
     clearTimeout(timer);
-    ss.cancel();
+    try { ss?.cancel(); } catch { /* ignore */ }
+    try { if (audio && !audio.paused) audio.pause(); } catch { /* ignore */ }
     const mine = ++run;
     timer = setTimeout(() => {
       timer = null;
       if (document.visibilityState === "hidden" || mine !== run) return;
-      ss.cancel();
-      const v = pickDeviceVoice(preset);
-      const rate = preset.rate * voiceSpeed().rate * (slow ? 0.8 : 1);
-      // Too many stressed words in one sentence sounds choppy: then read it in one go.
-      const chunks = plan.flatMap(parts => (parts.filter(p => p.stress).length > 2 ? [{ t: parts.map(p => p.t).join(""), stress: false }] : parts));
-      keep = chunks.map((c, i) => {
-        const u = new SpeechSynthesisUtterance(c.t);
-        if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-IN";
-        u.rate = Math.max(0.5, rate * (c.stress ? STRESS_RATE : 1));
-        u.pitch = Math.min(2, preset.pitch + (c.stress ? STRESS_PITCH : 0));
-        if (i === 0) u.onstart = () => { if (mine === run) setSpeaking(raw); };
-        if (i === chunks.length - 1) u.onend = u.onerror = () => { if (mine === run) { keep = []; setSpeaking(null); } };
-        return u; // kept so the browser doesn't drop speech when the utterance is garbage-collected
+      if (!natural) { speakDevice(preset, raw, plan, slow, mine); return; }
+      speakNeural(preset, raw, plan, slow, mine).catch(e => {
+        if (e?.message !== "slow" && e?.name !== "NotAllowedError" && e?.status !== 422) neuralFailed(); // rest natural voices for a while
+        if (mine === run) speakDevice(preset, raw, plan, slow, mine);
       });
-      keep.forEach(u => ss.speak(u));
     }, GAP_MS);
     return true;
   } catch { return false; }
