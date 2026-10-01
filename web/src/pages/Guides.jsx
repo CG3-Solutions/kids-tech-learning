@@ -12,6 +12,7 @@ export const GUIDES = [
   { slug: "binary", file: "05-binary-adventure.md", title: "Binary adventure course (Bit)" },
   { slug: "language", file: "06-language-course.md", title: "Language course (Polly)" },
   { slug: "maths", file: "07-maths-course.md", title: "Maths course (Ollie)" },
+  { slug: "typing", file: "08-typing-course.md", title: "Typing course (Keyo)" },
 ];
 
 export default function Guides() {

@@ -25,7 +25,13 @@ describe("milestones", () => {
     expect(findMilestones(before, after, pub, kid).some(m => m.title.includes(`finished ${coding.title}`))).toBe(true);
   });
   it("ignores coming-soon subjects", () => {
-    expect(SEED.modules.filter(m => m.coming_soon).map(m => m.id)).toEqual(["typing"]);
+    // A coming-soon tile with puzzles: finishing them all must not send a "finished" email.
+    const soon = { id: "soon", area: "science", title: "Soon", coming_soon: true, activity: "coding" };
+    const p2 = { ...pub, modules: [...pub.modules, soon] };
+    const ids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"].map(p => `puzzle-${p}`);
+    const before = { ...empty, progress: ids.slice(0, -1).map(id => ({ item_id: id, module_id: "soon" })) };
+    const after = { ...empty, progress: ids.map(id => ({ item_id: id, module_id: "soon" })) };
+    expect(findMilestones(before, after, p2, kid).some(m => m.title.includes("finished Soon"))).toBe(false);
   });
 });
 

@@ -40,6 +40,8 @@ export const BADGES = [
   { id: "sentence", emoji: "💬", name: "Sentence builder", how: "Finish Part B of Polly's sentence adventure", test: s => s.ids.has("sent-step-7") },
   { id: "numbers", emoji: "🔟", name: "Number ninja", how: "Finish Part B of Ollie's number adventure", test: s => s.ids.has("num-step-9") },
   { id: "maths", emoji: "🧮", name: "Maths master", how: "Finish Part C of Ollie's maths adventure", test: s => s.ids.has("math-step-12") },
+  { id: "homerow", emoji: "⌨️", name: "Home row hero", how: "Pass the home row check in typing", test: s => s.ids.has("typ-step-8") },
+  { id: "toprow", emoji: "🚀", name: "Top row ace", how: "Pass the top row check in typing", test: s => s.ids.has("typ-step-15") },
   { id: "binary", emoji: "🤖", name: "Binary boss", how: "Finish Bit's 7 binary steps", test: s => s.ids.has("binary-step-7") || s.ids.has("activity-binary") },
   { id: "coder", emoji: "🧩", name: "Code cadet", how: "Solve 3 robot puzzles", test: s => s.puzzles >= 3 },
   { id: "robot", emoji: "🤖", name: "Robot master", how: "Solve all robot puzzles", test: s => s.puzzles >= PUZZLES.length },

@@ -22,6 +22,10 @@ export function timeline(entries, published, limit = 20) {
       const m = published?.modules.find(x => x.id === a.module_id);
       rows.push({ at: a.created_at, child, text: `❓ Scored ${a.score}/${a.total} in the ${m?.title ?? a.module_id} quiz`, module: a.module_id });
     }
+    for (const t of data.typing ?? []) {
+      const title = STEPS[t.lesson_id]?.title ?? t.lesson_id;
+      rows.push({ at: t.created_at, child, text: `⌨️ Typed “${title}”: ${t.wpm} words a minute, ${t.accuracy}% accuracy${t.passed ? "" : " (not passed yet)"}`, module: "typing" });
+    }
   }
   return rows.filter(r => r.at).sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
 }

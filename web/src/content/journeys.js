@@ -3,6 +3,7 @@
 import { CIRCUIT_JOURNEY, CIRCUIT_PARTS } from "./circuits.js";
 import { BINARY_JOURNEY } from "./subjects.js";
 import { ALPHABET_JOURNEY, ALPHABET_PARTS, WORDS_JOURNEY, WORDS_PARTS, SENTENCES_JOURNEY, SENTENCES_PARTS } from "./practice/language.js";
+import { TYPING_JOURNEY, TYPING_PARTS } from "./typing.js";
 import { NUMBERS_JOURNEY, NUMBERS_PARTS, MATHS_JOURNEY, MATHS_PARTS } from "./practice/maths.js";
 
 export const JOURNEYS = {
@@ -13,6 +14,7 @@ export const JOURNEYS = {
   mathematics: { name: "➕ Ollie's maths adventure", guide: "maths", steps: MATHS_JOURNEY, parts: MATHS_PARTS, intro: "From adding apples to algebra and Pythagoras." },
   circuit: { name: "🔌 Volt's circuits & gates", guide: "circuits", steps: CIRCUIT_JOURNEY, parts: CIRCUIT_PARTS },
   binary: { name: "🔢 Bit's binary adventure", guide: "binary", steps: BINARY_JOURNEY, parts: [] },
+  typing: { name: "⌨️ Keyo's typing course", guide: "typing", steps: TYPING_JOURNEY, parts: TYPING_PARTS, intro: "Touch typing, finger by finger." },
 };
 export const ALL_STEPS = Object.values(JOURNEYS).flatMap(j => j.steps);
 export const STEP_IDS = new Set(ALL_STEPS.map(s => s.id));
