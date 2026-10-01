@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { speak } from "../../lib/speech.js";
+import { speak, hush } from "../../lib/speech.js";
+import { onSpeaking, speakingText } from "../../lib/voice.js";
 import { isMuted, onMuteChange } from "../../lib/sfx.js";
 
 // A story character with a speech bubble that reads itself aloud (unless muted).
@@ -8,13 +9,22 @@ export default function Guide({ Face, children, say, mood = "happy", lamp = true
   const text = say ?? (typeof children === "string" ? children : "");
   const [muted, setM] = useState(isMuted());
   useEffect(() => onMuteChange(setM), []);
-  useEffect(() => { if (text && !muted) speak(text); }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [talking, setTalking] = useState(false);
+  useEffect(() => onSpeaking(t => setTalking(!!t && t === text)), [text]);
+  useEffect(() => { setTalking(speakingText() === text); if (text && !muted) speak(text); }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="bit">
       <Face mood={mood} lamp={lamp} />
       <div className="bubble" role="status">
         <div>{children ?? say}</div>
-        {text && <button className="btn ghost small" onClick={() => speak(text, { force: true })} aria-label="Hear it again">🔊 Hear it</button>}
+        {text && (
+          <div className="hear-row">
+            {talking
+              ? <button className="btn ghost small talking" onClick={hush} aria-label="Stop reading">⏹ Stop</button>
+              : <button className="btn ghost small" onClick={() => speak(text, { force: true })} aria-label="Hear it again">🔊 Hear it</button>}
+            <button className="btn ghost small" onClick={() => speak(text, { force: true, slow: true })} aria-label="Hear it slowly">🐢 Slowly</button>
+          </div>
+        )}
       </div>
     </div>
   );

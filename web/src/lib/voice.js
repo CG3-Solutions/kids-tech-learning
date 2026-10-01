@@ -1,69 +1,107 @@
-// Kid-friendly voices built from the device's own text-to-speech voices.
-// Browsers only ship adult voices, so each preset picks a suitable voice and tunes pitch and speed.
+// Voices for the story characters, built from the device's own text-to-speech voices.
+// Clarity first: big pitch changes make voices sound unnatural and hard for children to follow,
+// so presets only nudge pitch, speak a little slower, and the best natural voice on the device is chosen.
 import { local } from "./storage.js";
-import { speechText } from "./speechText.js";
+import { speechPlan } from "./speechPlan.js";
 
 export const VOICES = [
-  { id: "bright", name: "Bright girl", emoji: "👧", like: /female|samantha|zira|susan|karen|moira|tessa|veena|heera|victoria|serena|fiona|google (uk|us) english$|google .*female|neerja|aditi|priya/i, pitch: 1.55, rate: 1.0 },
-  { id: "cheerful", name: "Cheerful boy", emoji: "👦", like: /\bmale|daniel|alex|rishi|fred|david|mark|oliver|aaron|arthur|google uk english male|prabhat|ravi/i, pitch: 1.45, rate: 1.02 },
-  { id: "robot", name: "Friendly robot", emoji: "🤖", like: /./, pitch: 0.75, rate: 0.95 },
-  { id: "teacher", name: "Calm teacher", emoji: "🧑‍🏫", like: /female|samantha|zira|karen|moira|veena|heera|neerja|aditi/i, pitch: 1.05, rate: 0.88 },
+  { id: "bright", name: "Bright girl", emoji: "👧", gender: "f", pitch: 1.12, rate: 0.92 },
+  { id: "cheerful", name: "Cheerful boy", emoji: "👦", gender: "m", pitch: 1.08, rate: 0.93 },
+  { id: "teacher", name: "Clear teacher", emoji: "🧑‍🏫", gender: "f", pitch: 1.0, rate: 0.88 },
+  { id: "robot", name: "Friendly robot", emoji: "🤖", gender: "m", pitch: 0.88, rate: 0.9 },
 ];
-export const defaultVoiceFor = gender => (gender === "girl" ? "bright" : gender === "boy" ? "cheerful" : "robot");
+export const defaultVoiceFor = gender => (gender === "girl" ? "bright" : gender === "boy" ? "cheerful" : "teacher");
 export const voiceOf = child => VOICES.find(v => v.id === (child?.voice || (child?.learner === "adult" ? "teacher" : defaultVoiceFor(child?.gender)))) ?? VOICES[2];
 
 let current = VOICES[2];
 export function setVoice(preset) { current = preset ?? VOICES[2]; }
 
-// Indian English first, then British, then any English.
-const LANG_ORDER = [/en[-_]IN/i, /en[-_]GB/i, /^en/i];
-function pickDeviceVoice(preset) {
-  const all = window.speechSynthesis?.getVoices?.() ?? [];
-  const english = all.filter(v => /^en/i.test(v.lang));
-  const pool = english.length ? english : all;
-  for (const lang of LANG_ORDER) {
-    const m = pool.find(v => lang.test(v.lang) && preset.like.test(v.name));
-    if (m) return m;
-  }
-  return pool.find(v => preset.like.test(v.name)) ?? pool.find(v => LANG_ORDER[0].test(v.lang)) ?? pool[0] ?? null;
+// Speaking speed on this device (a multiplier on each preset).
+export const SPEEDS = [{ id: "slow", name: "Slower", rate: 0.82 }, { id: "normal", name: "Normal", rate: 1 }, { id: "quick", name: "Quicker", rate: 1.12 }];
+export const voiceSpeed = () => SPEEDS.find(s => s.id === local.get("sparklab.voiceSpeed", "normal")) ?? SPEEDS[1];
+export const setVoiceSpeed = id => local.set("sparklab.voiceSpeed", id);
+
+// Ranks the device's voices: natural/neural voices first, Indian English, then British, then any English.
+// Novelty voices (macOS "Bubbles", "Zarvox"…) and eSpeak are pushed to the bottom.
+const NATURAL = /natural|neural|enhanced|premium|online|wavenet|siri/i;
+const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|\bfred\b|junior|ralph|kathy|princess|espeak/i;
+const FEMALE = /female|woman|samantha|zira|susan|karen|moira|tessa|veena|heera|victoria|serena|fiona|neerja|aditi|priya|swara|kalpana|isha|sonia|libby|aria|jenny|ava|allison|google uk english female|google us english/i;
+const MALE = /\bmale|man\b|daniel|alex|rishi|david|mark|oliver|aaron|arthur|prabhat|ravi|hemant|madhur|ryan|guy|tom|google uk english male/i;
+export function scoreVoice(v, preset) {
+  let s = 0;
+  if (NATURAL.test(v.name)) s += 50;
+  if (/en[-_]IN/i.test(v.lang)) s += 30; else if (/en[-_]GB/i.test(v.lang)) s += 18; else if (/^en/i.test(v.lang)) s += 10; else s -= 100;
+  if (/google|microsoft/i.test(v.name)) s += 8;
+  if (v.localService === false) s += 4; // network voices are usually the higher-quality ones
+  const want = preset.gender === "m" ? MALE : FEMALE, other = preset.gender === "m" ? FEMALE : MALE;
+  if (want.test(v.name)) s += 20; else if (other.test(v.name)) s -= 15;
+  if (NOVELTY.test(v.name)) s -= 300;
+  return s;
+}
+// (The default is worked out inside the function: optional chaining in a default parameter builds wrongly.)
+export function pickDeviceVoice(preset, voices) {
+  const all = voices ?? window.speechSynthesis?.getVoices?.() ?? [];
+  let best = null, top = -Infinity;
+  for (const v of all) { const sc = scoreVoice(v, preset); if (sc > top) { top = sc; best = v; } }
+  return best;
 }
 
 // Voices load asynchronously in some browsers; wait once for them.
 try { window.speechSynthesis?.addEventListener?.("voiceschanged", () => {}); } catch { /* ignore */ }
 
+// Who is listening for "is it talking?" (to show a Stop button).
+const listeners = new Set();
+let speaking = null; // the text being read, or null
+const setSpeaking = t => { speaking = t; listeners.forEach(f => f(t)); };
+export const onSpeaking = fn => { listeners.add(fn); return () => listeners.delete(fn); };
+export const speakingText = () => speaking;
+
 // One voice at a time. Children often tap quickly, and browsers (Safari especially) can play
 // two lines over each other if a new one starts the moment the old one is cancelled. So every
 // request goes through here: the newest line wins, it starts after a short pause, and the same
 // line is not repeated straight away.
-let timer = null, lastText = "", lastAt = 0, keep = null;
+let timer = null, lastText = "", lastAt = 0, keep = [], run = 0;
 const GAP_MS = 140;
+const STRESS_RATE = 0.8, STRESS_PITCH = 0.08; // a stressed word: slower and a little higher, like a teacher
 
 export function hushVoice() {
-  clearTimeout(timer); timer = null;
+  clearTimeout(timer); timer = null; run++;
   try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+  if (speaking) setSpeaking(null);
 }
 
-export function speakWith(preset, raw, { force = false } = {}) {
+// Reads `raw` sentence by sentence. Stressed words are their own short utterance, said slower.
+// opts.force: say it even if it was just said. opts.slow: extra slow ("Say it slowly").
+export function speakWith(preset, raw, { force = false, slow = false } = {}) {
   try {
     const ss = window.speechSynthesis;
-    const text = speechText(raw);
-    if (!ss || !text) return false;
+    const plan = speechPlan(raw);
+    if (!ss || !plan.length) return false;
+    const key = JSON.stringify(plan);
     const now = Date.now();
-    if (!force && text === lastText && now - lastAt < 2500) return true;
-    lastText = text; lastAt = now;
+    if (!force && key === lastText && now - lastAt < 2500) return true;
+    lastText = key; lastAt = now;
     clearTimeout(timer);
     ss.cancel();
+    const mine = ++run;
     timer = setTimeout(() => {
       timer = null;
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || mine !== run) return;
       ss.cancel();
-      const u = new SpeechSynthesisUtterance(text);
       const v = pickDeviceVoice(preset);
-      if (v) { u.voice = v; u.lang = v.lang; }
-      u.pitch = preset.pitch; u.rate = preset.rate;
-      keep = u; // some browsers drop speech if the utterance is garbage-collected
-      u.onend = () => { if (keep === u) keep = null; };
-      ss.speak(u);
+      const rate = preset.rate * voiceSpeed().rate * (slow ? 0.8 : 1);
+      // Too many stressed words in one sentence sounds choppy: then read it in one go.
+      const chunks = plan.flatMap(parts => (parts.filter(p => p.stress).length > 2 ? [{ t: parts.map(p => p.t).join(""), stress: false }] : parts));
+      keep = chunks.map((c, i) => {
+        const u = new SpeechSynthesisUtterance(c.t);
+        if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-IN";
+        u.rate = Math.max(0.5, rate * (c.stress ? STRESS_RATE : 1));
+        u.pitch = Math.min(2, preset.pitch + (c.stress ? STRESS_PITCH : 0));
+        if (i === 0) u.onstart = () => { if (mine === run) setSpeaking(raw); };
+        if (i === chunks.length - 1) u.onend = u.onerror = () => { if (mine === run) { keep = []; setSpeaking(null); } };
+        return u; // kept so the browser doesn't drop speech when the utterance is garbage-collected
+      });
+      keep.forEach(u => ss.speak(u));
     }, GAP_MS);
     return true;
   } catch { return false; }

@@ -28,7 +28,7 @@ export default function CardDetail({ card, levelName, color, learned, onLearned,
           <span className="pic" aria-hidden="true">{d.e}</span>
           <div><div className="eyebrow">{levelName}</div><h2 id="cardTitle">{d.n}</h2></div>
           <div className="acts">
-            <button className="btn primary" onClick={() => speak(`${d.n}. ${d.what} It's like ${d.like} Think! ${d.q}`, { force: true })}>Read to me</button>
+            <button className="btn primary" onClick={() => speak(`${d.n}. ${d.what} It's like ${/^[A-Z][a-z]/.test(d.like ?? "") ? d.like[0].toLowerCase() + d.like.slice(1) : d.like} Think! ${d.q}`, { force: true })}>Read to me</button>
             <button className="btn" ref={closeRef} onClick={onClose}>Close</button>
           </div>
         </div>

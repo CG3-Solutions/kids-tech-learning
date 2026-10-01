@@ -99,3 +99,66 @@ describe("alphabet speech uses letter names", () => {
     }
   });
 });
+
+describe("clear speech for children", async () => {
+  const { speechPlan, planText, SPELL } = await import("./speechPlan.js");
+  const stressed = t => speechPlan(t).flat().filter(p => p.stress).map(p => p.t.replace(/[.,!?]+$/, ""));
+  it("spells short acronyms and says units as words", () => {
+    expect(planText(speechPlan("The CPU has 8 GB of RAM at 3 GHz."))).toBe("The C P U has 8 gigabytes of ram at 3 gigahertz.");
+    expect(planText(speechPlan("Use an ATM or AI."))).toBe("Use an ay T M or ay I.");
+    expect(SPELL.has("CPU") && SPELL.has("ATM") && !SPELL.has("RAM")).toBe(true);
+  });
+  it("stresses words in capitals and the new word after “is called”", () => {
+    expect(stressed("The loop works only when BOTH are ON.")).toEqual(["both", "on"]);
+    expect(stressed("A mistake in a program is called a bug.")).toEqual(["bug"]);
+    expect(stressed("This is called the stored-program idea (1945).")).toEqual(["stored-program idea"]);
+    expect(stressed("The CPU follows instructions.")).toEqual([]);
+  });
+  it("splits into sentences and never reads punctuation on its own", () => {
+    const plan = speechPlan("Input goes IN. Output comes OUT! Ready?");
+    expect(plan).toHaveLength(3);
+    for (const p of plan.flat()) expect(/[\p{L}\p{N}]/u.test(p.t)).toBe(true);
+  });
+  it("leaves letters, names and maths alone", () => {
+    expect(planText(speechPlan("ay, for Apple."))).toBe("ay, for Apple.");
+    expect(planText(speechPlan("Riya, please come here."))).toBe("Riya, please come here.");
+    expect(planText(speechPlan("5 + 3 = ?"))).toBe("5 plus 3 equals what?");
+    expect(speechPlan("⭐🎉")).toEqual([]);
+  });
+});
+
+describe("device voice choice and delivery", () => {
+  let spoken;
+  beforeEach(() => {
+    vi.useFakeTimers(); spoken = [];
+    globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
+    vi.resetModules();
+  });
+  const V = (name, lang, localService = true) => ({ name, lang, localService });
+  it("prefers natural Indian English voices and avoids novelty voices", async () => {
+    const { pickDeviceVoice, VOICES } = await import("./voice.js");
+    const all = [V("Zarvox", "en-US"), V("Fred", "en-US"), V("Google US English", "en-US", false), V("Microsoft Neerja Online (Natural) - English (India)", "en-IN", false), V("Rishi", "en-IN")];
+    expect(pickDeviceVoice(VOICES[0], all).name).toMatch(/Neerja/);
+    expect(pickDeviceVoice(VOICES[3], [V("Zarvox", "en-US"), V("Daniel", "en-GB")]).name).toBe("Daniel");
+    expect(pickDeviceVoice(VOICES[1], [V("Veena", "en-IN"), V("Rishi", "en-IN")]).name).toBe("Rishi");
+    expect(pickDeviceVoice(VOICES[0], [])).toBe(null);
+  });
+  it("reads sentence by sentence, with stressed words slower", async () => {
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [] };
+    const { speakWith, VOICES } = await import("./voice.js");
+    speakWith(VOICES[2], "The loop works only when BOTH are on. Try it!");
+    vi.advanceTimersByTime(300);
+    expect(spoken.map(u => u.text)).toEqual(["The loop works only when ", "both", " are on.", "Try it!"]);
+    const both = spoken[1], plain = spoken[0];
+    expect(both.rate).toBeLessThan(plain.rate);
+    expect(plain.pitch).toBeLessThan(1.2); // no chipmunk voices
+    expect(plain.lang).toBe("en-IN");
+  });
+  it("the Slowly button reads slower", async () => {
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [] };
+    const { speakWith, VOICES } = await import("./voice.js");
+    speakWith(VOICES[2], "Hello there.", { force: true }); vi.advanceTimersByTime(300);
+    speakWith(VOICES[2], "Hello there.", { force: true, slow: true }); vi.advanceTimersByTime(300);
+    expect(spoken[1].rate).toBeLessThan(spoken[0].rate);
+  });
+});
