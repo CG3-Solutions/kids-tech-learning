@@ -4,6 +4,7 @@ import { HeatKeyboard } from "./Keyboard.jsx";
 import { LADDER, TYPING_JOURNEY, sessionTitle } from "../../content/typing.js";
 import { MAX_HUMAN_WPM, mergeKeys, typingSummary, weakKeys } from "../../lib/typing.js";
 import { useFamily } from "../../lib/useFamily.js";
+import { useApp } from "../../lib/AppContext.jsx";
 
 const when = iso => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 const keyName = c => (/^[a-z]$/.test(c) ? c.toUpperCase() : c === " " ? "space" : c);
@@ -25,7 +26,8 @@ export function leaderboard(children, data) {
 }
 
 function Leaderboard({ me }) {
-  const { children, data, loading } = useFamily(1);
+  const { children } = useApp();
+  const { data, loading } = useFamily(1);
   const rows = useMemo(() => leaderboard(children, data), [children, data]);
   if (loading) return <p className="muted">Loading…</p>;
   if (rows.length < 2) return <p className="muted">When someone else in your family starts typing, you'll see who's fastest here. Grown-ups can add a profile for themselves too!</p>;
