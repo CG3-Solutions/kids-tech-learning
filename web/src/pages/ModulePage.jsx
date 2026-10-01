@@ -8,7 +8,7 @@ import CircuitJourney from "../activities/circuits/CircuitJourney.jsx";
 import PracticeJourney, { PRACTICE_ACTIVITIES } from "../components/practice/PracticeJourney.jsx";
 import BinaryJourney from "../activities/binary/BinaryJourney.jsx";
 import TypingCourse from "../activities/typing/TypingCourse.jsx";
-import CircuitLab from "../components/lab/CircuitLab.jsx";
+import LabTab from "../components/lab/LabTab.jsx";
 import ComputerJourney from "../activities/computer/ComputerJourney.jsx";
 import { ChipQuiz } from "../activities/computer/Review.jsx";
 import CodingPuzzles from "../activities/CodingPuzzles.jsx";
@@ -94,7 +94,7 @@ export default function ModulePage() {
 
         {PRACTICE_ACTIVITIES.has(tab) && tab === m.activity && <PracticeJourney key={`${tab}-${location.key}`} activity={tab} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "circuit" && <CircuitJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
-        {tab === "lab" && <CircuitLab key={location.key} />}
+        {tab === "lab" && <LabTab key={location.key} done={done} onProjectDone={id => markDone(m.id, id)} />}
         {tab === "typing" && <TypingCourse key={location.key} />}
         {tab === "computer" && <ComputerJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "binary" && <BinaryJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}

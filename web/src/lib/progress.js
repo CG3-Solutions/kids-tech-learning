@@ -1,5 +1,6 @@
 import { PUZZLES } from "../content/subjects.js";
 import { JOURNEYS, STEP_IDS } from "../content/journeys.js";
+import { PROJECTS } from "../content/lab/projects.js";
 import { LADDER } from "../content/typing.js";
 import { GLOSSARY_MODULES } from "../content/index.js";
 import { COMPUTER_JOURNEY } from "../content/computer.js";
@@ -41,11 +42,20 @@ export function starCount(child) {
   return child.progress.length + child.attempts.reduce((s, a) => s + a.score, 0);
 }
 
+// Circuit Lab: a badge for finishing every project in a unit.
+const labUnit = n => PROJECTS.filter(p => p.unit === n).map(p => p.id);
+const LAB_UNIT_BADGES = [
+  { id: "lab1", emoji: "🔋", name: "Loop maker", how: "Finish every Circuit Lab project in Unit 1: power and loops", test: s => labUnit(1).every(id => s.ids.has(id)) },
+  { id: "lab2", emoji: "🛤️", name: "Series and parallel pro", how: "Finish every Circuit Lab project in Unit 2", test: s => labUnit(2).every(id => s.ids.has(id)) },
+  { id: "lab3", emoji: "🔴", name: "LED expert", how: "Finish every Circuit Lab project in Unit 3: LEDs and resistors", test: s => labUnit(3).every(id => s.ids.has(id)) },
+];
+
 export const BADGES = [
   { id: "first", emoji: "✨", name: "First spark", how: "Learn your first card", test: s => s.items >= 1 },
   { id: "ten", emoji: "🔟", name: "Ten cards", how: "Learn 10 cards", test: s => s.cards >= 10 },
   { id: "circuit", emoji: "🔌", name: "Circuit builder", how: "Finish Part A: circuit basics", test: s => s.ids.has("circuit-step-5") || s.ids.has("activity-circuit") },
   { id: "doorbell", emoji: "🔔", name: "Doorbell builder", how: "Build, test and fix a doorbell (Volt's mission)", test: s => s.ids.has("circuit-mission-bell") },
+  ...LAB_UNIT_BADGES,
   { id: "gates", emoji: "🚦", name: "Logic gatekeeper", how: "Finish Part B: switches that think", test: s => s.ids.has("circuit-step-12") },
   { id: "computer", emoji: "🖥️", name: "Computer builder", how: "Finish Part C: the adder and memory", test: s => s.ids.has("circuit-step-15") },
   { id: "abc", emoji: "🔠", name: "Alphabet star", how: "Finish Polly's alphabet adventure", test: s => s.ids.has("abc-step-9") },

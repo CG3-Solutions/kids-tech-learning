@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import PartGlyph from "./PartGlyph.jsx";
 import { PARTS } from "../../content/lab/parts.js";
 import { EXAMPLES } from "../../content/lab/examples.js";
-import { COLS, ROWS, PITCH, MARGIN, postXY, postName, inBounds, makePart, endOptions, isTwoPin, coveredPosts, fits, layerFor, remaining, toCircuit, describe, serialize, deserialize, buildBoard } from "../../lib/circuit/board.js";
+import { COLS, ROWS, PITCH, MARGIN, postXY, postName, inBounds, makePart, endOptions, isTwoPin, coveredPosts, fits, layerFor, remaining, toCircuit, describe, serialize, deserialize, buildBoard, pinPosts, samePlace, turned } from "../../lib/circuit/board.js";
 import { LiveCircuit } from "../../lib/circuit/live.js";
 import { createSoundPlayer } from "../../lib/circuit/sound.js";
 import { useApp } from "../../lib/AppContext.jsx";
@@ -26,6 +26,12 @@ const LDR_CHOICES = [["bright", "☀️ Bright"], ["dim", "⛅ Dim"], ["dark", "
 const MATERIALS = [["air", "Nothing"], ["spoon", "🥄 Spoon"], ["coin", "🪙 Coin"], ["foil", "✨ Foil"], ["key", "🔑 Key"], ["pencil", "✏️ Pencil line"], ["salt", "🧂 Salt water"], ["water", "💧 Tap water"], ["wetsoil", "🌱 Wet soil"], ["drysoil", "🏜️ Dry soil"], ["finger", "👆 Finger"], ["paper", "📄 Paper"], ["plastic", "📏 Plastic"], ["rubber", "🧽 Rubber"], ["wood", "🪵 Wood"]];
 const fmtA = a => (Math.abs(a) >= 1 ? `${a.toFixed(2)} A` : Math.abs(a) >= 0.001 ? `${(a * 1000).toFixed(1)} mA` : Math.abs(a) >= 1e-6 ? `${(a * 1e6).toFixed(0)} µA` : "0");
 const key = ([c, r]) => `${c},${r}`;
+// "a 100 Ω resistor from C1 to E1", for the guide's hint.
+function describeGhost(g) {
+  const posts = Object.values(pinPosts(g)).map(postName);
+  const what = g.type === "resistor" ? `a ${g.ohms >= 1000 ? `${g.ohms / 1000} kΩ` : `${g.ohms} Ω`} resistor` : g.type === "led" ? `a ${g.colour} LED (+ end at ${posts[0]})` : g.type === "battery" ? `the battery (+ end at ${posts[0]})` : g.type === "motor" ? `the motor (+ end at ${posts[0]})` : `a ${PARTS[g.type].name.toLowerCase()}`;
+  return `${what}, ${posts.length === 2 ? `from ${posts[0]} to ${posts[1]}` : `with its + at ${posts[0]}`}`;
+}
 
 // Board history for undo/redo: { past: [parts…], now: parts, future: [parts…] }.
 function history(state, action) {
@@ -37,10 +43,19 @@ function history(state, action) {
   }
 }
 
-export default function CircuitLab() {
+// Options (all optional), used by the project player:
+//   saveKey   where to autosave (default: this child's free-build board)
+//   initial   { parts, inputs } to start from when nothing is saved yet
+//   kit       { type: count } limits instead of the full kit (connectors are always available)
+//   trayTypes which parts the tray shows
+//   guide     the parts of a reference layout: the next missing one is shown as a ghost to copy
+//   actions   extra buttons shown under the hint (e.g. "Test my circuit")
+//   examples  show the example boards (default true)
+//   onChange(parts, inputs) whenever the board changes
+export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTypes, guide, actions, examples = true, onChange } = {}) {
   const { activeChild } = useApp();
-  const saveKey = `sparklab.lab.free.${activeChild?.id ?? "guest"}`;
-  const saved = useMemo(() => deserialize(local.get(saveKey, null)), [saveKey]);
+  const saveKey = saveKeyProp ?? `sparklab.lab.free.${activeChild?.id ?? "guest"}`;
+  const saved = useMemo(() => { const s = local.get(saveKey, null); return s ? deserialize(s) : { parts: initial?.parts ?? [], inputs: initial?.inputs ?? {} }; }, [saveKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hist, dispatch] = useReducer(history, { past: [], now: saved.parts, future: [] });
   const parts = hist.now;
   const setParts = useCallback(p => dispatch({ type: "set", parts: p }), []);
@@ -58,7 +73,7 @@ export default function CircuitLab() {
 
   useEffect(() => onMuteChange(setMutedState), []);
   // Autosave this child's board.
-  useEffect(() => { local.set(saveKey, serialize(parts, inputs)); }, [saveKey, parts, inputs]);
+  useEffect(() => { local.set(saveKey, serialize(parts, inputs)); onChange?.(parts, inputs); }, [saveKey, parts, inputs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Live simulation and sound ──
   const circuitKey = useMemo(() => JSON.stringify(parts.map(p => [p.type, p.id, p.at, p.dir, p.len, p.ohms, p.colour])), [parts]);
@@ -85,6 +100,8 @@ export default function CircuitLab() {
   }, []);
 
   // ── Helpers ──
+  const left = type => (kit ? (type === "wire" ? 99 : (kit[type] ?? 0) - parts.filter(p => p.type === type).length) : remaining(parts, type));
+  const next = guide ? guide.find(g => !parts.some(p => samePlace(p, g))) : null;
   const byUid = uid => parts.find(p => p.uid === uid);
   const sel = selected ? byUid(selected) : null;
   const topPartAt = at => [...parts].filter(p => coveredPosts(p).some(q => key(q) === key(at))).sort((a, b) => (b.layer ?? 1) - (a.layer ?? 1))[0];
@@ -99,7 +116,9 @@ export default function CircuitLab() {
   };
   const turn = uid => {
     const p = byUid(uid);
-    for (let k = 1; k <= 4; k++) { const q = { ...p, dir: ((p.dir ?? 0) + k) % 4 }; if (fits(q)) { update(uid, { dir: q.dir, layer: layerFor(parts, q) }); sfx.click(); return; } }
+    let q = p;
+    for (let k = 1; k <= 4; k++) { q = turned(q); if (fits(q)) { update(uid, { at: q.at, dir: q.dir, layer: layerFor(parts, q) }); sfx.click(); return; } }
+    sfx.oops();
   };
   const moveTo = (uid, at) => {
     const p = byUid(uid), q = { ...p, at };
@@ -108,7 +127,7 @@ export default function CircuitLab() {
   };
   const pickType = type => {
     playerRef.current?.unlock();
-    if (remaining(parts, type) <= 0) { sfx.oops(); return; }
+    if (left(type) <= 0) { sfx.oops(); return; }
     setSelected(null); setMode(m => (m.kind !== "idle" && m.type === type ? { kind: "idle" } : { kind: "place", type })); sfx.click();
     // On phones the tray is under the board: make sure the board is in view to tap.
     const box = wrapRef.current?.getBoundingClientRect();
@@ -248,6 +267,7 @@ export default function CircuitLab() {
     : mode.kind === "place" ? (isTwoPin(mode.type) ? `Tap a post for one end of the ${nameOf(mode.type).toLowerCase()}.` : `Tap a post to put the ${nameOf(mode.type).toLowerCase()} there. You can turn it after.`)
     : mode.kind === "end" ? (mode.type === "wire" ? "Now tap a glowing post for the other end (up to 6 posts away)." : "Now tap a glowing post for the other end.")
     : mode.kind === "move" ? "Tap a post to move it there."
+    : next ? `Next: ${describeGhost(next)}. Pick it from the tray, then tap the posts where the faint one is.`
     : sel ? `${nameOf(sel.type)} ${sel.id}. Drag it to move it, or use the buttons below.`
     : parts.length ? "Tap a part to choose it. Tap switches to flip them; press and hold buttons." : "Pick a part from the tray, then tap the board.";
   const status = describe(parts, result).filter(l => / is /.test(l) || /^Short/.test(l)).join(" ");
@@ -271,6 +291,7 @@ export default function CircuitLab() {
       </div>
 
       <p ref={hintRef} className={`lab-hint${result?.short ? " bad" : ""}`} role="status">{hint}</p>
+      {actions && <div className="lab-actions">{actions}</div>}
 
       <div ref={wrapRef} className="lab-board-wrap" tabIndex={0} role="application" aria-roledescription="circuit board"
         aria-label={`Circuit board, ${COLS} by ${ROWS} posts. Arrow keys move, Enter places or chooses, R turns, Delete removes. Cursor at ${postName(cursor)}.`}
@@ -287,11 +308,13 @@ export default function CircuitLab() {
               chip={result?.chips?.[p.id]} selected={p.uid === selected} dragging={drag?.uid === p.uid} offset={drag?.uid === p.uid ? [drag.dx, drag.dy] : [0, 0]} />
           ))}
 
+          {next && <PartGlyph part={{ ...next, anchorXY: postXY(next.at) }} ghost showLabel={false} />}
+          {next && Object.values(pinPosts(next)).map(at => <circle key={`g${key(at)}`} className="lab-ghost-pin" cx={postXY(at)[0]} cy={postXY(at)[1]} r={14} />)}
           {mode.kind === "end" && <circle className="lab-from" cx={postXY(mode.from)[0]} cy={postXY(mode.from)[1]} r={16} />}
           {targets.map(o => <circle key={key(o.to)} className="lab-target" cx={postXY(o.to)[0]} cy={postXY(o.to)[1]} r={15} />)}
           <circle className="lab-cursor" cx={postXY(cursor)[0]} cy={postXY(cursor)[1]} r={22} />
         </svg>
-        {!parts.length && (
+        {!parts.length && examples && (
           <div className="lab-empty">
             <p><b>Start building!</b> Pick a 🔋 battery from the tray, then tap two posts. Or try an example:</p>
             <div className="row center-row">{EXAMPLES.map(ex => <button key={ex.id} className="btn" onClick={() => loadExample(ex)}>{ex.emoji} {ex.title}</button>)}</div>
@@ -300,17 +323,17 @@ export default function CircuitLab() {
       </div>
       <p className="sr-only" aria-live="polite">{status}</p>
       <div className="lab-tray" role="toolbar" aria-label="Parts tray">
-        {TRAY.map(g => (
+        {(trayTypes ? [{ title: "Your parts", types: trayTypes }] : TRAY).map(g => (
           <div key={g.title} className="lab-tray-group">
             <span className="eyebrow">{g.title}</span>
             <div className="lab-tray-items">
               {g.types.map(type => {
-                const left = remaining(parts, type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type;
+                const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
                 return (
-                  <button key={type} className={`lab-tray-item${active ? " on" : ""}`} aria-pressed={active} disabled={left <= 0} onClick={() => pickType(type)} title={PARTS[type].say}>
+                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}`} aria-pressed={active} disabled={n <= 0} onClick={() => pickType(type)} title={PARTS[type].say}>
                     <span className="em" aria-hidden="true">{PARTS[type].emoji}</span>
                     <span className="nm">{PARTS[type].name}</span>
-                    {type !== "wire" && <small>{left} left</small>}
+                    {type !== "wire" && <small>{n} left</small>}
                   </button>
                 );
               })}
@@ -357,7 +380,7 @@ export default function CircuitLab() {
         <summary>🗣 Describe my circuit</summary>
         <ul>{describe(parts, result).map((l, i) => <li key={i}>{l}</li>)}</ul>
       </details>
-      {parts.length > 0 && (
+      {parts.length > 0 && examples && (
         <details className="lab-examples">
           <summary>💡 Examples</summary>
           <p className="muted">Loading an example replaces your board (you can undo).</p>
