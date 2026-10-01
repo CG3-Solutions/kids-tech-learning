@@ -9,6 +9,7 @@ import PracticeJourney, { PRACTICE_ACTIVITIES } from "../components/practice/Pra
 import BinaryJourney from "../activities/binary/BinaryJourney.jsx";
 import TypingCourse from "../activities/typing/TypingCourse.jsx";
 import ComputerJourney from "../activities/computer/ComputerJourney.jsx";
+import { ChipQuiz } from "../activities/computer/Review.jsx";
 import CodingPuzzles from "../activities/CodingPuzzles.jsx";
 import Hunt from "../activities/Hunt.jsx";
 import Machines from "../activities/Machines.jsx";
@@ -37,12 +38,13 @@ export default function ModulePage() {
   // Subjects with an adventure (Binary, Electricity) open on its map; others open on their cards.
   const hasJourney = ["binary", "circuit", "typing", "computer"].includes(m.activity) || PRACTICE_ACTIVITIES.has(m.activity);
   const glossary = GLOSSARY_MODULES.has(m.id) && m.activity === "computer"; // cards are reference only; the path gives the stars
+  const chipQuiz = m.activity === "computer"; // Chip's mixed quiz replaces the card quiz
   const tab = tabParam ?? (hasJourney ? m.activity : "cards");
 
   const levels = (m.levels?.length ? m.levels : [...new Set(cards.map(c => c.level))].map(id => ({ id, name: `Level ${id}`, note: "" })))
     .filter(l => cards.some(c => c.level === l.id));
   const color = lv => LV_COLORS[lv % LV_COLORS.length];
-  const tabs = [...(cards.length ? ["cards"] : []), ...(m.activity ? [m.activity] : []), ...(EXTRA_ACTIVITIES[m.id] ?? []), ...(quiz.length ? ["quiz"] : [])];
+  const tabs = [...(cards.length ? ["cards"] : []), ...(m.activity ? [m.activity] : []), ...(EXTRA_ACTIVITIES[m.id] ?? []), ...(quiz.length || chipQuiz ? ["quiz"] : [])];
   const open = cards.find(c => c.id === openId);
   const openIdx = open ? cards.indexOf(open) : -1;
   const levelOf = lv => levels.find(l => l.id === lv)?.name ?? `Level ${lv}`;
@@ -97,7 +99,9 @@ export default function ModulePage() {
         {tab === "coding" && <CodingPuzzles solved={done} onSolve={id => markDone(m.id, `puzzle-${id}`)} />}
         {tab === "hunt" && <Hunt marks={childData.state.hunt ?? {}} onChange={v => setChildState("hunt", v)} />}
         {tab === "machines" && <Machines />}
-        {tab === "quiz" && <Quiz questions={quiz} onFinish={(score, total) => addAttempt(m.id, score, total)} />}
+        {tab === "quiz" && (chipQuiz
+          ? <ChipQuiz key={location.key} done={done} onFinish={(score, total) => addAttempt(m.id, score, total)} />
+          : <Quiz questions={quiz} onFinish={(score, total) => addAttempt(m.id, score, total)} />)}
       </div>
 
       {open && (

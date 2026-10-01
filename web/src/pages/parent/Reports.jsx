@@ -8,6 +8,7 @@ import { JOURNEYS } from "../../content/journeys.js";
 import { AREAS } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
+import ConceptReport from "./ConceptReport.jsx";
 import { typingSummary, fmtMinutes, mergeKeys } from "../../lib/typing.js";
 import TrendChart from "../../activities/typing/TrendChart.jsx";
 import { HeatKeyboard } from "../../activities/typing/Keyboard.jsx";
@@ -125,6 +126,11 @@ export default function Reports() {
                 </div>
               );
             })}
+          </section>
+
+          <section className="pc-card">
+            <h2>💻 Inside a Computer: concepts</h2>
+            <ConceptReport state={d.state} done={done} />
           </section>
 
           <section className="pc-card">

@@ -111,7 +111,9 @@ describe("depth by class (C2)", async () => {
   });
   it("a deeper level replaces the learn text and checks and adds recap points", () => {
     const cpu = COMPUTER_JOURNEY.find(s => s.title === "The CPU");
-    expect(atDepth(cpu, 0)).toBe(cpu);
+    expect(atDepth(cpu, 0).explain).toBe(cpu.explain);
+    expect(atDepth(cpu, 0).check.map(q => q.key)).toEqual([0, 1, 2].map(i => `${cpu.id}:base:${i}`));
+    expect(atDepth(cpu, 2).check[1].key).toBe(`${cpu.id}:high:1`);
     const mid = atDepth(cpu, 1), high = atDepth(cpu, 2);
     expect(mid.explain.text.join(" ")).toMatch(/fetch .*decode.*execute/i);
     expect(high.explain.text.join(" ")).toMatch(/cores/);

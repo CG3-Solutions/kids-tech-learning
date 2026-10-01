@@ -122,9 +122,11 @@ export function AppProvider({ children: kids }) {
       return entry;
   }, [api, activeChild]);
 
-  const setChildState = useCallback((key, value) => {
+  // `value` can be a function of the current value, for updates that build on each other (review answers).
+  const setChildState = useCallback((key, valueOrFn) => {
     if (!activeChild) return;
     const before = dataRef.current;
+    const value = typeof valueOrFn === "function" ? valueOrFn(before.state?.[key]) : valueOrFn;
     const after = { ...before, state: { ...before.state, [key]: value } };
     dataRef.current = after;
     setChildData(after);
