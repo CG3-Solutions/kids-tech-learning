@@ -108,7 +108,7 @@ export const ELECTRICITY_CARDS = [
       "n": "Battery",
       "sh": "The pump that pushes",
       "sym": "battery",
-      "what": "A battery is a box of stored electricity. It pushes electricity out of one end (+), around the circuit, and back into the other end (–). When the energy is used up, the battery is “dead”.",
+      "what": "A battery stores energy in chemicals and turns it into electricity. It pushes electricity out of one end (+), around the circuit, and back into the other end (–). When the energy is used up, the battery is “dead”.",
       "like": "A water pump pushing water around the pipes.",
       "home": [
         "TV remote",
@@ -311,14 +311,14 @@ export const ELECTRICITY_CARDS = [
       "what": "A knob you turn to control how much electricity flows: more or less, faster or slower, louder or softer.",
       "like": "A water tap. Turn it more, more water comes.",
       "home": [
-        "Fan regulator",
-        "Volume knob on radio",
-        "Light dimmer"
+        "Volume knob on a radio or speaker",
+        "Light dimmer",
+        "Oven or mixer speed knob"
       ],
       "symNote": "A zig-zag with an arrow pointing at it. The arrow is the part you turn.",
-      "q": "How do we make the fan go slower?",
-      "a": "Turn the regulator. It lets less electricity through.",
-      "tr": "Turn the fan regulator step by step and count how fast the blades go."
+      "q": "How does a volume knob make music softer?",
+      "a": "Turning it lets less electricity reach the speaker, so the sound is quieter.",
+      "tr": "Turn a speaker's volume knob slowly from low to high and listen to the sound grow."
     }
   },
   {
@@ -384,7 +384,7 @@ export const ELECTRICITY_CARDS = [
         "Maglev trains"
       ],
       "symNote": "Curly loops of wire, with a line for the iron core.",
-      "q": "How does the crane drop the car?",
+      "q": "In a scrapyard, a crane with a big electromagnet lifts old cars. How does it drop one?",
       "a": "It switches the electricity off, and the magnet stops pulling.",
       "tr": "Wrap wire around an iron nail and connect a battery for a few seconds. Pick up paper pins!",
       "adult": true
@@ -567,7 +567,7 @@ export const ELECTRICITY_CARDS = [
       ],
       "symNote": "A circle with three legs. The small signal goes in the side leg.",
       "q": "How many transistors are in a phone chip?",
-      "a": "More than 10 billion!",
+      "a": "Billions! The newest phone chips have more than 15 billion.",
       "tr": "Use 5 cards with 1, 2, 4, 8 and 16 dots. Flip them up or down to make numbers. That’s binary: how transistors count."
     }
   },
@@ -693,7 +693,7 @@ export const ELECTRICITY_QUIZ = [
   {
     "id": "el-q3",
     "module_id": "electricity",
-    "question": "The light goes off. Which part broke the loop?",
+    "question": "You press a button on the wall and the light goes off. Which part broke the loop?",
     "options": [
       {
         "label": "Switch",
@@ -803,7 +803,7 @@ export const ELECTRICITY_QUIZ = [
   {
     "id": "el-q8",
     "module_id": "electricity",
-    "question": "What makes the fan go slower when you turn the regulator?",
+    "question": "You turn the volume knob and the music gets softer. Which part is that?",
     "options": [
       {
         "label": "Knob (potentiometer)",

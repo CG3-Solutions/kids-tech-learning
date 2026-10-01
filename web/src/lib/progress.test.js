@@ -113,3 +113,41 @@ describe("supabase url", async () => {
     expect(normalizeSupabaseUrl(undefined)).toBe("");
   });
 });
+
+describe("science content (Q4)", async () => {
+  const { PUZZLES: P } = await import("../content/subjects.js");
+  const { parseGrid } = await import("./coding.js");
+  it("every robot puzzle can be solved", () => {
+    for (const p of P) {
+      const { rows, cols, start, goal } = parseGrid(p.grid);
+      const seen = new Set([start.join()]), queue = [start];
+      while (queue.length) {
+        const [r, c] = queue.shift();
+        for (const [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nc >= 0 && nr < rows && nc < cols && p.grid[nr][nc] !== "#" && !seen.has(`${nr},${nc}`)) { seen.add(`${nr},${nc}`); queue.push([nr, nc]); }
+        }
+      }
+      expect(seen.has(goal.join()), p.id).toBe(true);
+      expect(p.grid.every(r => r.length === cols), p.id).toBe(true);
+    }
+    expect(P.length).toBeGreaterThanOrEqual(11);
+  });
+  it("cards and quiz questions are well formed, with one right answer", () => {
+    for (const c of SEED.cards) for (const k of ["e", "n", "sh", "what", "like", "q", "a"]) expect(c.data[k], `${c.id}.${k}`).toBeTruthy();
+    const ids = SEED.cards.map(c => c.id); expect(new Set(ids).size).toBe(ids.length);
+    for (const q of SEED.quiz) {
+      expect(q.options[q.answer], q.id).toBeTruthy();
+      expect(new Set(q.options.map(o => o.label)).size, q.id).toBe(q.options.length);
+      expect(q.explanation.length, q.id).toBeGreaterThan(8);
+    }
+  });
+  it("fixed wording: batteries store chemical energy; computers don't think", () => {
+    const bat = SEED.cards.find(c => c.data.n === "Battery");
+    expect(bat.data.what).toMatch(/chemicals/);
+    expect(bat.data.what).not.toMatch(/box of stored electricity/);
+    expect(SEED.quiz.some(q => /think/i.test(q.question))).toBe(false);
+    expect(SEED.cards.filter(c => c.module_id === "binary").length).toBeGreaterThanOrEqual(8);
+    expect(SEED.cards.filter(c => c.module_id === "coding").length).toBeGreaterThanOrEqual(7);
+  });
+});
