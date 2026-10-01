@@ -1,3 +1,4 @@
+import { PUZZLES } from "../content/subjects.js";
 import { describe, it, expect, beforeEach } from "vitest";
 import { SEED } from "../content/index.js";
 import { findMilestones } from "./milestones.js";
@@ -19,7 +20,7 @@ describe("milestones", () => {
   });
   it("reports finishing a whole subject", () => {
     const coding = SEED.modules.find(m => m.id === "coding");
-    const items = [...SEED.cards.filter(c => c.module_id === "coding").map(c => c.id), ...["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"].map(p => `puzzle-${p}`)];
+    const items = [...SEED.cards.filter(c => c.module_id === "coding").map(c => c.id), ...PUZZLES.map(p => `puzzle-${p.id}`)];
     const before = { ...empty, progress: items.slice(0, -1).map(id => ({ item_id: id, module_id: "coding" })) };
     const after = { ...empty, progress: items.map(id => ({ item_id: id, module_id: "coding" })) };
     expect(findMilestones(before, after, pub, kid).some(m => m.title.includes(`finished ${coding.title}`))).toBe(true);
@@ -28,7 +29,7 @@ describe("milestones", () => {
     // A coming-soon tile with puzzles: finishing them all must not send a "finished" email.
     const soon = { id: "soon", area: "science", title: "Soon", coming_soon: true, activity: "coding" };
     const p2 = { ...pub, modules: [...pub.modules, soon] };
-    const ids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"].map(p => `puzzle-${p}`);
+    const ids = PUZZLES.map(p => `puzzle-${p.id}`);
     const before = { ...empty, progress: ids.slice(0, -1).map(id => ({ item_id: id, module_id: "soon" })) };
     const after = { ...empty, progress: ids.map(id => ({ item_id: id, module_id: "soon" })) };
     expect(findMilestones(before, after, p2, kid).some(m => m.title.includes("finished Soon"))).toBe(false);

@@ -25,7 +25,7 @@ export const CIRCUIT_JOURNEY = [
     learned: "The same loop can power light, movement or sound. An LED only works one way round.",
     parent: "Find a motor (fan), a buzzer (microwave beep) and an LED (TV standby light) at home." },
   { id: "circuit-step-5", ...A, emoji: "🎚️", title: "Brighter or dimmer", blurb: "More batteries, or a knob.",
-    learned: "More batteries push more electricity. A resistor knob holds some back, like a fan regulator.",
+    learned: "More batteries push more electricity. A resistor knob holds some back, like the volume knob on a speaker.",
     parent: "Turn the fan regulator step by step together and watch the speed change." },
 
   { id: "circuit-step-6", ...B, emoji: "🔒", title: "Both switches: AND", blurb: "Lid locked AND button pressed.",
@@ -57,7 +57,7 @@ export const CIRCUIT_JOURNEY = [
     learned: "Chaining adders lets a computer add big numbers. The carry passes from one adder to the next.",
     parent: "Do a column addition on paper with carrying. The adder does exactly the same, in binary." },
   { id: "circuit-step-15", ...C, emoji: "💾", title: "A circuit that remembers", blurb: "Set, reset, remember.",
-    learned: "Two gates feeding each other can remember ON or OFF. This is how memory (RAM) stores bits.",
+    learned: "Two gates feeding each other can remember ON or OFF. This is how the fastest computer memory (the CPU's cache) stores bits.",
     parent: "Ask: why does a computer forget things in RAM when the power goes off? (The loop that remembers needs electricity.)" },
 
   { id: "circuit-workshop", part: "W", bonus: true, quiet: true, after: "circuit-step-4", openFrom: 4, emoji: "🛠️", title: "Free workshop", blurb: "Build anything you like.",

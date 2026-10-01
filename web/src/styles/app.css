@@ -1280,5 +1280,8 @@ button.kb-key { cursor: pointer }
   .choices.long { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100% }
   .choices.long .choice { min-width: 0; font-size: .98rem; padding: 10px 8px; line-height: 1.25 }
   .tile-btn { padding: 8px 12px; font-size: 1.1rem }
+  /* Robot puzzles: smaller maze cells, so the program blocks stay close to the maze. */
+  .maze { gap: 4px; max-width: min(100%, calc(var(--cols, 5) * 50px)) }
+  .maze .cell { border-radius: 8px; font-size: 1.15rem }
   .tabs a, .tabs button { padding: 6px 12px; font-size: .95rem }
 }

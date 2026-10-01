@@ -148,15 +148,37 @@ export const BINARY_CARDS = [
     home: ["Phone photos", "Video games", "TV pictures"],
     q: "What are the tiny squares in a picture called?", a: "Pixels.",
     tr: "On squared paper, colour boxes black (1) or white (0) to draw a smiley face in binary." }),
+  b("doubling", 0, 5, { e: "✨", n: "Doubling", sh: "Each new bit doubles it",
+    what: "Every new bit doubles the number of patterns: 1 bit makes 2 patterns, 2 bits make 4, 3 bits make 8, and 8 bits make 256.",
+    like: "Folding paper: every fold doubles the number of layers.",
+    home: ["Card values 1, 2, 4, 8, 16", "Phone storage sizes: 32, 64, 128, 256 GB"],
+    q: "How many patterns can 3 bits make?", a: "8! (2 × 2 × 2)",
+    tr: "Fold a sheet of paper in half three times, open it and count the boxes: 8." }),
+  b("eightbits", 1, 6, { e: "🧺", n: "Byte", sh: "8 bits together",
+    what: "A byte is 8 bits together. One byte can store a number from 0 to 255, or one English letter.",
+    like: "A team of 8 light switches working together.",
+    home: ["File sizes are counted in bytes", "Each letter you type"],
+    q: "How many bits are in one byte?", a: "8 bits.",
+    tr: "Write your name and count the letters. That is about how many bytes it needs." }),
+  b("sizes", 1, 7, { e: "💾", n: "KB, MB and GB", sh: "Kilo, mega, giga",
+    what: "A kilobyte (KB) is about a thousand bytes, a megabyte (MB) about a million, and a gigabyte (GB) about a billion. A song is about 4 MB; a phone may store 64 GB or more.",
+    like: "A cup, a bucket and a water tank: each holds about a thousand times more.",
+    home: ["Phone storage: 64 GB, 128 GB", "Photo and app sizes"],
+    q: "Which is bigger: 1 GB or 1 MB?", a: "1 GB. It is about a thousand times bigger.",
+    tr: "With a grown-up, open a phone's storage settings and find the biggest app." }),
 ];
 const bq = q("binary", "bin");
 export const BINARY_QUIZ = [
-  bq(1, "Computers think using only…", [{ label: "0 and 1", emoji: "🔘" }, { label: "A to Z", emoji: "🔤" }, { label: "Colours", emoji: "🎨" }], 0, "Everything is ON (1) or OFF (0)."),
+  bq(1, "Inside a computer, everything is stored as…", [{ label: "0 and 1", emoji: "🔘" }, { label: "A to Z", emoji: "🔤" }, { label: "Colours", emoji: "🎨" }], 0, "Everything is ON (1) or OFF (0)."),
   bq(2, "Which cards make 3?", [{ label: "2 + 1", emoji: "✌️" }, { label: "4 + 1", emoji: "🖐️" }, { label: "8", emoji: "🎱" }], 0, "2 + 1 = 3."),
   bq(3, "One single 0 or 1 is called a…", [{ label: "Byte", emoji: "8️⃣" }, { label: "Bit", emoji: "🔘" }, { label: "Pixel", emoji: "🟥" }], 1, "A bit is the smallest piece."),
   bq(4, "Which number is 8 + 2?", [{ label: "10", emoji: "🔟" }, { label: "6", emoji: "6️⃣" }, { label: "82", emoji: "🔢" }], 0, "Add the ON cards: 8 + 2 = 10."),
   bq(5, "Tiny squares in a picture are called…", [{ label: "Bugs", emoji: "🐞" }, { label: "Pixels", emoji: "🟥" }, { label: "Bits", emoji: "🔘" }], 1, "Every picture is made of pixels."),
   bq(6, "How many cards are ON to make 31?", [{ label: "All five", emoji: "🖐️" }, { label: "One", emoji: "☝️" }, { label: "None", emoji: "✊" }], 0, "16 + 8 + 4 + 2 + 1 = 31."),
+  bq(7, "How many bits make one byte?", [{ label: "8", emoji: "8️⃣" }, { label: "2", emoji: "2️⃣" }, { label: "100", emoji: "💯" }], 0, "8 bits make 1 byte."),
+  bq(8, "How many patterns can 3 bits make?", [{ label: "8", emoji: "8️⃣" }, { label: "3", emoji: "3️⃣" }, { label: "6", emoji: "6️⃣" }], 0, "Each bit doubles the patterns: 2 × 2 × 2 = 8."),
+  bq(9, "Which is the biggest?", [{ label: "1 GB", emoji: "🛢️" }, { label: "1 MB", emoji: "🪣" }, { label: "1 KB", emoji: "🥛" }], 0, "Giga is bigger than mega, and mega is bigger than kilo."),
+  bq(10, "On the 4, 2 and 1 cards, 101 means…", [{ label: "5", emoji: "5️⃣" }, { label: "101", emoji: "💯" }, { label: "3", emoji: "3️⃣" }], 0, "4 is ON, 2 is OFF, 1 is ON: 4 + 1 = 5."),
 ];
 
 // Bit's binary adventure: the steps shown on the Binary Magic map, in order.
@@ -206,14 +228,29 @@ export const CODING_CARDS = [
     home: ["Fixing a toy that stopped working", "Correcting spelling"],
     q: "Your robot turned the wrong way. What do you do?", a: "Look at each step, find the wrong turn and fix it!",
     tr: "Play “robot parent”. When the parent bumps into something, find the buggy step." }),
+  k("variable", 0, 5, { e: "📦", n: "Variable", sh: "A named box for a value",
+    what: "A variable is a named box that stores a value, like score = 10. The value can change while the program runs.",
+    like: "The scoreboard at a cricket match: the name stays the same, the number keeps changing.",
+    home: ["Game scores and lives", "Timers", "Steps counted by a fitness watch"],
+    q: "In a game, what could a variable called “lives” store?", a: "How many lives you have left, like 3. It goes down when you get caught!",
+    tr: "Keep score in a game of snakes and ladders on paper. That score is a variable." }),
+  k("event", 0, 6, { e: "👆", n: "Event", sh: "When something happens…",
+    what: "An event is something that happens, like a tap, a key press or a timer ending. Programs wait for events: WHEN the button is tapped, start the game.",
+    like: "A doorbell: when someone presses it, the bell rings.",
+    home: ["Tapping an app", "An alarm clock going off", "Pressing a lift button"],
+    q: "What event starts a video playing on a phone?", a: "Tapping the play button.",
+    tr: "Play “When I clap, you jump”. The clap is the event." }),
 ];
 const kq = q("coding", "code");
 export const CODING_QUIZ = [
   kq(1, "Steps done in order are called a…", [{ label: "Sequence", emoji: "➡️" }, { label: "Loop", emoji: "🔁" }, { label: "Bug", emoji: "🐞" }], 0, "A sequence is steps in order."),
   kq(2, "Which block repeats steps?", [{ label: "If", emoji: "🔀" }, { label: "Loop", emoji: "🔁" }, { label: "Stop", emoji: "🛑" }], 1, "A loop repeats."),
   kq(3, "“IF it's dark THEN switch on the light” is a…", [{ label: "Condition", emoji: "🔀" }, { label: "Pixel", emoji: "🟥" }, { label: "Battery", emoji: "🔋" }], 0, "IF… THEN… is a condition."),
-  kq(4, "Fixing a mistake in a program is called…", [{ label: "Printing", emoji: "🖨️" }, { label: "Debugging", emoji: "🔍" }, { label: "Charging", emoji: "🔌" }], 1, "Debugging means finding and fixing bugs."),
-  kq(5, "A plan of steps to solve a problem is an…", [{ label: "Algorithm", emoji: "🗺️" }, { label: "Antenna", emoji: "📡" }, { label: "Apple", emoji: "🍎" }], 0, "An algorithm is a plan."),
+  kq(4, "Fixing a mistake in a program is called…", [{ label: "Looping", emoji: "🔁" }, { label: "Debugging", emoji: "🔍" }, { label: "Sequencing", emoji: "➡️" }], 1, "Debugging means finding and fixing bugs."),
+  kq(5, "A clear plan of steps to solve a problem is called…", [{ label: "An algorithm", emoji: "🗺️" }, { label: "A loop", emoji: "🔁" }, { label: "A bug", emoji: "🐞" }], 0, "An algorithm is a plan of steps. A program is an algorithm written for a computer."),
+  kq(6, "A named box that stores a value, like a score, is a…", [{ label: "Variable", emoji: "📦" }, { label: "Loop", emoji: "🔁" }, { label: "Bug", emoji: "🐞" }], 0, "A variable stores a value that can change."),
+  kq(7, "“When the button is tapped, start the game.” The tap is an…", [{ label: "Event", emoji: "👆" }, { label: "Algorithm", emoji: "🗺️" }, { label: "Error", emoji: "❌" }], 0, "An event is something that happens, which the program reacts to."),
+  kq(8, "“Repeat 3 times: step forward.” How many steps does the robot take?", [{ label: "3", emoji: "3️⃣" }, { label: "1", emoji: "1️⃣" }, { label: "4", emoji: "4️⃣" }], 0, "The loop runs the step forward 3 times."),
 ];
 
 // Grid puzzles for the Coding Puzzles activity. S = start (facing right), G = goal, # = wall, . = floor.
@@ -226,4 +263,7 @@ export const PUZZLES = [
   { id: "p6", title: "Around the wall", hint: "The wall is in the way. Go around it.", grid: ["S#G", ".#.", "..."] },
   { id: "p7", title: "Stairs", hint: "Repeat the same two moves: forward, then down.", grid: ["S.###", "#..##", "##..#", "###.G"] },
   { id: "p8", title: "Big maze", hint: "Plan it on paper first, then build it.", grid: ["S..#G", "##.#.", "...#.", ".###.", "....."] },
+  { id: "p9", title: "There and back", hint: "Right to the end, down, then all the way left. Use repeats for the long parts.", grid: ["S....", "####.", "G...."] },
+  { id: "p10", title: "Long stairs", hint: "Find the pattern (forward, right, forward, left) and repeat it.", grid: ["S.####", "#..###", "##..##", "###..#", "####.G"] },
+  { id: "p11", title: "Spiral", hint: "Go round the outside, turning right each time, then into the middle.", grid: ["S....", "####.", "..G#.", ".###.", "....."] },
 ];

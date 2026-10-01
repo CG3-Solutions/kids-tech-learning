@@ -62,7 +62,7 @@ export default function CodingPuzzles({ solved, onSolve }) {
       <div className="bench">
         <div className="panel stack" style={{ gap: 12 }}>
           <div><h3 style={{ margin: 0 }}>{idx + 1}. {puzzle.title}</h3><p className="muted">{puzzle.hint}</p></div>
-          <div className="maze" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          <div className="maze" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, "--cols": cols }}>
             {puzzle.grid.flatMap((row, r) => [...row].map((ch, c) => {
               const here = pos.r === r && pos.c === c;
               const isGoal = goal[0] === r && goal[1] === c;
