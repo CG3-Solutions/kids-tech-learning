@@ -37,7 +37,7 @@ export const NUMBERS_JOURNEY = [
       if (k === "after") return { type: "number", prompt: `What comes just after ${n}?`, answer: n + 1, hint: "One more." };
       return { type: "number", prompt: `What comes between ${n - 1} and ${n + 1}?`, answer: n, hint: "Count up from the first number." }; } },
   { id: "num-step-5", ...N1, emoji: "⚖️", title: "More or less", blurb: "> < =", kind: "practice", count: 10,
-    intro: "Which is more? The crocodile mouth > < always opens towards the bigger number!", learned: "> means more than, < means less than, = means the same.", parent: "Compare prices in a shop: which is more?",
+    intro: "Which is more? Think of the signs as a hungry crocodile mouth: it always opens towards the bigger number!", learned: "> means more than, < means less than, = means the same.", parent: "Compare prices in a shop: which is more?",
     gen: g => { const max = gradeOf(g) >= 3 ? 999 : gradeOf(g) >= 2 ? 99 : 20; const a = randInt(0, max), b = Math.random() < 0.15 ? a : randInt(0, max); const ans = a > b ? ">" : a < b ? "<" : "=";
       return { type: "choice", prompt: `${a}  ☐  ${b}`, say: `Compare ${a} and ${b}.`, options: [{ label: "> more than", value: ">" }, { label: "< less than", value: "<" }, { label: "= the same", value: "=" }], answer: ans, hint: "The open mouth faces the bigger number.", bigPrompt: true }; } },
   { id: "num-step-6", ...N2, emoji: "🧊", title: "Tens and ones", blurb: "Rods and cubes.", kind: "practice", count: 10,

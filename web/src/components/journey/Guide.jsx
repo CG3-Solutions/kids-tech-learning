@@ -14,7 +14,7 @@ export default function Guide({ Face, children, say, mood = "happy", lamp = true
       <Face mood={mood} lamp={lamp} />
       <div className="bubble" role="status">
         <div>{children ?? say}</div>
-        {text && <button className="btn ghost small" onClick={() => speak(text)} aria-label="Hear it again">🔊 Hear it</button>}
+        {text && <button className="btn ghost small" onClick={() => speak(text, { force: true })} aria-label="Hear it again">🔊 Hear it</button>}
       </div>
     </div>
   );

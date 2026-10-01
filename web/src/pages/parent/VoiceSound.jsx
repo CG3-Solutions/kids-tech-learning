@@ -25,7 +25,7 @@ export default function VoiceSound() {
                     <span className="em" aria-hidden="true">{v.emoji}</span><b>{v.name}</b>
                     <small>{defaultVoiceFor(c.gender) === v.id ? "Default" : " "}</small>
                   </button>
-                  <button className="btn ghost small" onClick={() => speakWith(v, `Hi ${c.name}! Let's learn something amazing today.`)} aria-label={`Preview ${v.name}`}>▶ Preview</button>
+                  <button className="btn ghost small" onClick={() => speakWith(v, `Hi ${c.name}! Let's learn something amazing today.`, { force: true })} aria-label={`Preview ${v.name}`}>▶ Preview</button>
                 </div>
               ))}
             </div>
