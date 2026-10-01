@@ -118,9 +118,13 @@ export function AppProvider({ children: kids }) {
 
   const setChildState = useCallback((key, value) => {
     if (!activeChild) return;
-    setChildData(d => ({ ...d, state: { ...d.state, [key]: value } }));
+    const before = dataRef.current;
+    const after = { ...before, state: { ...before.state, [key]: value } };
+    dataRef.current = after;
+    setChildData(after);
     api.setState(activeChild.id, key, value).catch(e => setError(e.message));
-  }, [api, activeChild]);
+    reportMilestones(before, after); // e.g. a speed-ladder or treasure-hunt badge
+  }, [api, activeChild, reportMilestones]);
 
   // ───────── Screen time ─────────
   const [usage, setUsage] = useState({ day: localDay(), seconds: 0, bonus: 0 });

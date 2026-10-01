@@ -1,6 +1,7 @@
 // Turns raw progress records into readable lines for parents.
 import { PUZZLES } from "../content/subjects.js";
 import { ALL_STEPS } from "../content/journeys.js";
+import { sessionTitle } from "../content/typing.js";
 
 const STEPS = Object.fromEntries(ALL_STEPS.map(s => [s.id, s]));
 
@@ -23,7 +24,7 @@ export function timeline(entries, published, limit = 20) {
       rows.push({ at: a.created_at, child, text: `❓ Scored ${a.score}/${a.total} in the ${m?.title ?? a.module_id} quiz`, module: a.module_id });
     }
     for (const t of data.typing ?? []) {
-      const title = STEPS[t.lesson_id]?.title ?? t.lesson_id;
+      const title = sessionTitle(t.lesson_id);
       rows.push({ at: t.created_at, child, text: `⌨️ Typed “${title}”: ${t.wpm} words a minute, ${t.accuracy}% accuracy${t.passed ? "" : " (not passed yet)"}`, module: "typing" });
     }
   }

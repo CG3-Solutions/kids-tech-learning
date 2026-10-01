@@ -217,3 +217,42 @@ export function starsFor(lesson, mode, r) {
 }
 // Kids in 6th standard and above start in Pro mode; anyone can switch.
 export const defaultMode = grade => ((grade ?? 0) >= 6 ? "pro" : "kids");
+
+// ───────── Speed ladder and games ─────────
+// Each rung of the speed ladder is a 1-minute test at this many words a minute (with 90% accuracy).
+export const LADDER = [5, 8, 10, 12, 15, 20, 25, 30, 35, 40, 50, 60];
+export const LADDER_ACC = 90;
+export const GAMES = [
+  { id: "balloon", emoji: "🎈", title: "Balloon Pop", blurb: "Pop the letter balloons before they fly away", builds: "Finding keys fast" },
+  { id: "rocket", emoji: "🚀", title: "Word Rocket", blurb: "Type words to fill the fuel tank before the countdown ends", builds: "Word speed" },
+  { id: "race", emoji: "🏎️", title: "Typing Race", blurb: "Race against your own best run", builds: "Beating your record" },
+  { id: "clock", emoji: "⏱️", title: "Beat the Clock", blurb: "60 seconds: streaks without mistakes score double, triple, more", builds: "Steady rhythm" },
+];
+// Kids unlock the speed ladder and games by passing the home row check; Pro mode has them open.
+export const GAMES_UNLOCK = "typ-step-8";
+export const gamesOpen = (done, mode) => mode === "pro" || done.has(GAMES_UNLOCK);
+// Keys for games: everything from the furthest lesson passed (at least the home row).
+export function gamePool(done, mode) {
+  if (mode === "pro") return TYPING_JOURNEY.at(-1).pool;
+  const last = [...TYPING_JOURNEY].reverse().find(s => done.has(s.id));
+  return last && last.pool.length > HOME_ALL.length ? last.pool : HOME_ALL;
+}
+// Endless word text for timed runs (never the same word twice in a row).
+export function streamText(pool, len = 120) {
+  const words = wordsFor(pool).filter(w => w.length > 1);
+  const out = [];
+  while (out.join(" ").length < len) {
+    const w = pick(words);
+    if (w !== out.at(-1)) out.push(w);
+  }
+  return out.join(" ");
+}
+export const gameOf = id => GAMES.find(g => g.id === id);
+// A readable name for any saved typing result: a lesson, a ladder rung or a game.
+export function sessionTitle(id) {
+  const lesson = TYPING_JOURNEY.find(s => s.id === id);
+  if (lesson) return lesson.title;
+  if (id?.startsWith("ladder-")) return `Speed ladder: ${id.slice(7)} words a minute`;
+  if (id?.startsWith("game-")) return gameOf(id.slice(5))?.title ?? id;
+  return id;
+}

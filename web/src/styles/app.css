@@ -647,8 +647,9 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 .seg-field { border: 0; padding: 0; margin: 0 }
 .seg-field legend { font-weight: 700; font-size: .95rem; margin-bottom: 6px }
 .seg { display: flex; flex-wrap: wrap; gap: 6px }
-.seg label, .seg a { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none }
+.seg label, .seg a, .seg > button { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none }
 .seg label input { position: absolute; opacity: 0; pointer-events: none }
+.seg > button { color: var(--ink) }
 .seg .on { border-color: var(--ink); background: color-mix(in srgb, var(--spark) 22%, var(--surface)) }
 .seg label:focus-within { outline: 3px solid var(--wire); outline-offset: 2px }
 
@@ -873,4 +874,106 @@ button.kb-key { cursor: pointer }
   .type-text.big { font-size: 1.5rem }
   .kb, .kb-row { gap: 3px }
   .kb-key { border-radius: 5px; border-width: 1px }
+}
+
+/* Typing: ladder, streaks, speedometer, timers and games */
+.type-play { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; align-items: stretch }
+.ladder { position: relative; width: 76px; min-height: 220px }
+.ladder svg { width: 100%; height: 100%; display: block }
+.ladder-rail { fill: color-mix(in srgb, var(--lv3) 60%, var(--surface)) }
+.ladder-rung { fill: var(--line); transition: fill .2s }
+.ladder-rung.done { fill: var(--good) }
+.ladder-star { position: absolute; top: -4px; left: 0; right: 0; text-align: center; font-size: 1.3rem }
+.ladder-keyo { position: absolute; left: 50%; margin-left: -22px; transition: bottom .35s cubic-bezier(.3, 1.4, .5, 1) }
+.ladder-keyo.wobble { animation: ladder-wobble .3s }
+@keyframes ladder-wobble { 25% { transform: rotate(-10deg) } 75% { transform: rotate(10deg) } }
+.streak { font-family: var(--f-display); font-weight: 700; border-radius: 99px; padding: 2px 12px; background: color-mix(in srgb, var(--plus) 16%, var(--surface)); color: var(--plus); white-space: nowrap; transition: font-size .2s }
+.streak.off { display: none }
+.streak.sm { font-size: 1rem } .streak.md { font-size: 1.2rem } .streak.lg { font-size: 1.4rem } .streak.xl { font-size: 1.6rem; box-shadow: 0 0 0 4px var(--glow) }
+.type-stats.pro { gap: 8px 22px }
+.speedo { margin: 0; width: 132px; display: grid; justify-items: center }
+.speedo svg { width: 100% }
+.speedo-track, .speedo-fill { fill: none; stroke-width: 9; stroke-linecap: round }
+.speedo-track { stroke: var(--surface-2) }
+.speedo-fill { stroke: var(--wire) }
+.speedo-best { stroke: var(--spark); stroke-width: 4 }
+.speedo-goal { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 2 }
+.speedo-needle { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; transition: all .25s }
+.speedo-hub { fill: var(--ink) }
+.speedo figcaption { margin-top: -6px; font-size: .9rem; color: var(--muted) }
+.speedo figcaption b { font-size: 1.3rem }
+.type-record { font-weight: 700; font-size: 1.15rem; background: color-mix(in srgb, var(--spark) 25%, var(--surface)); border-radius: 12px; padding: 10px 14px }
+.type-results { position: relative }
+.burst { position: absolute; left: 50%; top: 40px; width: 0; height: 0; pointer-events: none; z-index: 2 }
+.burst i { position: absolute; width: 9px; height: 14px; border-radius: 2px; background: var(--c); animation: burst 1.1s ease-out forwards; transform: rotate(var(--a)) translateY(0) }
+@keyframes burst { to { transform: rotate(var(--a)) translateY(calc(-1 * var(--d) * 2.4)) rotate(200deg); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .burst { display: none } }
+
+.type-sections { margin-top: -6px }
+.timed-top { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; width: 100%; justify-content: flex-start }
+.timed-visual { flex: 1 1 300px; min-width: 220px }
+.center { text-align: center }
+.ring { position: relative; width: 64px; height: 64px; display: grid; place-items: center; flex: none }
+.ring svg { position: absolute; inset: 0 }
+.ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 7 }
+.ring-fg { fill: none; stroke: var(--good); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .1s linear }
+.ring.low .ring-fg { stroke: var(--bad) }
+.ring b { font-family: var(--f-display); font-size: 1.3rem; font-variant-numeric: tabular-nums }
+.ring.low b { color: var(--bad) }
+.track { display: grid; gap: 6px }
+.lane { display: grid; grid-template-columns: 74px minmax(0, 1fr) 24px; gap: 8px; align-items: center }
+.lane-name { font-size: .8rem; font-weight: 700; color: var(--muted); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.lane-road { position: relative; height: 38px; border-radius: 10px; background: repeating-linear-gradient(90deg, var(--surface-2) 0 18px, color-mix(in srgb, var(--line) 60%, var(--surface-2)) 18px 22px); border: 2px solid var(--line) }
+.lane.ghost .car { opacity: .55; filter: grayscale(.4) }
+.car { position: absolute; top: 2px; font-size: 26px; line-height: 30px; width: 34px; text-align: center; transform: scaleX(-1); transition: left .12s linear }
+.lane.me .lane-road { border-color: var(--wire) }
+.flag { font-size: 1.2rem }
+.speed-ladder { list-style: none; margin: 0; padding: 0 0 0 18px; display: grid; gap: 6px; border-left: 6px solid color-mix(in srgb, var(--lv3) 50%, var(--surface)) }
+.speed-ladder button { width: 100%; display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 8px 14px; font-weight: 700 }
+.speed-ladder .rung-w { font-family: var(--f-display); font-size: 1.5rem }
+.speed-ladder .rung-u { color: var(--muted); font-size: .9rem }
+.speed-ladder li.done button { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface)) }
+.speed-ladder li.next button { border-color: var(--spark); box-shadow: 0 0 0 4px color-mix(in srgb, var(--spark) 30%, transparent) }
+.speed-ladder button:disabled { opacity: .5; cursor: default }
+.game-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) }
+.game-card { display: grid; gap: 6px; justify-items: start; text-align: left; background: var(--surface); border: 3px solid var(--line); border-radius: 18px; padding: 16px; transition: transform .1s, border-color .1s }
+.game-card:hover { transform: translateY(-2px); border-color: var(--spark) }
+.game-card b { font-family: var(--f-display); font-size: 1.3rem }
+.game-card small { color: var(--muted) }
+.game-em { font-size: 2.4rem }
+.game-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px }
+.game-rec { font-size: .85rem; font-weight: 700; color: var(--wire) }
+.clock-score { display: flex; align-items: baseline; gap: 8px; flex: 1; min-width: 160px }
+.clock-score b { font-family: var(--f-display); font-size: 2.2rem; font-variant-numeric: tabular-nums }
+.clock-score span { color: var(--muted); font-weight: 700 }
+.combo { font-family: var(--f-display); border-radius: 10px; padding: 2px 10px; background: var(--surface-2) }
+.combo.x2 { background: color-mix(in srgb, var(--lv2) 25%, var(--surface)); color: var(--ink) }
+.combo.x3 { background: color-mix(in srgb, var(--spark) 40%, var(--surface)); color: var(--ink) }
+.combo.x4 { background: var(--plus); color: #fff; box-shadow: 0 0 0 4px var(--glow) }
+.lives { letter-spacing: 2px }
+.rocket-row { display: flex; align-items: center; gap: 12px }
+.rocket-count { font-family: var(--f-display); font-size: 1.4rem }
+.rocket-scene { width: 110px; flex: none }
+.rocket-scene svg { width: 100%; overflow: visible }
+.tank { fill: var(--surface-2); stroke: var(--line); stroke-width: 2 }
+.tank-fuel { fill: var(--good); transition: y .2s, height .2s }
+.rk-hull { fill: var(--surface); stroke: var(--ink); stroke-width: 3 }
+.rk-window { fill: var(--lv4); stroke: var(--ink); stroke-width: 3 }
+.rk-fin { fill: var(--plus); stroke: var(--ink); stroke-width: 2 }
+.rk-flame { fill: var(--spark) }
+.pad { fill: var(--muted) }
+.rocket-scene.launch .rocket-body { animation: launch 1.6s ease-in forwards }
+@keyframes launch { 20% { transform: translateY(4px) } to { transform: translateY(-260px) } }
+.sky { position: relative; height: 330px; border-radius: 16px; overflow: hidden; border: 2px solid var(--line); background: linear-gradient(var(--surface-2), color-mix(in srgb, var(--lv4) 18%, var(--surface))) }
+.balloon { position: absolute; width: 58px; height: 70px; margin-left: -29px; border-radius: 50% 50% 46% 46%; background: color-mix(in srgb, var(--c) 80%, var(--surface)); border: 2px solid color-mix(in srgb, var(--c) 70%, var(--ink)); display: grid; place-items: center; transition: transform .25s, opacity .25s }
+.balloon::after { content: ""; position: absolute; top: 100%; left: 50%; width: 2px; height: 26px; background: var(--muted) }
+.balloon-l { font: 700 1.7rem/1 ui-monospace, Menlo, Consolas, monospace; color: var(--key-ink) }
+.balloon.popped { transform: scale(1.6); opacity: 0 }
+@media (max-width: 560px) {
+  .type-play { grid-template-columns: 52px minmax(0, 1fr); gap: 8px }
+  .ladder { width: 52px }
+  .ladder-keyo { margin-left: -16px; transform: scale(.75) }
+  .lane { grid-template-columns: 54px minmax(0, 1fr) 20px }
+  .sky { height: 280px }
+  .balloon { width: 46px; height: 56px; margin-left: -23px }
 }
