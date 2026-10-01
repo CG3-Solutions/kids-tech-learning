@@ -1,6 +1,6 @@
 # Inside a Computer: Chip's path
 
-"Inside a Computer" is a **learning path**, not a set of cards. Chip the Computer guides the child through 13 concepts in order. Each step opens after the one before it is passed. A parent can open all levels in **Parent dashboard → Learners → Levels**.
+"Inside a Computer" is a **learning path**, not a set of cards. Chip the Computer guides the child through 13 concepts in order, built around one big question: **"When I press a key, how does the letter appear on the screen?"** Each step opens after the one before it is passed. A parent can open all levels in **Parent dashboard → Learners → Levels**.
 
 ## How each step works (6 short screens)
 | Screen | What happens |
@@ -31,7 +31,17 @@ Stars come only from passing checks. The old cards are now a **📚 Glossary** t
 | | 12 Networks and the internet | Computers joined together; data travels in packets | Order the steps of a photo's journey | |
 | | 13 Staying safe online | Keep private details private, be kind, tell a grown-up | Sort: OK to share or keep private | |
 
-Badges: 💻 **Computer explorer** (finish Part B) and 🛡️ **Internet safety star** (finish step 13). Each sends a milestone email.
+Badges: ⌨️ **Key press detective** (the mission), 💻 **Computer explorer** (finish Part B) and 🛡️ **Internet safety star** (finish step 13). Each sends a milestone email.
+
+## Chip's mission: follow a key press
+The path starts and ends with the big question, so the 13 concepts have a purpose:
+
+| Step | What the child does | What they learn | Talk about it at home |
+|---|---|---|---|
+| 💬 **How does a letter reach the screen?** (first step, Part A) | A conversation with Chip: guess how the letter gets there (magic? the keyboard draws it?) and how long the trip takes. Every answer gets a reply; a wrong guess is a good thought, then gently corrected. | A team of parts passes the letter along in less than a blink. Computers only understand ON and OFF, so H → 72 → 01001000 (from Bit's mission). | Press a key together and ask: what happened inside? |
+| 🎯 **Mission: follow a key press** (after "Build a computer", Part B) | Presses any letter on a little keyboard and follows it through six stops: ⌨️ keyboard (a switch closes) → 🔌 the trip (as ONs and OFFs) → 🔲 CPU (follows the app's instructions) → 🗂️ memory (H is stored as 72) → 🎨 drawing (the letter's shape becomes pixels) → 🖥️ screen. Two quick predictions on the way, then puts the trip in order. | How input, process, memory and output work together, using the parts from Part B. Earns the ⌨️ **Key press detective** badge. | Ask your child to tell the whole trip of their own initial. |
+
+From **Class 8** (and for grown-ups) each stop has a 🔬 **Go deeper** note: the keyboard grid and scan codes, USB and Bluetooth packets, interrupts and the operating system, bytes in RAM (and why a power cut loses unsaved work), the GPU and frame buffer, and screen refresh at 60 Hz. The script and stops are plain data in `content/computerTalk.js`; the review, quiz and report still use the 13 concept steps only.
 
 ## Depth by class
 Every concept has three depths. The **Learn** text, the **Check** questions and extra **Recap** points change with the depth; the hook, animation and activity are shared.

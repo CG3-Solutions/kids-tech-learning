@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { COMPUTER_JOURNEY, COMPUTER_PARTS } from "./computer.js";
+import { COMPUTER_JOURNEY, COMPUTER_PATH, COMPUTER_PARTS } from "./computer.js";
 import { JOURNEYS, STEP_IDS } from "./journeys.js";
 import { SEED, GLOSSARY_MODULES } from "./index.js";
 import { moduleItems, BADGES } from "../lib/progress.js";
@@ -12,7 +12,10 @@ const ANIMS = ["flow", "inside", "steps", "power", "layers", "pixels", "network"
 describe("Chip's computer path", () => {
   it("is the computer subject's activity, in order, in three parts", () => {
     expect(SEED.modules.find(m => m.id === "computer").activity).toBe("computer");
-    expect(JOURNEYS.computer.steps).toBe(COMPUTER_JOURNEY);
+    expect(JOURNEYS.computer.steps).toBe(COMPUTER_PATH);
+    // The path: Chip's opening conversation, lessons 1–8, the key-press mission, lessons 9–13.
+    expect(COMPUTER_PATH.map(s => s.id)).toEqual(["comp-talk-key", ...[1, 2, 3, 4, 5, 6, 7, 8].map(n => `comp-step-${n}`), "comp-mission-key", ...[9, 10, 11, 12, 13].map(n => `comp-step-${n}`)]);
+    for (const s of COMPUTER_PATH) expect(STEP_IDS.has(s.id)).toBe(true);
     expect(COMPUTER_JOURNEY.map(s => s.id)).toEqual(COMPUTER_JOURNEY.map((_, i) => `comp-step-${i + 1}`));
     for (const s of COMPUTER_JOURNEY) expect(STEP_IDS.has(s.id)).toBe(true);
     expect(COMPUTER_PARTS.map(p => p.id)).toEqual(["A", "B", "C"]);
@@ -74,7 +77,8 @@ describe("Chip's computer path", () => {
     expect(GLOSSARY_MODULES.has("computer")).toBe(true);
     const m = SEED.modules.find(x => x.id === "computer");
     const items = moduleItems(m, SEED.cards);
-    expect(items).toEqual(COMPUTER_JOURNEY.map(s => s.id));
+    expect(items).toEqual(COMPUTER_PATH.map(s => s.id));
+    expect(BADGES.find(b => b.id === "keypress").test({ ids: new Set(["comp-mission-key"]) })).toBe(true);
     expect(BADGES.find(b => b.id === "netsafe").test({ ids: new Set(["comp-step-13"]) })).toBe(true);
   });
 
@@ -136,5 +140,30 @@ describe("depth by class (C2)", async () => {
     for (const s of COMPUTER_JOURNEY) for (const d of ["mid", "high"]) {
       for (const t of [...DEEP[s.id][d].text, ...DEEP[s.id][d].check.map(q => q.q)]) expect(EMOJI.test(speechText(t)), t).toBe(false);
     }
+  });
+});
+
+describe("Chip's mission: follow a key press", async () => {
+  const T = await import("./computerTalk.js");
+  it("six stops in order, each with a deeper note for older classes", () => {
+    expect(T.KEY_STOPS.map(s => s.id)).toEqual(["key", "travel", "cpu", "memory", "draw", "screen"]);
+    for (const s of T.KEY_STOPS) { expect(s.short.length).toBeLessThanOrEqual(7); expect(s.say.length).toBeGreaterThan(40); expect(s.deeper.length).toBeGreaterThan(40); }
+  });
+  it("every letter A–Z has a 5×7 pixel shape, and the keyboard has all 26 letters", () => {
+    const letters = Object.keys(T.FONT_5x7);
+    expect(letters).toEqual([..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]);
+    for (const l of letters) { expect(T.FONT_5x7[l]).toHaveLength(7); for (const r of T.FONT_5x7[l]) expect(r).toMatch(/^[01]{5}$/); }
+    expect([...T.KEY_ROWS.join("")].sort().join("")).toBe("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    expect(T.FONT_5x7.H).toEqual(["10001", "10001", "10001", "11111", "10001", "10001", "10001"]);
+  });
+  it("the conversation: every question has answers with replies; the H example is right", () => {
+    for (const l of T.CHIP_TALK_KEY) if (l.ask) for (const c of l.choices) expect(c.reply.length).toBeGreaterThan(10);
+    expect(JSON.stringify(T.CHIP_TALK_KEY)).toContain("72");
+    expect(JSON.stringify(T.CHIP_TALK_KEY)).toContain((72).toString(2).padStart(8, "0"));
+  });
+  it("the mission is the finale of Part B, after Build a computer", () => {
+    const i = COMPUTER_PATH.findIndex(s => s.id === "comp-mission-key");
+    expect(COMPUTER_PATH[i - 1].id).toBe("comp-step-8");
+    expect(COMPUTER_PATH[i].part).toBe("B");
   });
 });
