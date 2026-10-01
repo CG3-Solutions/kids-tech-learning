@@ -3,7 +3,7 @@
 // so presets only nudge pitch, speak a little slower, and the best natural voice on the device is chosen.
 import { local } from "./storage.js";
 import { speechPlan } from "./speechPlan.js";
-import { neuralOn, hasPrivate, neuralUrl, neuralFailed } from "./neuralVoice.js";
+import { neuralOn, hasPrivate, neuralUrl, neuralFailed, neuralConfirmed } from "./neuralVoice.js";
 
 export const VOICES = [
   { id: "bright", name: "Bright girl", emoji: "👧", gender: "f", pitch: 1.12, rate: 0.92 },
@@ -148,8 +148,15 @@ export function speakWith(preset, raw, { force = false, slow = false } = {}) {
       timer = null;
       if (document.visibilityState === "hidden" || mine !== run) return;
       if (!natural) { speakDevice(preset, raw, plan, slow, mine); return; }
+      // Natural voices not proven yet in this session: speak now with the device voice, and get the
+      // recording ready in the background (so the next time this line is natural).
+      if (!neuralConfirmed()) {
+        speakDevice(preset, raw, plan, slow, mine);
+        neuralUrl(preset.id, plan).catch(e => { if (e?.status !== 422) neuralFailed(e); });
+        return;
+      }
       speakNeural(preset, raw, plan, slow, mine).catch(e => {
-        if (e?.message !== "slow" && e?.name !== "NotAllowedError" && e?.status !== 422) neuralFailed(); // rest natural voices for a while
+        if (e?.message !== "slow" && e?.name !== "NotAllowedError" && e?.status !== 422) neuralFailed(e); // rest natural voices for a while
         if (mine === run) speakDevice(preset, raw, plan, slow, mine);
       });
     }, GAP_MS);

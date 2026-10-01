@@ -9,15 +9,19 @@ import { local } from "./storage.js";
 export const VERSION = 1; // must match supabase/functions/tts/index.ts
 
 let cfg = null; // { publicUrl(path), synth({ voice, plan }) → { path } }
-export function setNeural(c) { cfg = c; failedAt = 0; }
+export function setNeural(c) { if (c !== cfg) { cfg = c; failedAt = 0; lastError = null; confirmed = false; } }
 export const neuralAvailable = () => !!cfg;
 export const neuralEnabled = () => local.get("sparklab.neuralVoice", true);
 export const setNeuralEnabled = v => local.set("sparklab.neuralVoice", v);
 export const neuralOn = () => !!cfg && neuralEnabled() && Date.now() - failedAt > REST_MS;
 
-let failedAt = 0;
+let failedAt = 0, lastError = null, confirmed = false;
+// True once a recording has worked in this session. Until then the device voice speaks first,
+// so a missing setup never means silence.
+export const neuralConfirmed = () => confirmed;
 const REST_MS = 5 * 60 * 1000;
-export const neuralFailed = () => { failedAt = Date.now(); };
+export const neuralFailed = e => { failedAt = Date.now(); lastError = e?.message ?? String(e ?? "failed"); };
+export const neuralLastError = () => lastError;
 
 // Children's (and the parent's) names: lines containing them stay on the device.
 let names = [];
@@ -46,5 +50,31 @@ export async function neuralUrl(voice, plan) {
     if (made?.path !== path) throw new Error("unexpected voice file");
   }
   ready.add(path);
+  confirmed = true;
   return url;
+}
+
+// For "Test natural voice" in Voice & sound: makes (or finds) a short line and says what went wrong, if anything.
+export async function testNeural(voice = "teacher") {
+  if (!cfg) return { ok: false, error: "Natural voices work when you're signed in (not in the demo)." };
+  const plan = [[{ t: "Hello! This is my ", stress: false }, { t: "natural", stress: true }, { t: " voice.", stress: false }]];
+  try {
+    const url = await neuralUrl(voice, plan);
+    failedAt = 0; lastError = null;
+    return { ok: true, url };
+  } catch (e) {
+    neuralFailed(e);
+    return { ok: false, error: explain(e) };
+  }
+}
+// Turns a failure into a next step for the parent.
+export function explain(e) {
+  const m = e?.message ?? String(e);
+  if (e?.status === 401) return "The voice service didn't accept the sign-in. Sign out and in again.";
+  if (e?.status === 404 || /Failed to send a request/i.test(m)) return "Can't reach the voice service. In Supabase → Edge Functions, check there is a function named “tts” and that “Verify JWT” is OFF for it.";
+  if (e?.status === 503 || /GOOGLE_TTS_KEY/.test(m)) return "The Google key is missing: add the GOOGLE_TTS_KEY secret in Supabase → Edge Functions → Secrets.";
+  if (e?.status === 429) return "Today's voice limit is used up. Lessons use the device voice until tomorrow.";
+  if (/Google TTS 403|PERMISSION_DENIED|API_KEY|API key/i.test(m)) return "Google refused the key: enable the Cloud Text-to-Speech API and check the key is restricted to it.";
+  if (/bucket|not found/i.test(m)) return "The recordings storage is missing: run supabase/release-5.sql in the SQL Editor.";
+  return `The voice service failed: ${m}`;
 }

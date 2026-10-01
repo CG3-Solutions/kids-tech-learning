@@ -71,6 +71,13 @@ describe("speaking with natural voices", () => {
     window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
     try { localStorage.clear(); } catch { /* ignore */ }
   });
+  // A recording that already exists in storage proves natural voices work.
+  const confirm = async () => {
+    const nv = await import("./neuralVoice.js");
+    const f = globalThis.fetch; globalThis.fetch = vi.fn(async () => ({ ok: true }));
+    await nv.neuralUrl("teacher", [[{ t: "Ready.", stress: false }]]);
+    globalThis.fetch = f;
+  };
   const setup = async (synth) => {
     const nv = await import("./neuralVoice.js");
     globalThis.fetch = vi.fn(async () => ({ ok: true }));
@@ -78,12 +85,24 @@ describe("speaking with natural voices", () => {
     nv.setPrivateNames(["Panvith"]);
     return import("./voice.js");
   };
-  it("plays the recorded line instead of the device voice", async () => {
+  it("speaks with the device voice first, then plays recordings once they've worked", async () => {
     const { speakWith, VOICES } = await setup();
     speakWith(VOICES[2], "A mistake is called a bug.");
+    await vi.waitFor(() => expect(spoken.length).toBeGreaterThan(0)); // never silent while unproven
+    const nv = await import("./neuralVoice.js");
+    await vi.waitFor(() => expect(nv.neuralConfirmed()).toBe(true)); // the recording was readied in the background
+    speakWith(VOICES[2], "Input goes in.");
     await vi.waitFor(() => expect(played).toHaveLength(1));
     expect(played[0].src).toMatch(/^https:\/\/cdn\/tts\/teacher\//);
-    expect(spoken).toEqual([]);
+  });
+  it("if the service is broken, the device voice still speaks and natural voices rest", async () => {
+    const { speakWith, VOICES } = await setup(vi.fn(async () => { throw Object.assign(new Error("Failed to send a request to the Edge Function"), { status: undefined }); }));
+    globalThis.fetch = vi.fn(async () => ({ ok: false }));
+    speakWith(VOICES[2], "Hello there.");
+    await vi.waitFor(() => expect(spoken).toEqual(["Hello there."]));
+    const nv = await import("./neuralVoice.js");
+    await vi.waitFor(() => expect(nv.neuralOn()).toBe(false));
+    expect(nv.explain(new Error(nv.neuralLastError()))).toMatch(/Verify JWT/);
   });
   it("uses the device voice for a line with a child's name", async () => {
     const { speakWith, VOICES } = await setup();
@@ -95,6 +114,7 @@ describe("speaking with natural voices", () => {
   });
   it("falls back to the device voice when the function fails", async () => {
     const { speakWith, VOICES } = await setup(vi.fn(async () => { throw Object.assign(new Error("down"), { status: 503 }); }));
+    await confirm();
     globalThis.fetch = vi.fn(async () => ({ ok: false }));
     speakWith(VOICES[0], "Input goes in.");
     await vi.waitFor(() => expect(spoken).toEqual(["Input goes in."]));
@@ -102,14 +122,27 @@ describe("speaking with natural voices", () => {
   });
   it("falls back when making the line is slow", async () => {
     const { speakWith, VOICES } = await setup(vi.fn(() => new Promise(() => {})));
+    await confirm();
     globalThis.fetch = vi.fn(async () => ({ ok: false }));
     speakWith(VOICES[0], "Output comes out.");
     await vi.waitFor(() => expect(spoken).toEqual(["Output comes out."]), { timeout: 5000, interval: 100 });
   });
   it("the Slowly button and speed setting slow the recording down", async () => {
     const { speakWith, VOICES } = await setup();
+    await confirm();
     speakWith(VOICES[2], "Slow please.", { slow: true });
     await vi.waitFor(() => expect(played).toHaveLength(1));
     expect(played[0].rate).toBeCloseTo(0.8);
+  });
+});
+
+describe("telling the parent what's wrong", () => {
+  it("turns failures into next steps", async () => {
+    const { explain } = await import("./neuralVoice.js");
+    expect(explain(Object.assign(new Error("x"), { status: 404 }))).toMatch(/function named “tts”/);
+    expect(explain(Object.assign(new Error("GOOGLE_TTS_KEY is not set"), { status: 503 }))).toMatch(/GOOGLE_TTS_KEY/);
+    expect(explain(Object.assign(new Error("daily voice limit reached"), { status: 429 }))).toMatch(/limit/);
+    expect(explain(new Error("Google TTS 403 PERMISSION_DENIED"))).toMatch(/Text-to-Speech API/);
+    expect(explain(new Error("Bucket not found"))).toMatch(/release-5\.sql/);
   });
 });

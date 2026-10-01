@@ -100,7 +100,7 @@ Lessons can be read by Google's Indian English neural voices: clearer, with stre
 
 1. **Google Cloud:** create a project, enable the **Cloud Text-to-Speech API** (needs a billing account; there is a monthly free allowance), and set a budget alert under **Billing → Budgets & alerts**. Create an **API key** under **APIs & Services → Credentials** and restrict it to the Cloud Text-to-Speech API.
 2. **Supabase → SQL Editor:** run `supabase/release-5.sql` once. It adds the public `tts` storage bucket for the recordings and the usage table for the limits. It's safe to re-run.
-3. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `tts`, paste `supabase/functions/tts/index.ts`, and deploy. Leave **"Verify JWT" on**: only signed-in parents' apps can use it.
+3. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `tts`, paste `supabase/functions/tts/index.ts`, and deploy. Turn **"Verify JWT" off** (the function checks the sign-in itself; with it on, the browser's CORS check is blocked).
 4. **Edge Functions → Secrets:** add `GOOGLE_TTS_KEY` (the API key). Optional limits: `TTS_DAILY_CHARS` (per family per day, default 20000) and `TTS_MONTHLY_CHARS` (whole app, default 900000).
 5. Parents can turn natural voices off under **Parent dashboard → Voice & sound**.
 

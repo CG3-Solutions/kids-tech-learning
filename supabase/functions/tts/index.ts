@@ -11,7 +11,9 @@
 // Secrets (Edge Functions → Secrets): GOOGLE_TTS_KEY (required).
 // Optional: TTS_DAILY_CHARS (per family per day, default 20000), TTS_MONTHLY_CHARS (whole app, default 900000).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
-// Deploy with "Verify JWT" ON: only signed-in parents' apps can call it.
+// Deploy with "Verify JWT" OFF. The browser's CORS preflight (OPTIONS) carries no token, and with JWT
+// verification on, the gateway rejects it before this code runs. The function checks the sign-in itself:
+// a request without a valid signed-in user gets 401.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const env = (k: string, d = "") => Deno.env.get(k) ?? d;

@@ -53,7 +53,7 @@ export function AppProvider({ children: kids }) {
   useEffect(() => { loadAccount(); }, [loadAccount]);
 
   // Natural voices need a signed-in Supabase account; names are never sent to the voice service.
-  useEffect(() => { setNeural(api?.tts && user ? api.tts : null); }, [api, user]);
+  useEffect(() => { setNeural(api?.tts && user ? api.tts : null); }, [api, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setPrivateNames([...children.map(c => c.name), profile?.display_name, ...(profile?.display_name ?? "").split(/\s+/)]); }, [children, profile?.display_name]);
 
   const activeChild = children.find(c => c.id === activeId) ?? null;

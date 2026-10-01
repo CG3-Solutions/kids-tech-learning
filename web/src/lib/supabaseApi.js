@@ -25,7 +25,11 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
       publicUrl: path => sb.storage.from("tts").getPublicUrl(path).data.publicUrl,
       async synth(body) {
         const { data, error } = await sb.functions.invoke("tts", { body });
-        if (error) { const e = new Error(error.message); e.status = error.context?.status; throw e; }
+        if (error) {
+          const res = error.context;
+          const detail = typeof res?.json === "function" ? (await res.json().catch(() => null))?.error : null;
+          const e = new Error(detail || error.message); e.status = res?.status; throw e;
+        }
         return data;
       },
     },
