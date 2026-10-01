@@ -5,13 +5,19 @@
 import { pick, sample, shuffle, withDistractors, gradeOf } from "./gen.js";
 
 // ───────────────────────── Alphabets ─────────────────────────
+// Voices misread a lone capital letter ("A" is read as the word "a"), so anything spoken uses
+// the letter's name, spelled for the voice. Indian/British names: "zed", "aitch".
+const NAMES = { A: "ay", B: "bee", C: "see", D: "dee", E: "ee", F: "ef", G: "jee", H: "aitch", I: "eye", J: "jay", K: "kay", L: "el", M: "em",
+  N: "en", O: "oh", P: "pee", Q: "cue", R: "ar", S: "ess", T: "tee", U: "you", V: "vee", W: "double you", X: "ex", Y: "why", Z: "zed" };
+export const letterName = l => NAMES[l.toUpperCase()] ?? l;
+const small = l => `small ${letterName(l)}`;
 export const ABC = [
   ["A", "Apple", "🍎"], ["B", "Ball", "⚽"], ["C", "Cat", "🐱"], ["D", "Dog", "🐶"], ["E", "Elephant", "🐘"],
   ["F", "Fish", "🐟"], ["G", "Grapes", "🍇"], ["H", "House", "🏠"], ["I", "Ice cream", "🍦"], ["J", "Juice", "🧃"],
   ["K", "Kite", "🪁"], ["L", "Lion", "🦁"], ["M", "Mango", "🥭"], ["N", "Nest", "🪺"], ["O", "Orange", "🍊"],
   ["P", "Parrot", "🦜"], ["Q", "Queen", "👸"], ["R", "Rabbit", "🐰"], ["S", "Sun", "☀️"], ["T", "Tiger", "🐯"],
   ["U", "Umbrella", "☂️"], ["V", "Van", "🚐"], ["W", "Watch", "⌚"], ["X", "X-ray", "🩻"], ["Y", "Yo-yo", "🪀"], ["Z", "Zebra", "🦓"],
-].map(([big, word, emoji]) => ({ big, small: big.toLowerCase(), word, emoji, say: `${big}. ${big} is for ${word}.` }));
+].map(([big, word, emoji]) => ({ big, small: big.toLowerCase(), word, emoji, say: `${letterName(big)}, for ${word}.` }));
 const LETTERS = ABC.map(x => x.big);
 const LOOKALIKE = { b: "dpq", d: "bpq", p: "bdq", q: "bdp", m: "nw", n: "mu", u: "nv", w: "mv", i: "jl", j: "ig", l: "it", g: "qj", c: "eo", e: "ca", a: "oe", o: "ac" };
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -30,13 +36,13 @@ export const ALPHABET_JOURNEY = [
   { id: "abc-step-3", ...A1, emoji: "👂", title: "Starting sounds", blurb: "Which letter does it start with?", kind: "practice", count: 10,
     intro: "Look at the picture and listen. Which letter does it start with?", learned: "Every word starts with a sound, and each sound has a letter.",
     parent: "Play “I spy with my little eye, something beginning with…”.",
-    gen: () => { const x = pick(ABC); return { type: "choice", prompt: `${x.emoji} ${x.word} starts with…`, say: `${x.word}. Which letter does ${x.word} start with?`, options: withDistractors(x.big, LETTERS), answer: x.big, hint: `Say it slowly: ${x.word}. The first sound is the letter ${x.big}.` }; } },
+    gen: () => { const x = pick(ABC); return { type: "choice", prompt: `${x.emoji} ${x.word} starts with…`, say: `${x.word}. Which letter does ${x.word} start with?`, options: withDistractors(x.big, LETTERS), answer: x.big, hint: `Say it slowly: ${x.word}. The first sound is the letter ${x.big}.`, hintSay: `Say it slowly: ${x.word}. It starts with ${letterName(x.big)}.`, answerSay: letterName(x.big) }; } },
   { id: "abc-step-4", ...A1, emoji: "🔠", title: "Big and small letters", blurb: "Match A with a.", kind: "practice", count: 10,
     intro: "Every letter has a big (capital) shape and a small shape. Find the small letter!", learned: "Capital letters and small letters are the same letter in two shapes.",
     parent: "Look at a newspaper headline and find capital letters, then small ones.",
     gen: () => {
       const x = pick(ABC), wrong = (LOOKALIKE[x.small] ?? "").split("").concat(sample(ABC.map(a => a.small), 4));
-      return { type: "choice", prompt: `Find the small letter for ${x.big}`, say: `Find the small letter for ${x.big}.`, options: withDistractors(x.small, wrong), answer: x.small, hint: `${x.big} and ${x.small} are the same letter. Look at ${x.emoji} ${x.word}.`, big: true };
+      return { type: "choice", prompt: `Find the small letter for ${x.big}`, say: `Find the small letter for capital ${letterName(x.big)}.`, options: withDistractors(x.small, wrong), answer: x.small, hint: `${x.big} and ${x.small} are the same letter. Look at ${x.emoji} ${x.word}.`, hintSay: `Capital ${letterName(x.big)} and ${small(x.big)} are the same letter, as in ${x.word}.`, answerSay: small(x.big), big: true };
     } },
   { id: "abc-step-5", ...A1, emoji: "➡️", title: "What comes next?", blurb: "Find the missing letter.", kind: "practice", count: 10,
     intro: "Letters live in order, like a line of friends. Which letter is missing?", learned: "The alphabet always goes in the same order.",
@@ -44,22 +50,22 @@ export const ALPHABET_JOURNEY = [
     gen: () => {
       const s = Math.floor(Math.random() * 23), run = LETTERS.slice(s, s + 4), gap = 1 + Math.floor(Math.random() * 3), ans = run[gap];
       const shown = run.map((l, i) => (i === gap ? "_" : l)).join("  ");
-      return { type: "choice", prompt: shown, say: `What letter is missing?`, options: withDistractors(ans, LETTERS.slice(Math.max(0, s - 3), s + 7)), answer: ans, hint: `Say the letters in order: ${run.join(", ")}.`, big: true };
+      return { type: "choice", prompt: shown, say: `What letter is missing?`, options: withDistractors(ans, LETTERS.slice(Math.max(0, s - 3), s + 7)), answer: ans, hint: `Say the letters in order: ${run.join(", ")}.`, hintSay: `Say the letters in order: ${run.map(letterName).join(", ")}.`, answerSay: letterName(ans), big: true };
     } },
   { id: "abc-step-6", ...A2, emoji: "🗣️", title: "Vowels and consonants", blurb: "A, E, I, O, U are special.", kind: "practice", count: 10,
-    intro: "Five letters are called vowels: A, E, I, O and U. All the others are consonants. Which is this one?", learned: "A, E, I, O and U are vowels. Every word needs at least one vowel sound.",
+    intro: "Five letters are called vowels: A, E, I, O and U. All the others are consonants. Which is this one?", introSay: "Five letters are called vowels: ay, ee, eye, oh and you. All the others are consonants. Which is this one?", learned: "A, E, I, O and U are vowels. Every word needs at least one vowel sound.",
     parent: "Pick a word from a storybook and count its vowels together.",
     gen: () => { const l = pick(Math.random() < 0.45 ? [...VOWELS] : LETTERS.filter(x => !VOWELS.has(x))); const v = VOWELS.has(l);
-      return { type: "choice", prompt: `Is ${l} a vowel or a consonant?`, say: `Is ${l} a vowel or a consonant?`, options: ["Vowel", "Consonant"], answer: v ? "Vowel" : "Consonant", hint: "The vowels are A, E, I, O, U." }; } },
+      return { type: "choice", prompt: `Is ${l} a vowel or a consonant?`, say: `Is ${letterName(l)} a vowel or a consonant?`, options: ["Vowel", "Consonant"], answer: v ? "Vowel" : "Consonant", hint: "The vowels are A, E, I, O, U.", hintSay: "The vowels are ay, ee, eye, oh and you." }; } },
   { id: "abc-step-7", ...A2, emoji: "🔢", title: "Put letters in order", blurb: "Tap them in ABC order.", kind: "practice", count: 6,
     intro: "Tap the letters in alphabetical order, from the one that comes first.", learned: "Alphabetical order is how dictionaries and class lists are arranged.",
     parent: "Put your family's names in alphabetical order together.",
-    gen: g => { const n = gradeOf(g) >= 4 ? 5 : 4; const ls = sample(LETTERS, n).sort(); return { type: "order", prompt: "Put these in ABC order", tiles: shuffle(ls), answer: ls, joiner: " ", hint: "Sing the ABC song. Which of these letters comes first?" }; } },
+    gen: g => { const n = gradeOf(g) >= 4 ? 5 : 4; const ls = sample(LETTERS, n).sort(), tiles = shuffle(ls); return { type: "order", prompt: "Put these in ABC order", say: `Put these letters in ABC order: ${tiles.map(letterName).join(", ")}.`, tiles, answer: ls, joiner: " ", hint: "Sing the ABC song. Which of these letters comes first?", answerSay: ls.map(letterName).join(", ") }; } },
   { id: "abc-step-8", ...A2, emoji: "🔍", title: "Letter hunt", blurb: "Which word starts with it?", kind: "practice", count: 10,
     intro: "I'm hunting for words. Which picture starts with my letter?", learned: "Finding the first letter helps with reading and spelling.",
     parent: "On a walk, spot shop signs and read their first letters.",
     gen: () => { const [x, ...rest] = sample(ABC, 3); const opts = shuffle([x, ...rest]).map(o => ({ label: `${o.emoji} ${o.word}`, value: o.word }));
-      return { type: "choice", prompt: `Which one starts with ${x.big}?`, say: `Which one starts with the letter ${x.big}?`, options: opts, answer: x.word, hint: `Say each word. Which one starts with the ${x.big} sound?` }; } },
+      return { type: "choice", prompt: `Which one starts with ${x.big}?`, say: `Which one starts with ${letterName(x.big)}?`, options: opts, answer: x.word, hint: `Say each word. Which one starts with the ${x.big} sound?`, hintSay: `Say each word. Which one starts with ${letterName(x.big)}?` }; } },
   { id: "abc-step-9", ...A2, emoji: "📚", title: "Words in ABC order", blurb: "Order words like a dictionary.", kind: "practice", count: 6,
     intro: "Put these words in alphabetical order by their first letter.", learned: "Words can be put in ABC order by their first letter, just like in a dictionary.",
     parent: "Open a dictionary together and find a word by its first letter.",

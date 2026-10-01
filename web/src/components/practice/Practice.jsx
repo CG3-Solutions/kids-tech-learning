@@ -101,13 +101,18 @@ export default function Practice({ spec, grade, onComplete, Face }) {
     : status === "wrong" ? `Not quite. ${q.hint ?? "Try again!"}`
     : status === "reveal" ? `The answer is ${answerText}. Let's keep going!`
     : i === 0 && spec.intro ? spec.intro : q.say ?? q.prompt;
+  // What Polly or Ollie says can differ from what's shown (e.g. letter names: "ay", not "A").
+  const bubbleSay = status === "right" ? praise
+    : status === "wrong" ? `Not quite. ${q.hintSay ?? q.hint ?? "Try again!"}`
+    : status === "reveal" ? `The answer is ${q.answerSay ?? answerText}. Let's keep going!`
+    : i === 0 && spec.intro ? spec.introSay ?? spec.intro : q.say ?? q.prompt;
   return (
     <div className="step-body practice">
       <div className="practice-top">
         <div className="progress"><i style={{ width: `${(i / spec.count) * 100}%` }} /></div>
         <span className="muted">Question {i + 1} of {spec.count}</span>
       </div>
-      <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"}>{bubble}</Guide>
+      <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"} say={bubbleSay}>{bubble}</Guide>
       <div className="q-card" {...testHook(q, answerText)}>
         <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}`}>
           {q.prompt}

@@ -77,3 +77,25 @@ describe("one voice at a time", () => {
     expect(spoken).toHaveLength(0);
   });
 });
+
+describe("alphabet speech uses letter names", () => {
+  it("never speaks a lone capital letter (voices read A as the word 'a')", async () => {
+    const { ALPHABET_JOURNEY, ABC, letterName } = await import("../content/practice/language.js");
+    const lone = /(^|[^A-Za-z'-])[A-Z](?=$|[^A-Za-z'-])/; // "X-ray" is a word, not a lone letter
+    expect(ABC[0].say).toBe("ay, for Apple.");
+    expect(ABC[25].say).toBe("zed, for Zebra.");
+    expect(ABC.map(x => letterName(x.big))).not.toContain(undefined);
+    for (const x of ABC) expect(lone.test(speechText(x.say)), x.say).toBe(false);
+    for (const s of ALPHABET_JOURNEY) {
+      if (s.introSay || s.intro) expect(lone.test(s.introSay ?? s.intro), `${s.id} intro`).toBe(false);
+      if (!s.gen) continue;
+      for (let n = 0; n < 60; n++) {
+        const q = s.gen(3);
+        for (const [k, v] of [["say", q.say ?? q.prompt], ["hint", q.hintSay ?? q.hint], ["answer", q.answerSay ?? String(q.answer)]]) {
+          if (!v) continue;
+          expect(lone.test(speechText(v)), `${s.id} ${k}: ${v}`).toBe(false);
+        }
+      }
+    }
+  });
+});
