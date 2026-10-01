@@ -151,25 +151,14 @@ describe("Circuit Lab: the 100 projects", () => {
     }
   });
 
-  it("a NOT trigger (pull-up resistor + sensor to −) only rings when the sensor lets go", () => {
-    for (const p of ALL.filter(x => !x.open)) {
-      for (const ch of p.parts.filter(x => ["melody", "siren", "fx"].includes(x.type))) {
-        const pull = p.parts.find(x => x.type === "resistor" && x.ohms === 10000 && Object.values(x.pins).includes(ch.pins.trig));
-        if (!pull) continue;
-        const minus = p.parts.find(x => x.type === "battery").pins["−"];
-        for (const c of p.checksParsed) {
-          const quiet = Object.entries(c.expect).some(([id, v]) => v === "quiet" && p.parts.find(x => x.id === id)?.type === "speaker");
-          const pulledDown = reach(p.parts, c.when, ch.pins.trig, pull.id).has(minus);
-          const plus = p.parts.find(x => x.type === "battery").pins["+"];
-          const powered = reach(p.parts, c.when, plus).has(ch.pins["+"]);
-          // Quiet is right if the sensor pulls the trigger down, or if nothing feeds the pull-up (a switch before it is open).
-          const pullEnd = Object.values(pull.pins).find(net => net !== ch.pins.trig);
-          const fed = reach(p.parts, c.when, plus).has(pullEnd);
-          if (quiet && powered && fed) expect(pulledDown, `${p.id} [${p.checks[p.checksParsed.indexOf(c)]}]: quiet, but nothing pulls the trigger down`).toBe(true);
-          if (!quiet && Object.values(c.expect).some(v => v.startsWith("sound"))) expect(pulledDown, `${p.id}: rings although the trigger is pulled down`).toBe(false);
-        }
-      }
+  // (The NOT-trigger alarms are now proven by the simulator: lib/circuit/engine.test.js.)
+
+  it("fix-it projects start from a circuit that uses the same kit", () => {
+    for (const p of ALL.filter(x => x.start)) {
+      const start = parseParts(p.start), done = p.parts;
+      expect(start.map(x => x.type).sort(), p.id).toEqual(done.map(x => x.type).sort());
     }
+    expect(ALL.filter(x => x.start).length).toBeGreaterThanOrEqual(2);
   });
 
   it("covers every concept in the study map, with something for every level", () => {

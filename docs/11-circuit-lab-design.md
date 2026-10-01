@@ -22,7 +22,7 @@ The Circuit Lab lets children build real electronic circuits on screen: pick par
 | 💡 Bulb | a b | | off / dim / on / flash | 2 |
 | 🔴 LED (red, yellow, green) | + − | | off / dim / on / flash / damage | 3 |
 | 〰️ Resistor (100 Ω, 1 kΩ, 10 kΩ) | a b | | | 3 |
-| 🌗 Light sensor | a b | bright / dim / dark | | 1 |
+| 🌗 Light sensor | a b | bright / dim / dark / lit by the lamp | | 1 |
 | 🌀 Motor with fan | + − | | off / slow / spin / reverse | 1 |
 | 🔈 Speaker | a b | | quiet / soft / sound (+ which sound) | 1 |
 | 🥁 Buzzer disc | a b | quiet / clap | quiet / sound | 1 |
@@ -36,15 +36,16 @@ The Circuit Lab lets children build real electronic circuits on screen: pick par
 Plus connector strips (1–6 posts long) and two flying leads, which are just wire.
 
 Every part's electrical model is written in `web/src/content/lab/parts.js` (`model`). Here are the ones that matter most:
-- **Bulb:** about 10 Ω. Below 60 mA it doesn't glow; 60–180 mA is dim; above that it's on.
-- **LED:** about 1.8–2.1 V. Below 0.5 mA it's off, 0.5–5 mA dim, 5–30 mA on, and above 30 mA it shows damage.
-- **Light sensor:** 100 Ω when bright, 1 kΩ when dim, 1 MΩ when dark.
+- **Bulb:** about 10 Ω. Below 60 mA it doesn't glow; 60–220 mA is dim; above that it's on.
+- **LED:** 1.8 V (red), 1.85 V (yellow) or 2.0 V (green). Below 0.3 mA it's off, 0.3–4 mA dim, 4–30 mA on, and above 30 mA it shows damage.
+- **Light sensor:** 100 Ω when bright, 1 kΩ when dim, 1 MΩ when dark. *Lit by the lamp* means it sees only the circuit's own bulb (a beam or a reflection), so switching the bulb off makes it dark.
 - **Chips:**
   - A chip's trigger is HIGH above 1.5 V. It has 470 kΩ to − inside, so tap water (50 kΩ) or a finger (200 kΩ) can trigger it.
   - A 10 kΩ pull-up resistor with a sensor to − makes a NOT trigger: the alarm rings when the sensor lets go.
   - **Melody** plays a 6 s tune and finishes it even after the trigger drops, which makes a time delay.
   - **Siren** sounds only while the trigger is HIGH; its mode pins choose the sound.
   - **Sound effects** steps through 8 sounds, one per trigger.
+  - A chip's output is push-pull: HIGH joins it to the chip's + and LOW to its −, each through 1 Ω. So it can drive a speaker and an LED together, and the current really comes through the chip's supply.
 - **Buzzer disc as a sensor:** a clap makes pin a 2 V above pin b for 0.2 s. Children use the clap button, or the microphone if they turn it on. The microphone is off by default, and sound is processed only on the device.
 - **Short circuit:** more than 1 A from the battery. The board switches off and explains what happened.
 
@@ -69,13 +70,38 @@ When the child presses **Test**, the lab runs every check on the child's own cir
 
 If a check fails, the lab says which, in plain words: *"With S1 ON the bulb should glow, but it's off. Is the loop complete?"* It can highlight the part, or show a ghost of the next part as a hint.
 
-## The simulation engine (release 2)
+## The simulation engine (release 2, built)
 
-- **DC circuit solver** using modified nodal analysis. Diodes, LEDs and the transistor are solved with Newton iterations; bulbs, motors, speakers, sensors and switches are resistances.
-- **Chips are behaviour models** ticking 50 times a second. They read their trigger voltage, and their output is a voltage source with 30 Ω inside, so they drive speakers, LEDs and bulbs realistically.
-- **Sound** uses the Web Audio API. Each chip has its own synthesized sounds (no recordings), and volume follows the current through the speaker.
-- **Outputs are classified** from currents (off/dim/on, slow/spin, soft/sound), using the thresholds above. Short circuits and LED damage are flagged.
-- **Every project is tested.** The engine runs all 100 reference circuits against their own checks in the test suite, so none can ship broken. Release 1 already checks the structure and wiring paths of all 100 (`lab.test.js`).
+The code is in `web/src/lib/circuit/`:
+- **`engine.js`: the circuit solver.**
+  - Nodal analysis with every part in Norton form (conductances and current sources), solved by Gaussian elimination. The battery's − net is 0 V.
+  - LEDs and the transistor (off, active or saturated) are piecewise models. The solver guesses their states, solves, checks and repeats until nothing changes.
+  - A chip that is playing is solved twice, with its output HIGH and with it LOW. A light that differs between the two is *flashing*; a speaker with signal through it is *making sound*. Driving each chip alone tells which sound a speaker hears, so two chips together give a *mix*.
+  - `evaluate(circuit, inputs)` returns every output, the short-circuit flag, each chip's state, and meter readings: node voltages and part currents, for the Engineer level.
+  - `runChecks(circuit, checks)` marks a build.
+- **`live.js`: time.**
+  - `LiveCircuit` keeps each chip's state as the board steps it many times a second. The melody finishes its 6 s tune after a short press (a time delay) and repeats while held. The sound-effects chip moves to the next of its 8 sounds on each press. The siren sounds only while triggered.
+  - Claps last 0.2 s, and a chip that loses power stops at once.
+- **`sound.js`: the sounds.**
+  - Web Audio synthesis, no recordings: our own 6-second melody, four sirens (police wail, fire-engine yelp, ambulance two-tone, robot beeps) and eight space sounds.
+  - Volume follows the speaker: full, soft, or a buzzer disc.
+  - It respects the app's mute setting, and does nothing where audio isn't available.
+- **Speed:** a whole project's checks run in a few milliseconds, which is fast enough for live use.
+
+How we know it's right (`engine.test.js` and `live.test.js`):
+- **Hand-worked circuits:** Ohm's law, series and parallel, the LED drop, a voltage divider, transistor switching, chip triggers, shorts, motor direction.
+- **All 100 projects:** every check passes in simulation.
+- **Every part matters:** removing any single part from any project breaks one of its checks, and so does turning any LED or motor round. So no project has a pointless part or a check that can't fail.
+- **Fix-it projects start broken:** their starting circuits fail.
+- **Margins:** no checked light or motor sits within 15% of a threshold, so results don't depend on rounding.
+- **Real browser:** every chip sound was played through real Chromium Web Audio without errors.
+
+What the simulation found in the release 1 projects, now fixed:
+- "LED one way only" and "Too much resistance" checked only that an LED was off, which any broken build passes. They are now **fix-it** projects: the child starts from the broken circuit (`start`) and repairs it.
+- In the battery direction finder, a red LED switches on at a lower voltage than a green one, so the wrong LED could be flipped unnoticed. The colours were swapped.
+- The duet now checks for a *mix*, which proves both chips play.
+- The light-beam projects now use the sensor's *lit by the lamp* setting, so the bulb really makes the beam.
+- The sunny-day fan's 10 kΩ resistor did nothing, so it was removed.
 
 ## The board and the child's experience (releases 3–4)
 
@@ -90,6 +116,7 @@ If a check fails, the lab says which, in plain words: *"With S1 ON the bulb shou
   - **Guided:** a ghost shows where each part goes, one at a time.
   - **Challenge:** only the circuit diagram is shown.
   - **Free build:** the whole kit, no project.
+  - **Fix-it** (some projects): the child starts from a broken circuit and repairs it.
 - **Each project follows the lesson pattern children already know:**
   1. Big question
   2. Pick the parts
@@ -115,8 +142,8 @@ If a check fails, the lab says which, in plain words: *"With S1 ON the bulb shou
 
 | # | Release | Contents |
 |---|---|---|
-| 1 | Study map + project specs (this) | Study map, baseline design, kit, notation, 100 projects as data, tests, these documents |
-| 2 | Simulation engine | Solver, part models, chip behaviours, sound; all 100 reference circuits pass their checks |
+| 1 | Study map + project specs (done) | Study map, baseline design, kit, notation, 100 projects as data, tests, these documents |
+| 2 | Simulation engine (done) | Solver, part models, chip behaviours, sound; all 100 reference circuits pass their checks |
 | 3 | Board + free build | Grid, snapping, layers, tray, undo, zoom, autosave, live current and outputs |
 | 4 | Project player + units 1–3 | Guided/Challenge modes, behaviour marking, predict and explain, badges (24 projects) |
 | 5 | Units 5–6 | Motion and sound (20 projects) |
