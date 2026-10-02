@@ -1727,16 +1727,13 @@ button.kb-key { cursor: pointer }
 .lab-tray-ghost { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; margin: -58px 0 0 -36px; opacity: .92; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); will-change: transform }
 @media (hover: hover) and (pointer: fine) { .lab-tray-ghost { margin-top: -20px } }
 
-/* A finished circuit: the part's toolbar shows just the switch, with editing behind "Change" */
-.lab-fbtn.change { font-size: .9rem; font-weight: 700; padding-inline: 10px; width: auto; white-space: nowrap }
-.lab-fname { align-self: center; padding: 0 8px 0 6px; font-family: var(--f-display); font-weight: 600; white-space: nowrap }
 
 /* The lab fits the screen: board, hint and parts tray are visible together.
    --lab-fit is the board's width when its height is what is left under the top bar and the action
    row, above the docked hint and tray (the board is 440 wide for every 560 tall). */
 .lab { --dock-b: 0px; --tray-h: 0px; --hint-h: 76px;
-  --lab-fit: calc((100vh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * .786) }
-@supports (height: 100dvh) { .lab { --lab-fit: calc((100dvh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * .786) } }
+  --lab-fit: calc((100vh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * var(--lab-ratio, .786)) }
+@supports (height: 100dvh) { .lab { --lab-fit: calc((100dvh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * var(--lab-ratio, .786)) } }
 .lab-actions { scroll-margin-top: 72px }
 .lab-hint { position: sticky; z-index: 20; bottom: calc(var(--dock-b) + var(--tray-h) + 6px); box-shadow: 0 -4px 12px rgba(22, 35, 63, .1) }
 @media (max-width: 979px) {
@@ -1798,12 +1795,11 @@ button.kb-key { cursor: pointer }
 .lab-tray-item.used, .lab-tray-item.used:disabled { background: color-mix(in srgb, var(--good) 14%, var(--surface)); border-color: var(--good) }
 .lab-tray-item.used small { color: color-mix(in srgb, var(--good) 80%, var(--ink)) }
 @media (min-width: 700px) {
-  /* A project's few parts: one clear row each. Free build's many parts: small tiles, two across. */
-  .lab-tray-group:only-child .lab-tray-items { grid-template-columns: 1fr }
-  .lab-tray-group:only-child .lab-tray-item { grid-template-columns: auto 1fr; grid-template-areas: "em nm" "em n"; justify-items: start; text-align: left; column-gap: 10px; padding: 8px 10px; min-height: 60px }
-  .lab-tray-group:not(:only-child) .lab-tray-items { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px }
-  .lab-tray-group:not(:only-child) .lab-tray-item { min-height: 72px }
-  .lab-tray-group:not(:only-child) .lab-tray-item .nm { font-size: .78rem }
+  /* The parts panel is the same in a project and in free build: one clear row per part
+     (picture, name, how many are left), under a heading for each group. */
+  .lab-tray .lab-tray-items { grid-template-columns: 1fr }
+  .lab-tray .lab-tray-item { grid-template-columns: 64px 1fr; grid-template-areas: "em nm" "em n"; justify-items: start; text-align: left; column-gap: 10px; padding: 8px 10px; min-height: 60px }
+  .lab-tray .lab-tray-item .em { justify-self: center }
 }
 @media (max-width: 699px) {
   .lab-hint { gap: 8px; padding: 6px 10px }
@@ -1841,3 +1837,144 @@ button.kb-key { cursor: pointer }
 .lab-locate { fill: color-mix(in srgb, var(--spark) 22%, transparent); stroke: var(--spark); stroke-width: 5; pointer-events: none; animation: lab-locate .65s ease-in-out 4 alternate }
 @keyframes lab-locate { from { opacity: .25; stroke-width: 3 } to { opacity: 1; stroke-width: 7 } }
 @media (prefers-reduced-motion: reduce) { .lab-locate { animation: none } }
+
+/* Lab toolbar: Lock and Full screen. On phones Redo and the zoom buttons give way (pinch still zooms). */
+.lab-toolbar .btn.on { background: var(--ink); color: var(--board); border-color: var(--ink) }
+@media (max-width: 699px) { .lab-toolbar .wide-only { display: none } }
+.lab-tray.locked .lab-tray-item:not(.used) { opacity: .45 }
+.lab.is-locked .lab-part { cursor: default }
+
+/* Full screen: everything around the lab is hidden, so the board gets the whole screen. */
+html.lab-fullscreen .kid-top, html.lab-fullscreen .kid-nav, html.lab-fullscreen .mode-banner,
+html.lab-fullscreen .crumbs, html.lab-fullscreen .mod-head, html.lab-fullscreen .tabs, html.lab-fullscreen .lab-switch,
+html.lab-fullscreen .proj-head, html.lab-fullscreen .proj-steps, html.lab-fullscreen .proj-goal { display: none }
+html.lab-fullscreen .kid-body { grid-template-columns: 1fr; max-width: none }
+html.lab-fullscreen .kid-main { padding: 0 12px }
+html.lab-fullscreen .page { padding-block: 8px 12px }
+html.lab-fullscreen .lab { --dock-b: 0px;
+  --lab-fit: calc((100vh - 54px - 62px - var(--hint-h) - var(--tray-h) - 44px) * var(--lab-ratio, .786)) }
+@supports (height: 100dvh) { html.lab-fullscreen .lab { --lab-fit: calc((100dvh - 54px - 62px - var(--hint-h) - var(--tray-h) - 44px) * var(--lab-ratio, .786)) } }
+@media (min-width: 700px) {
+  /* A workbench: the board at full height, with Test, the hint and the parts in a panel beside it. */
+  html.lab-fullscreen .lab { --lab-fit: calc((100vh - 54px - 44px) * var(--lab-ratio, .786));
+    grid-template-columns: min(var(--lab-board-w), calc(100% - 262px)) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr auto auto;
+    grid-template-areas: "toolbar toolbar" "board act" "board hint" "board tray" "board insp" "desc desc" "ex ex" }
+  @supports (height: 100dvh) { html.lab-fullscreen .lab { --lab-fit: calc((100dvh - 54px - 44px) * var(--lab-ratio, .786)) } }
+  html.lab-fullscreen .lab-board-wrap { grid-row: 2 / 6; max-height: none }
+  html.lab-fullscreen .lab-hint { flex-direction: column; align-items: flex-start; max-width: 380px }
+  html.lab-fullscreen .lab-actions { max-width: 380px }
+}
+html.lab-fullscreen .lab-board-wrap { max-height: none }
+.lab-toolbar .btn { white-space: nowrap }
+@media (max-width: 979px) { .lab-toolbar .lbl.xl { display: none } }
+@media (min-width: 700px) { html.lab-fullscreen .lab { grid-template-columns: min(var(--lab-board-w), calc(100% - 236px)) minmax(0, 1fr) } }
+
+/* The chosen part's buttons, in Volt's hint card */
+.lab-hint-actions .btn.sw { min-width: 64px; background: var(--ink); color: var(--board); border-color: var(--ink) }
+.lab-hint-actions .btn.sw.on { background: var(--good); border-color: var(--good); color: #fff }
+.lab-hint-actions .btn.remove { color: var(--bad) }
+.lab-hint-actions .lbl { display: none }
+@media (min-width: 700px) { .lab-hint-actions .lbl { display: inline } }
+.lab-hint-actions { flex-wrap: nowrap }
+@media (max-width: 699px) { .lab-hint-actions { gap: 4px } .lab-hint-actions .btn { min-width: 40px; padding: 6px } }
+@media (max-width: 699px) { .lab-hint .long { display: none } }
+
+/* ── Lab header, tidied: one project row, one control bar ──
+   Project row: back, title with the goal under it, and a small numbered stepper.
+   Control bar: Test and the goal on the left; one family of icon buttons on the right. */
+.proj-head { gap: 10px; flex-wrap: nowrap; min-width: 0 }
+.proj-head .back-btn { min-height: 40px; padding: 6px 12px 6px 8px; font-size: .95rem; gap: 2px; flex: none }
+.proj-emoji { font-size: 1.6rem; flex: none }
+.proj-title { min-width: 0; flex: 1 }
+.proj-title h2 { margin: 0; font-size: 1.15rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.proj-title p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.proj-steps { flex: none; gap: 4px }
+.proj-steps li { padding: 0; border: 0; background: none; gap: 5px; font-size: .82rem; font-family: var(--f-body); font-weight: 700; color: var(--muted) }
+.proj-steps li + li::before { width: 10px; height: 2px; margin: 0 2px 0 0; background: var(--line) }
+.proj-steps li .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); background: var(--surface); font-size: .75rem; line-height: 1 }
+.proj-steps li.past, .proj-steps li.now { border: 0; background: none }
+.proj-steps li.past { color: var(--good) }
+.proj-steps li.past .n { border-color: var(--good); background: var(--good); color: #fff }
+.proj-steps li.now { color: var(--ink) }
+.proj-steps li.now .n { border-color: var(--ink); background: var(--spark); color: var(--spark-ink) }
+.proj-steps li:not(.now) .t { display: none }
+@media (max-width: 699px) {
+  .proj-head { flex-wrap: wrap }
+  .proj-head .back-btn .lbl { display: none }
+  .proj-steps { order: 5; flex-basis: 100% }
+}
+
+.lab { grid-template-areas: "bar" "hint" "board" "tray" "insp" "desc" "ex" }
+.lab-bar { grid-area: bar; display: flex; align-items: center; gap: 8px; min-width: 0 }
+.lab-bar .lab-actions { flex: none; gap: 6px; scroll-margin-top: 76px }
+.lab-bar .lab-toolbar { margin-left: auto; flex-wrap: nowrap; gap: 4px; padding: 3px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px }
+.lab-ib { flex: none; min-width: 38px; height: 38px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-weight: 700; font-size: .9rem; cursor: pointer }
+.lab-ib:hover:not(:disabled) { background: var(--surface-2) }
+.lab-ib:active:not(:disabled) { transform: translateY(1px) }
+.lab-ib:disabled { opacity: .35; cursor: default }
+.lab-ib.on { background: var(--ink); color: var(--board) }
+.lab-ib.on:hover:not(:disabled) { background: var(--ink) }
+.lab-ib.danger { background: var(--bad); color: #fff }
+.lab-ib .lbl { display: inline; font-size: .9rem }
+.lab-ib.lab-zoom { font-variant-numeric: tabular-nums; min-width: 52px; font-size: .82rem }
+.lab-sep { width: 2px; height: 22px; background: var(--line); border-radius: 1px; flex: none }
+.lab-actions > .lab-ib { border: 2px solid var(--line); background: var(--surface); height: 44px; min-width: 44px; border-radius: 12px }
+.lab-actions .lab-test { min-height: 44px; padding: 8px 16px; gap: 6px }
+.lab-actions .proj-must { position: relative; background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 0 }
+.lab-actions .proj-must summary { list-style: none; display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; font-size: .95rem; white-space: nowrap }
+.lab-actions .proj-must summary::-webkit-details-marker { display: none }
+.lab-actions .proj-must[open] summary { background: var(--surface-2); border-radius: 10px }
+.lab-actions .proj-must ul { position: absolute; z-index: 25; top: calc(100% + 6px); left: 0; width: max-content; max-width: min(360px, 86vw); margin: 0; padding: 10px 14px 10px 30px; background: var(--surface); border: 2px solid var(--ink); border-radius: 12px; box-shadow: 0 8px 20px rgba(22, 35, 63, .18) }
+.ico { flex: none; display: block }
+.btn .ico { display: inline-block; vertical-align: -3px }
+.lab-hint-actions .btn { gap: 5px }
+@media (max-width: 979px) { .lab-bar .xl-only { display: none } }
+@media (max-width: 699px) {
+  /* Phones: tools on their own row above; Test, Goal and Start again stay on one row at the top of the screen. */
+  .lab-bar { flex-wrap: wrap }
+  .lab-bar .lab-toolbar { order: -1; margin-left: 0; flex-basis: 100%; justify-content: space-between }
+  .lab-bar .lab-actions { flex: 1 1 100% }
+  .lab-actions .lab-test { flex: 1 }
+  .lab-actions:has(.proj-must[open]) { flex-wrap: nowrap }
+  .lab-actions .proj-must[open] { flex: none }
+}
+@media (min-width: 700px) {
+  .lab { grid-template-rows: auto auto auto 1fr auto auto;
+    grid-template-areas: "bar bar" "hint hint" "board tray" "board insp" "desc desc" "ex ex" }
+  .lab-board-wrap { grid-row: 3 / 5 }
+  html.lab-fullscreen .lab { grid-template-rows: auto auto auto 1fr auto auto;
+    grid-template-areas: "bar bar" "board hint" "board tray" "board insp" "desc desc" "ex ex" }
+  html.lab-fullscreen .lab-board-wrap { grid-row: 2 / 5 }
+}
+.lab-actions .lab-test { white-space: nowrap }
+@media (max-width: 699px) {
+  .lab { --hint-h: 88px }
+  .lab-actions .lab-test { padding: 8px 10px; font-size: .95rem }
+  .lab-actions .proj-must summary { padding: 0 10px }
+}
+@media (min-width: 700px) { html.lab-fullscreen .lab-actions { max-width: none } }
+
+/* A filled black tool means "this is switched off or held": sounds off, reading off, board locked.
+   Sounds and Read to me are plain while they are on (the usual state). */
+.lab-ib.toggle[aria-pressed="false"], .lab-ib.toggle[aria-pressed="false"]:hover:not(:disabled) { background: var(--ink); color: var(--board) }
+
+/* Free build: the Examples dropdown in the control bar */
+.lab-actions .proj-must ul.lab-ex-list { list-style: none; padding: 10px; display: grid; gap: 6px; min-width: 220px }
+.lab-ex-list .btn { width: 100%; justify-content: flex-start }
+.lab-ex-list .muted { font-size: .85rem; max-width: 220px }
+/* Free build's long parts list scrolls inside its own panel, no taller than the board beside it. */
+@media (min-width: 700px) {
+  .lab-tray:has(.lab-tray-group:nth-child(2)) { max-height: calc(max(240px, var(--lab-fit)) / var(--lab-ratio, .786) + 4px); overflow-y: auto; align-content: start }
+}
+
+/* Free build: the board-size dropdown */
+.lab-ex-list .btn[aria-pressed="true"] { background: var(--ink); color: var(--board); border-color: var(--ink) }
+.lab-ex-list .btn[aria-pressed="true"] .muted { color: inherit; opacity: .8 }
+.lab-ex-list .btn .muted { margin-left: auto; font-weight: 400; font-size: .85rem }
+
+/* Free build: columns and rows steppers in the Board dropdown */
+.lab-size li:not(.muted) { display: flex; align-items: center; gap: 8px }
+.lab-size li span { flex: 1; font-weight: 700 }
+.lab-size li b { min-width: 2ch; text-align: center; font-family: var(--f-display); font-size: 1.15rem }
+.lab-size .lab-ib { border: 2px solid var(--line); background: var(--surface); width: 40px; height: 40px }

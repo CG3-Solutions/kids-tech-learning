@@ -11,9 +11,16 @@ describe("natural voices: the app and the tts function agree", () => {
     const { VOICES } = await import("./voice.js");
     expect(Number(FN.match(/export const VERSION = (\d+)/)[1])).toBe(nv.VERSION);
     for (const v of VOICES) expect(FN).toContain(`  ${v.id}: { names: [`);
+    // Each preset's Google voices are all one gender, matching the preset, so a fallback never changes gender.
+    const female = /Leda|Sulafat|-A"|-D"/, male = /Puck|Achird|-B"|-C"/;
+    for (const v of VOICES) {
+      const names = FN.match(new RegExp(`  ${v.id}: \\{ names: \\[([^\\]]+)\\]`))[1].split(",").map(n => n.trim());
+      expect(names[0]).toMatch(/Chirp3-HD/);
+      for (const n of names) expect(n).toMatch(v.gender === "m" ? male : female);
+    }
     // The function hashes JSON.stringify({ v, voice, plan }) with plan parts as { t, stress } (checked in its own test run).
     expect(nv.canonical("teacher", [[{ stress: 1, t: "A mistake is called a " }, { t: "bug.", stress: true, extra: 1 }], [{ t: "Try it!" }]]))
-      .toBe('{"v":1,"voice":"teacher","plan":[[{"t":"A mistake is called a ","stress":false},{"t":"bug.","stress":true}],[{"t":"Try it!","stress":false}]]}');
+      .toBe('{"v":2,"voice":"teacher","plan":[[{"t":"A mistake is called a ","stress":false},{"t":"bug.","stress":true}],[{"t":"Try it!","stress":false}]]}');
     expect(await nv.sha256("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
   });
 });
@@ -78,7 +85,7 @@ describe("speaking with natural voices", () => {
     played = []; spoken = [];
     globalThis.Audio = class { constructor() { this.paused = true; } play() { played.push({ src: this.src, rate: this.playbackRate }); this.paused = false; this.onplaying?.(); return Promise.resolve(); } pause() { this.paused = true; } };
     globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
-    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     try { localStorage.clear(); } catch { /* ignore */ }
   });
   // A line already recorded (known on this device) proves natural voices work.
@@ -154,7 +161,7 @@ describe("previews, prefetching and missing files", () => {
     played = []; spoken = [];
     try { localStorage.clear(); } catch { /* ignore */ }
     globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
-    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     nv = await import("./neuralVoice.js");
     synth = vi.fn(async ({ voice: v, plan: p }) => ({ path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }));
     nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
@@ -197,7 +204,7 @@ describe("one voice for a lesson", () => {
     try { localStorage.clear(); } catch { /* ignore */ }
     globalThis.Audio = class { constructor() { this.paused = true; } play() { played.push(this.src); this.paused = false; this.onplaying?.(); return Promise.resolve(); } pause() { this.paused = true; } };
     globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
-    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     nv = await import("./neuralVoice.js");
     synth = vi.fn(async ({ voice: v, plan: p }) => ({ path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }));
     nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
@@ -251,6 +258,52 @@ describe("one voice for a lesson", () => {
     expect(voice.voiceHistory()[0]).toMatchObject({ natural: false });
     expect(voice.voiceHistory()[0].why).toMatch(/name/);
   });
+});
+
+describe("a line is never lost", () => {
+  let played, spoken, nv, voice, synth, playImpl;
+  const P = async text => { const { speechPlan } = await import("./speechPlan.js"); return speechPlan(text); };
+  beforeEach(async () => {
+    vi.useFakeTimers(); vi.resetModules();
+    played = []; spoken = [];
+    try { localStorage.clear(); } catch { /* ignore */ }
+    playImpl = a => { a.paused = false; a.onplaying?.(); return Promise.resolve(); };
+    globalThis.Audio = class { constructor() { this.paused = true; } play() { played.push(this.src); return playImpl(this); } pause() { this.paused = true; } };
+    globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
+    nv = await import("./neuralVoice.js");
+    synth = vi.fn(async ({ voice: v, plan: p }) => ({ path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }));
+    nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
+    voice = await import("./voice.js");
+    await nv.neuralUrl("teacher", await P("Warm up."));
+  });
+  it("a line stopped before it was heard is spoken when asked for again straight away", async () => {
+    voice.speakWith(voice.VOICES[2], "Meet the battery.");
+    voice.hushVoice(); // the card was closed (or the screen re-opened) before the line started
+    voice.speakWith(voice.VOICES[2], "Meet the battery.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+  });
+  it("a line that is playing is not repeated by the same request", async () => {
+    voice.speakWith(voice.VOICES[2], "Meet the battery.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+    voice.speakWith(voice.VOICES[2], "Meet the battery.");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(played).toHaveLength(1);
+  });
+  it("interrupting a recording while it loads is not treated as a voice-service failure", async () => {
+    playImpl = () => Promise.reject(Object.assign(new Error("The play() request was interrupted"), { name: "AbortError" }));
+    voice.speakWith(voice.VOICES[2], "First line.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+    await vi.advanceTimersByTimeAsync(50);
+    expect(nv.neuralOn()).toBe(true);
+    expect(nv.neuralLastError()).toBe(null);
+  });
+  it("a recording that never starts playing is read by the device voice instead", async () => {
+    playImpl = () => new Promise(() => {}); // the download stalls
+    voice.speakWith(voice.VOICES[2], "Stalled line.");
+    await vi.waitFor(() => expect(spoken).toEqual(["Stalled line."]), { timeout: 9000, interval: 200 });
+    expect(nv.neuralOn()).toBe(true); // slow is not a failure
+  }, 15000);
 });
 
 describe("telling the parent what's wrong", () => {

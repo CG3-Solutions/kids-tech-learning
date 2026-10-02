@@ -8,7 +8,7 @@
 // since: it comes straight from storage. That keeps a lesson in one voice.
 import { local } from "./storage.js";
 
-export const VERSION = 1; // must match supabase/functions/tts/index.ts
+export const VERSION = 2; // must match supabase/functions/tts/index.ts
 
 let cfg = null; // { publicUrl(path), synth({ voice, plan }) → { path } }
 export function setNeural(c) { if (c !== cfg) { cfg = c; failedAt = 0; restMs = REST_MS; lastError = null; confirmed = false; } }

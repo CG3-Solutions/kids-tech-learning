@@ -39,16 +39,38 @@ export function scoreVoice(v, preset) {
   if (NOVELTY.test(v.name)) s -= 300;
   return s;
 }
+// Does this device voice sound like the preset's gender? "same", "other", or "unknown" (the name doesn't say).
+export function genderMatch(v, preset) {
+  const want = preset.gender === "m" ? MALE : FEMALE, other = preset.gender === "m" ? FEMALE : MALE;
+  return want.test(v.name) ? "same" : other.test(v.name) ? "other" : "unknown";
+}
+// The device voice for a preset. Gender comes first, so a boy's guide never falls back to a woman's
+// voice just because that voice is higher quality: the best voice of the same gender, else the best
+// whose gender the name doesn't give away, and only then the other gender.
 // (The default is worked out inside the function: optional chaining in a default parameter builds wrongly.)
 export function pickDeviceVoice(preset, voices) {
   const all = voices ?? window.speechSynthesis?.getVoices?.() ?? [];
-  let best = null, top = -Infinity;
-  for (const v of all) { const sc = scoreVoice(v, preset); if (sc > top) { top = sc; best = v; } }
-  return best;
+  const english = all.filter(v => /^en/i.test(v.lang) && !NOVELTY.test(v.name));
+  const best = list => { let b = null, top = -Infinity; for (const v of list) { const sc = scoreVoice(v, preset); if (sc > top) { top = sc; b = v; } } return b; };
+  for (const tier of ["same", "unknown", "other"]) {
+    const found = best(english.filter(v => genderMatch(v, preset) === tier));
+    if (found) return found;
+  }
+  return best(all);
 }
 
-// Voices load asynchronously in some browsers; wait once for them.
-try { window.speechSynthesis?.addEventListener?.("voiceschanged", () => {}); } catch { /* ignore */ }
+// Voices load asynchronously in some browsers. Speaking before they arrive uses the system's default
+// voice (often a different gender), so the first device line waits a moment for the list.
+let voicesLoaded = false;
+const haveVoices = () => (window.speechSynthesis?.getVoices?.() ?? []).length > 0;
+function whenVoicesReady(then, waitMs = 700) {
+  if (voicesLoaded || haveVoices()) { voicesLoaded = true; then(); return; }
+  const ss = window.speechSynthesis;
+  let done = false;
+  const go = () => { if (done) return; done = true; voicesLoaded = true; clearTimeout(t); try { ss.removeEventListener?.("voiceschanged", go); } catch { /* ignore */ } then(); };
+  const t = setTimeout(go, waitMs);
+  try { ss.addEventListener?.("voiceschanged", go); } catch { /* ignore */ }
+}
 
 // Who is listening for "is it talking?" (to show a Stop button).
 const listeners = new Set();
@@ -93,17 +115,24 @@ const WHY = {
   missing: "The recording had gone missing. It will be made again.",
 };
 const history = [];
-function note(raw, natural, why = "") {
-  history.unshift({ at: Date.now(), text: String(raw).slice(0, 70), natural, why: WHY[why] ?? why });
+function note(raw, natural, why = "", preset = current) {
+  const dv = natural ? null : pickDeviceVoice(preset);
+  history.unshift({ at: Date.now(), text: String(raw).slice(0, 70), natural, why: WHY[why] ?? why,
+    voice: natural ? `${preset.name} (natural)` : dv ? `${dv.name}${genderMatch(dv, preset) === "other" ? " — not the same gender as the chosen voice" : ""}` : "the system voice" });
   if (history.length > 30) history.length = 30;
 }
 export const voiceHistory = () => history.slice();
 
 // Longer than this to get a recording: use the device voice for this line (it keeps recording, for next time).
 // A parent's Preview waits longer, so it really plays the chosen voice.
-const NEURAL_WAIT_MS = 6000, PATIENT_WAIT_MS = 12000;
+const NEURAL_WAIT_MS = 5000, PATIENT_WAIT_MS = 12000;
+// A recording that hasn't started playing after this long (a stalled download) is read by the device voice instead.
+const PLAY_WAIT_MS = 5000;
 
 export function hushVoice() {
+  // A line that was stopped before it was ever heard may be asked for again straight away (a card
+  // closed and reopened, a screen left and returned to): don't treat that as a repeat.
+  if (!speaking) lastAt = 0;
   clearTimeout(timer); timer = null; run++;
   try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
   try { if (audio && !audio.paused) audio.pause(); } catch { /* ignore */ }
@@ -114,7 +143,10 @@ export function hushVoice() {
 function speakDevice(preset, raw, plan, slow, mine) {
   const ss = window.speechSynthesis;
   if (!ss) return;
-  ss.cancel();
+  // Cancel only if something is queued: some browsers drop a line spoken straight after a cancel.
+  try { if (ss.speaking || ss.pending) ss.cancel(); ss.resume?.(); } catch { /* ignore */ }
+  if (!voicesLoaded && !haveVoices()) { whenVoicesReady(() => { if (mine === run) speakDevice(preset, raw, plan, slow, mine); }); return; }
+  voicesLoaded = true;
   const v = pickDeviceVoice(preset);
   const rate = preset.rate * voiceSpeed().rate * (slow ? 0.8 : 1);
   // Too many stressed words in one sentence sounds choppy: then read it in one go.
@@ -142,9 +174,16 @@ async function speakNeural(preset, raw, plan, slow, mine, wait = NEURAL_WAIT_MS)
   a.onplaying = () => { if (mine === run) setSpeaking(raw); };
   a.onended = () => { if (mine === run) setSpeaking(null); };
   // The file is gone (e.g. storage was cleared): forget it, and say the line with the device voice.
-  a.onerror = () => { forget(url); if (mine === run) { setSpeaking(null); note(raw, false, "missing"); speakDevice(preset, raw, plan, slow, mine); } };
-  await a.play();
-  note(raw, true);
+  a.onerror = () => { forget(url); if (mine === run) { setSpeaking(null); note(raw, false, "missing", preset); speakDevice(preset, raw, plan, slow, mine); } };
+  // play() settles when the sound starts. If the download stalls it never does, so give it a time limit.
+  let stall;
+  try {
+    await Promise.race([a.play(), new Promise((_, no) => { stall = setTimeout(() => no(new Error("slow")), PLAY_WAIT_MS); })]);
+  } catch (e) {
+    if (mine === run && e?.message === "slow") { try { a.pause(); } catch { /* ignore */ } }
+    throw e;
+  } finally { clearTimeout(stall); }
+  note(raw, true, "", preset);
   return true;
 }
 
@@ -172,9 +211,11 @@ export function speakWith(preset, raw, { force = false, slow = false, patient = 
     timer = setTimeout(() => {
       timer = null;
       if (document.visibilityState === "hidden" || mine !== run) return;
-      const device = why => { if (mine !== run) return; if (why) note(raw, false, why); speakDevice(preset, raw, plan, slow, mine); };
+      const device = why => { if (mine !== run) return; if (why) note(raw, false, why, preset); speakDevice(preset, raw, plan, slow, mine); };
       if (!natural) { device(named && neuralWanted() ? "name" : ""); return; }
       const viaNatural = wait => speakNeural(preset, raw, plan, slow, mine, wait).catch(e => {
+        // Stopped on purpose (a newer line, or Stop, interrupted it while it was loading): not a failure.
+        if (e?.name === "AbortError" || mine !== run) return;
         const soft = e?.message === "slow" || e?.name === "NotAllowedError" || e?.status === 422;
         if (!soft) neuralFailed(e); // new lines rest for a while; recorded lines keep playing
         device(e?.message === "slow" ? "slow" : e?.name === "NotAllowedError" ? "blocked" : e?.status === 422 ? "name" : explain(e));

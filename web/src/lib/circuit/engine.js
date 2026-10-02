@@ -255,7 +255,8 @@ export function evaluate(circuit, given = {}, playing = null) {
       outputs[p.id] = Math.abs((vA - vB) - (wA - wB)) > MODEL.piezo.sound ? "sound" : "quiet";
     }
   }
-  const batteryAmps = Math.max(lo.parts[c.battery?.id]?.amps ?? 0, hi.parts[c.battery?.id]?.amps ?? 0);
+  // The hardest-working battery (free build may have several): any one over the limit is a short circuit.
+  const batteryAmps = Math.max(0, ...c.parts.filter(p => p.type === "battery").flatMap(b => [lo.parts[b.id]?.amps ?? 0, hi.parts[b.id]?.amps ?? 0]));
   const short = batteryAmps > MODEL.shortAmps;
   if (short) for (const id of Object.keys(outputs)) outputs[id] = { lamp: "off", led: "off", motor: "off", speaker: "quiet", piezo: "quiet" }[c.parts.find(x => x.id === id).type]; // the board switches off
   return {

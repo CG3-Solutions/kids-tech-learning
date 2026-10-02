@@ -85,7 +85,7 @@ export default function VoiceSound() {
             {voiceHistory().length === 0 ? <p className="muted">Nothing has been read aloud since the app was opened. Play a lesson, then look here.</p> : (
               <ul data-tick={logTick}>
                 {voiceHistory().slice(0, 12).map((h, i) => (
-                  <li key={i}><b>{h.natural ? "🟢 Natural" : "🟡 This device"}</b> “{h.text}”{!h.natural && h.why && <small> {h.why}</small>}</li>
+                  <li key={i}><b>{h.natural ? "🟢 Natural" : "🟡 This device"}</b> “{h.text}”<small>{h.voice}{!h.natural && h.why ? `. ${h.why}` : ""}</small></li>
                 ))}
               </ul>
             )}

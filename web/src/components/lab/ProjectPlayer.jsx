@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CircuitLab from "./CircuitLab.jsx";
 import PartPic from "./PartPic.jsx";
+import Icon from "./Icon.jsx";
 import Guide, { VoltFace } from "../journey/Guide.jsx";
 import { PARTS, CONCEPTS } from "../../content/lab/parts.js";
 import { parseParts, parseCheck } from "../../content/lab/netlist.js";
@@ -46,12 +47,12 @@ export function checkLines(project) {
 }
 
 // Where am I? The steps of every project, with the current one lit.
-const STEPS = { intro: ["❓", "Question"], gather: ["🧰", "Parts"], build: ["🔧", "Build"], test: ["⚡", "Test"], done: ["⭐", "Star"] };
+const STEPS = { intro: "Question", gather: "Parts", build: "Build", test: "Test", done: "Star" };
 function Steps({ at, fixIt }) {
   const order = ["intro", ...(fixIt ? [] : ["gather"]), "build", "test", "done"], now = order.indexOf(at);
   return (
-    <ol className="proj-steps" aria-label={`Step ${now + 1} of ${order.length}: ${STEPS[at][1]}`}>
-      {order.map((s, i) => <li key={s} className={i === now ? "now" : i < now ? "past" : ""} aria-hidden="true"><span className="e">{i < now ? "✓" : STEPS[s][0]}</span><span className="t">{STEPS[s][1]}</span></li>)}
+    <ol className="proj-steps" aria-label={`Step ${now + 1} of ${order.length}: ${STEPS[at]}`}>
+      {order.map((s, i) => <li key={s} className={i === now ? "now" : i < now ? "past" : ""} aria-hidden="true"><span className="n">{i < now ? <Icon name="check" size={14} /> : i + 1}</span><span className="t">{STEPS[s]}</span></li>)}
     </ol>
   );
 }
@@ -83,11 +84,14 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   const header = (
     <>
       <div className="proj-head">
-        <button className="btn back-btn" onClick={() => { hush(); onBack(); }}>← Projects</button>
+        <button className="btn back-btn" onClick={() => { hush(); onBack(); }} aria-label="Back to projects"><Icon name="back" size={18} /><span className="lbl">Projects</span></button>
         <span className="proj-emoji" aria-hidden="true">{project.emoji}</span>
-        <div><span className="eyebrow">Unit {project.unit} · {LEVEL[project.level]}</span><h2>{project.title}</h2></div>
+        <div className="proj-title">
+          <h2>{project.title}</h2>
+          <p>{stage === "build" ? project.goal : `Unit ${project.unit} · ${LEVEL[project.level]}`}</p>
+        </div>
+        <Steps at={stage === "build" && testing ? "test" : stage} fixIt={fixIt} />
       </div>
-      <Steps at={stage === "build" && testing ? "test" : stage} fixIt={fixIt} />
     </>
   );
 
@@ -171,20 +175,19 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   const words = mark ? explainMark(project, mark, board, 3) : [];
   const actions = (
     <>
-      <button className="btn primary" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}>⚡ Test my circuit</button>
+      <button className="btn primary lab-test" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}><Icon name="bolt" size={18} /> Test my circuit</button>
       <details className="proj-must">
-        <summary>🎯 <span className="long">What it must do</span><span className="short">Goal</span></summary>
+        <summary><Icon name="target" size={18} /> <span className="long">What it must do</span><span className="short">Goal</span></summary>
         <ul>{checkLines(project).map((l, i) => <li key={i}>{l}</li>)}</ul>
       </details>
       {/* Always shown (just disabled), so the row above the board never changes size. */}
-      <button className="btn ghost" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }} aria-label="Start again">↺<span className="long"> Start again</span></button>
+      <button className="lab-ib" title="Start again" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }} aria-label="Start again"><Icon name="restart" /></button>
     </>
   );
 
   return (
     <div className="stack proj">
       {header}
-      <p className="proj-goal">{fixIt ? `🔧 ${project.goal}` : project.goal}</p>
       {testing && (
         <div className="proj-test" role="region" aria-label="Testing">
           {predicted == null ? (

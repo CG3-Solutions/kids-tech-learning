@@ -7,6 +7,7 @@ import { LAYOUTS } from "../../content/lab/layouts.js";
 import { local } from "../../lib/storage.js";
 import { sfx } from "../../lib/sfx.js";
 import { useUrlState } from "../../lib/useUrlState.js";
+import Icon from "./Icon.jsx";
 
 const LEVEL = { explorer: "🌱", builder: "🔧", inventor: "💡", engineer: "🚀" };
 // A unit is open once every project in it has a guided layout.
@@ -25,7 +26,17 @@ export default function LabTab({ done, onProjectDone }) {
         <button className="chip" role="tab" aria-selected={view === "projects"} aria-pressed={view === "projects"} onClick={() => pick("projects")}>🧩 Projects</button>
         <button className="chip" role="tab" aria-selected={view === "free"} aria-pressed={view === "free"} onClick={() => pick("free")}>🛠️ Free build</button>
       </div>
-      {view === "free" && <CircuitLab />}
+      {/* Free build has the same focused page as a project: a back button, a title, then the board. */}
+      {view === "free" && (
+        <div className="stack proj">
+          <div className="proj-head">
+            <button className="btn back-btn" onClick={() => pick("projects")} aria-label="Back to projects"><Icon name="back" size={18} /><span className="lbl">Projects</span></button>
+            <span className="proj-emoji" aria-hidden="true">🛠️</span>
+            <div className="proj-title"><h2>Free build</h2><p>Build any circuit you like. Every part is in the tray.</p></div>
+          </div>
+          <CircuitLab />
+        </div>
+      )}
       {view === "projects" && project && (
         <ProjectPlayer key={project.id} project={project} done={done.has(project.id)}
           onComplete={id => onProjectDone(id)} onBack={() => setOpenId(null)}
