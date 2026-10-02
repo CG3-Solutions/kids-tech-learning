@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import PartArt, { Battery, Bulb, Buzzer, Motor, Lever, PushButton, Wire } from "./PartArt.jsx";
 import LoopScene, { Gap, Emoji, Holder, Batteries } from "./LoopScene.jsx";
 import { MORE_TOYS } from "./MoreToys.jsx";
-import { speak, hush } from "../../lib/speech.js";
+import { speak, hush, prepareSpeech } from "../../lib/speech.js";
 import { sfx } from "../../lib/sfx.js";
 
 // --- The toys. Each calls onGoal() once the child has done what was asked. ---
@@ -155,6 +155,7 @@ export default function CardLesson({ card, lesson, levelName, color, learned, on
 
   const say = [`${d.n}. ${lesson.meet}`, lesson.play, lesson.check.q, `You collected ${d.n}! ${lesson.check.why}`];
   useEffect(() => { setAt(0); setPlayed(false); setWrong([]); setRight(false); closeRef.current?.focus(); }, [card.id]);
+  useEffect(() => { prepareSpeech(say); }, [card.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { speak(say[at]); return hush; }, [at, card.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") onClose(); };

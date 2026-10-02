@@ -136,8 +136,8 @@ describe("speaking with natural voices", () => {
     await confirm();
     globalThis.fetch = vi.fn(async () => ({ ok: false }));
     speakWith(VOICES[0], "Output comes out.");
-    await vi.waitFor(() => expect(spoken).toEqual(["Output comes out."]), { timeout: 8000, interval: 200 });
-  });
+    await vi.waitFor(() => expect(spoken).toEqual(["Output comes out."]), { timeout: 9000, interval: 200 });
+  }, 15000);
   it("the Slowly button and speed setting slow the recording down", async () => {
     const { speakWith, VOICES } = await setup();
     await confirm();
@@ -185,6 +185,71 @@ describe("previews, prefetching and missing files", () => {
     expect(played).toHaveLength(1);
     const known = JSON.parse(localStorage.getItem("sparklab.ttsKnown"));
     expect(known.some(k => played[0].endsWith(k))).toBe(false);
+  });
+});
+
+describe("one voice for a lesson", () => {
+  let played, spoken, nv, voice, synth;
+  const P = async text => { const { speechPlan } = await import("./speechPlan.js"); return speechPlan(text); };
+  beforeEach(async () => {
+    vi.useFakeTimers(); vi.resetModules();
+    played = []; spoken = [];
+    try { localStorage.clear(); } catch { /* ignore */ }
+    globalThis.Audio = class { constructor() { this.paused = true; } play() { played.push(this.src); this.paused = false; this.onplaying?.(); return Promise.resolve(); } pause() { this.paused = true; } };
+    globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u.text), getVoices: () => [] };
+    nv = await import("./neuralVoice.js");
+    synth = vi.fn(async ({ voice: v, plan: p }) => ({ path: `${v}/${await nv.sha256(nv.canonical(v, p))}.mp3` }));
+    nv.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
+    voice = await import("./voice.js");
+  });
+  it("a recorded line stays natural while the service is resting after a failure", async () => {
+    await nv.neuralUrl("teacher", await P("Input goes in."));
+    nv.neuralFailed(Object.assign(new Error("down"), { status: 500 }));
+    expect(nv.neuralOn()).toBe(false);
+    voice.speakWith(voice.VOICES[2], "Input goes in.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+    expect(spoken).toEqual([]);
+    voice.speakWith(voice.VOICES[2], "A brand new line.");
+    await vi.waitFor(() => expect(spoken).toEqual(["A brand new line."])); // a new line can't be made right now
+    expect(voice.voiceHistory().map(h => h.natural)).toEqual([false, true]);
+  });
+  it("the first line after reopening the app is natural, once natural voices have worked on this device", async () => {
+    await nv.neuralUrl("teacher", await P("Warm up."));
+    vi.resetModules(); // a new visit
+    const nv2 = await import("./neuralVoice.js");
+    nv2.setNeural({ publicUrl: p => `https://cdn/tts/${p}`, synth });
+    expect(nv2.neuralConfirmed()).toBe(true);
+    const voice2 = await import("./voice.js");
+    voice2.speakWith(voice2.VOICES[2], "A line never heard before.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+    expect(spoken).toEqual([]);
+  });
+  it("a setup failure forgets that, so a broken service never means waiting in silence", async () => {
+    await nv.neuralUrl("teacher", await P("Warm up."));
+    nv.neuralFailed(Object.assign(new Error("gone"), { status: 404 }));
+    expect(nv.neuralConfirmed()).toBe(false);
+  });
+  it("the daily limit rests new lines for an hour, not five minutes", async () => {
+    nv.neuralFailed(Object.assign(new Error("daily voice limit reached"), { status: 429 }));
+    vi.advanceTimersByTime(10 * 60 * 1000);
+    expect(nv.neuralOn()).toBe(false);
+    vi.advanceTimersByTime(55 * 60 * 1000);
+    expect(nv.neuralOn()).toBe(true);
+  });
+  it("warming up proves the service before the first lesson line", async () => {
+    expect(await nv.warmNeural()).toBe(true);
+    expect(nv.neuralConfirmed()).toBe(true);
+    voice.speakWith(voice.VOICES[2], "First lesson line.");
+    await vi.waitFor(() => expect(played).toHaveLength(1));
+    expect(spoken).toEqual([]);
+  });
+  it("says why the device voice was used", async () => {
+    nv.setPrivateNames(["Panvith"]);
+    voice.speakWith(voice.VOICES[2], "Well done, Panvith!");
+    await vi.waitFor(() => expect(spoken.length).toBeGreaterThan(0));
+    expect(voice.voiceHistory()[0]).toMatchObject({ natural: false });
+    expect(voice.voiceHistory()[0].why).toMatch(/name/);
   });
 });
 

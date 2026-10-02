@@ -1824,3 +1824,8 @@ button.kb-key { cursor: pointer }
   .lab-hint-actions .btn { flex: none }
   .lab-describe, .lab-examples { max-width: none }
 }
+
+/* Voice & sound: which voice read each recent line */
+.voice-log summary { cursor: pointer; font-weight: 700 }
+.voice-log ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: .92rem }
+.voice-log small { display: block; color: var(--muted) }

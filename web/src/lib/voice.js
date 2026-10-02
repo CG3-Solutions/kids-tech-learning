@@ -3,7 +3,7 @@
 // so presets only nudge pitch, speak a little slower, and the best natural voice on the device is chosen.
 import { local } from "./storage.js";
 import { speechPlan } from "./speechPlan.js";
-import { neuralOn, hasPrivate, neuralUrl, neuralFailed, neuralConfirmed, forget } from "./neuralVoice.js";
+import { neuralOn, neuralWanted, neuralKnown, hasPrivate, neuralUrl, neuralFailed, neuralConfirmed, neuralLastError, forget, explain } from "./neuralVoice.js";
 
 export const VOICES = [
   { id: "bright", name: "Bright girl", emoji: "👧", gender: "f", pitch: 1.12, rate: 0.92 },
@@ -83,9 +83,25 @@ try {
   window.addEventListener("pointerdown", unlock, true);
 } catch { /* ignore */ }
 
+// Which voice said each recent line, and why (shown to parents in Voice & sound, so "why did I
+// hear a different voice?" has an answer).
+const WHY = {
+  name: "The line has a name in it. Names never leave this device.",
+  first: "The first line while the voice service was being checked.",
+  slow: "The recording took too long to make. It will be natural next time.",
+  blocked: "The browser hadn't allowed sound yet.",
+  missing: "The recording had gone missing. It will be made again.",
+};
+const history = [];
+function note(raw, natural, why = "") {
+  history.unshift({ at: Date.now(), text: String(raw).slice(0, 70), natural, why: WHY[why] ?? why });
+  if (history.length > 30) history.length = 30;
+}
+export const voiceHistory = () => history.slice();
+
 // Longer than this to get a recording: use the device voice for this line (it keeps recording, for next time).
 // A parent's Preview waits longer, so it really plays the chosen voice.
-const NEURAL_WAIT_MS = 4000, PATIENT_WAIT_MS = 12000;
+const NEURAL_WAIT_MS = 6000, PATIENT_WAIT_MS = 12000;
 
 export function hushVoice() {
   clearTimeout(timer); timer = null; run++;
@@ -126,20 +142,24 @@ async function speakNeural(preset, raw, plan, slow, mine, wait = NEURAL_WAIT_MS)
   a.onplaying = () => { if (mine === run) setSpeaking(raw); };
   a.onended = () => { if (mine === run) setSpeaking(null); };
   // The file is gone (e.g. storage was cleared): forget it, and say the line with the device voice.
-  a.onerror = () => { forget(url); if (mine === run) { setSpeaking(null); speakDevice(preset, raw, plan, slow, mine); } };
+  a.onerror = () => { forget(url); if (mine === run) { setSpeaking(null); note(raw, false, "missing"); speakDevice(preset, raw, plan, slow, mine); } };
   await a.play();
+  note(raw, true);
   return true;
 }
 
-// Reads `raw` in the preset's voice: the natural voice when it's on and the line has no names,
-// otherwise (or if that fails) the device voice.
+// Reads `raw` in the preset's voice. To keep a lesson in one voice:
+//   • a line that is already recorded always plays in the natural voice (straight from storage);
+//   • a new line is recorded first (waiting a few seconds), unless the service is resting after a failure;
+//   • the device voice is used only for a line with a name, when natural voices are off, or when a
+//     new line can't be made in time.
 // opts.force: say it even if it was just said. opts.slow: extra slow ("Say it slowly").
 // opts.patient: wait longer for a new recording (the parent's Preview button).
 export function speakWith(preset, raw, { force = false, slow = false, patient = false } = {}) {
   try {
     const plan = speechPlan(raw);
     const ss = window.speechSynthesis;
-    const natural = neuralOn() && !hasPrivate(raw);
+    const named = hasPrivate(raw), natural = neuralWanted() && !named;
     if (!plan.length || (!ss && !natural)) return false;
     const key = JSON.stringify(plan);
     const now = Date.now();
@@ -152,17 +172,25 @@ export function speakWith(preset, raw, { force = false, slow = false, patient = 
     timer = setTimeout(() => {
       timer = null;
       if (document.visibilityState === "hidden" || mine !== run) return;
-      if (!natural) { speakDevice(preset, raw, plan, slow, mine); return; }
-      // Natural voices not proven yet in this session: speak now with the device voice, and get the
-      // recording ready in the background (so the next time this line is natural).
-      if (!neuralConfirmed() && !patient) {
-        speakDevice(preset, raw, plan, slow, mine);
-        neuralUrl(preset.id, plan).catch(e => { if (e?.status !== 422) neuralFailed(e); });
-        return;
-      }
-      speakNeural(preset, raw, plan, slow, mine, patient ? PATIENT_WAIT_MS : NEURAL_WAIT_MS).catch(e => {
-        if (e?.message !== "slow" && e?.name !== "NotAllowedError" && e?.status !== 422) neuralFailed(e); // rest natural voices for a while
-        if (mine === run) speakDevice(preset, raw, plan, slow, mine);
+      const device = why => { if (mine !== run) return; if (why) note(raw, false, why); speakDevice(preset, raw, plan, slow, mine); };
+      if (!natural) { device(named && neuralWanted() ? "name" : ""); return; }
+      const viaNatural = wait => speakNeural(preset, raw, plan, slow, mine, wait).catch(e => {
+        const soft = e?.message === "slow" || e?.name === "NotAllowedError" || e?.status === 422;
+        if (!soft) neuralFailed(e); // new lines rest for a while; recorded lines keep playing
+        device(e?.message === "slow" ? "slow" : e?.name === "NotAllowedError" ? "blocked" : e?.status === 422 ? "name" : explain(e));
+      });
+      neuralKnown(preset.id, plan).catch(() => false).then(known => {
+        if (mine !== run) return;
+        if (known) { viaNatural(NEURAL_WAIT_MS); return; } // recorded: plays from storage, whatever state the service is in
+        if (!neuralOn()) { device(explain(new Error(neuralLastError() ?? "The voice service is resting."))); return; }
+        // Natural voices not proven yet on this device: speak now with the device voice, and get the
+        // recording ready in the background (so the next time this line is natural).
+        if (!neuralConfirmed() && !patient) {
+          device("first");
+          neuralUrl(preset.id, plan).catch(e => { if (e?.status !== 422) neuralFailed(e); });
+          return;
+        }
+        viaNatural(patient ? PATIENT_WAIT_MS : NEURAL_WAIT_MS);
       });
     }, GAP_MS);
     return true;
