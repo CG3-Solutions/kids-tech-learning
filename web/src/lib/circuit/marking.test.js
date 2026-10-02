@@ -51,3 +51,21 @@ describe("marking a build by what it does", () => {
     expect(hintFor(mark)).toMatch(/joins \+ straight to −/);
   });
 });
+
+describe("marking an open-ended invention", () => {
+  it("passes when an input really controls an output, and says what is missing when it doesn't", async () => {
+    const { markOpenBuild, hintFor } = await import("./marking.js");
+    const { buildBoard } = await import("./board.js");
+    const { LAYOUTS } = await import("../../content/lab/layouts.js");
+    const light = buildBoard(LAYOUTS["lab-1-1"]); // battery, switch, bulb in a loop
+    expect(markOpenBuild(light)).toMatchObject({ pass: true, input: "S1", output: "L1" });
+    const noSwitch = light.filter(p => p.type !== "slide");
+    expect(markOpenBuild(noSwitch)).toMatchObject({ pass: false, noInput: true });
+    expect(hintFor(markOpenBuild(noSwitch))).toMatch(/switch, a button or a sensor/);
+    const noBattery = light.filter(p => p.type !== "battery");
+    expect(markOpenBuild(noBattery).missing).toEqual([{ type: "battery", count: 1 }]);
+    const looseSwitch = [...noSwitch, ...buildBoard([["slide", [4, 6], { dir: 0 }]])]; // a switch that isn't in the loop
+    expect(markOpenBuild(looseSwitch)).toMatchObject({ pass: false, noInput: false });
+  });
+});
+
