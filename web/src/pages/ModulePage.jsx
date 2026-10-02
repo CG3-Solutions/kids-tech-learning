@@ -5,6 +5,9 @@ import { usePageTitle } from "../lib/usePageTitle.js";
 import { useUrlState, viewKey } from "../lib/useUrlState.js";
 import { areaOf } from "../content/areas.js";
 import CardDetail from "../components/CardDetail.jsx";
+import CardLesson from "../components/cards/CardLesson.jsx";
+import PartArt, { hasArt } from "../components/cards/PartArt.jsx";
+import { CARD_LESSONS } from "../content/cardLessons.js";
 import Quiz from "../components/Quiz.jsx";
 import CircuitJourney from "../activities/circuits/CircuitJourney.jsx";
 import PracticeJourney, { PRACTICE_ACTIVITIES } from "../components/practice/PracticeJourney.jsx";
@@ -56,6 +59,10 @@ export default function ModulePage() {
   const vk = viewKey(location);
   const open = tab === "cards" ? cards.find(c => c.id === openId) : undefined;
   const openIdx = open ? cards.indexOf(open) : -1;
+  // The first card not yet learned is marked "Next", so there is always one clear thing to do.
+  const nextCard = glossary ? null : cards.find(c => !done.has(c.id));
+  const cardsDone = cards.filter(c => done.has(c.id)).length;
+  const lesson = open && !glossary ? CARD_LESSONS[open.id] : null;
   const levelOf = lv => levels.find(l => l.id === lv)?.name ?? `Level ${lv}`;
 
   return (
@@ -77,6 +84,7 @@ export default function ModulePage() {
         {tab === "cards" && (
           <div className="stack">
             <p className="lead">{glossary ? "Every word from Chip's path, to look up any time. Stars come from passing each step's check on the path." : <>{m.id === "electricity" ? "Electricity is like water flowing through pipes. " : ""}Tap a card to learn it. Finish a card to earn a star ★</>}</p>
+            {!glossary && cards.length > 0 && <p className="collected" role="status">⭐ {cardsDone} of {cards.length} collected</p>}
             {levels.length > 1 && (
               <div className="chips">
                 <button className="chip" aria-pressed={levelFilter === "all"} onClick={() => setLevelFilter("all")}>All</button>
@@ -88,9 +96,10 @@ export default function ModulePage() {
                 <div className="lvl-h"><h3>{l.name}</h3><span>{l.note}</span></div>
                 <div className="grid">
                   {cards.filter(c => c.level === l.id).map(c => (
-                    <button key={c.id} className={`tile${done.has(c.id) && !glossary ? " done" : ""}`} style={{ "--c": color(l.id) }} onClick={() => setOpenId(c.id)} aria-label={`${c.data.n}${done.has(c.id) ? ", learned" : ""}`}>
+                    <button key={c.id} className={`tile${done.has(c.id) && !glossary ? " done" : ""}${c === nextCard ? " next" : ""}`} style={{ "--c": color(l.id) }} onClick={() => setOpenId(c.id)} aria-label={`${c.data.n}${done.has(c.id) ? ", learned" : ""}`}>
                       <span className="dot" aria-hidden="true">{done.has(c.id) && !glossary ? "★" : ""}</span>
-                      <span className="pic" aria-hidden="true">{c.data.e}</span><span className="nm">{c.data.n}</span><span className="sh">{c.data.sh}</span>
+                      {c === nextCard && <span className="next-tag">Next</span>}
+                      <span className="pic" aria-hidden="true">{hasArt(c.id) ? <PartArt id={c.id} size={64} /> : c.data.e}</span><span className="nm">{c.data.n}</span><span className="sh">{c.data.sh}</span>
                     </button>
                   ))}
                 </div>
@@ -114,7 +123,13 @@ export default function ModulePage() {
           : <Quiz questions={quiz} onFinish={(score, total) => addAttempt(m.id, score, total)} />)}
       </div>
 
-      {open && (
+      {open && lesson && (
+        <CardLesson card={open} lesson={lesson} levelName={levelOf(open.level)} color={color(open.level)}
+          learned={done.has(open.id)} onLearned={() => markDone(m.id, open.id)}
+          next={cards[openIdx + 1]} onGo={id => { hush(); setOpenId(id); }}
+          onClose={() => { hush(); setOpenId(null); }} />
+      )}
+      {open && !lesson && (
         <CardDetail card={open} levelName={levelOf(open.level)} color={color(open.level)}
           learned={done.has(open.id)} onLearned={() => markDone(m.id, open.id)} glossary={glossary}
           prev={cards[openIdx - 1]} next={cards[openIdx + 1]} onGo={id => { hush(); setOpenId(id); }}
