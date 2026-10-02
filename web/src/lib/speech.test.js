@@ -54,7 +54,7 @@ describe("one voice at a time", () => {
     vi.useFakeTimers();
     spoken = [];
     globalThis.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
-    window.speechSynthesis = { cancel: vi.fn(() => { spoken.length && (spoken.at(-1).cancelled = true); }), speak: u => spoken.push({ text: u.text }), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(() => { spoken.length && (spoken.at(-1).cancelled = true); }), speak: u => spoken.push({ text: u.text }), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     vi.resetModules();
   });
   it("speaks only the newest of a burst of lines", async () => {
@@ -143,8 +143,36 @@ describe("device voice choice and delivery", () => {
     expect(pickDeviceVoice(VOICES[1], [V("Veena", "en-IN"), V("Rishi", "en-IN")]).name).toBe("Rishi");
     expect(pickDeviceVoice(VOICES[0], [])).toBe(null);
   });
+  it("keeps to the chosen voice's gender, even when the other gender's voice is better quality", async () => {
+    const { pickDeviceVoice, genderMatch, VOICES } = await import("./voice.js");
+    const neerja = V("Microsoft Neerja Online (Natural) - English (India)", "en-IN", false), ravi = V("Microsoft Ravi - English (India)", "en-IN");
+    expect(pickDeviceVoice(VOICES[1], [neerja, ravi]).name).toMatch(/Ravi/);   // Cheerful boy: the plain male voice, not the natural female one
+    expect(pickDeviceVoice(VOICES[0], [neerja, ravi]).name).toMatch(/Neerja/); // Bright girl
+    // No voice of that gender: one whose name doesn't say comes before the other gender.
+    expect(pickDeviceVoice(VOICES[1], [neerja, V("English India", "en-IN")]).name).toBe("English India");
+    expect(pickDeviceVoice(VOICES[1], [neerja]).name).toMatch(/Neerja/); // nothing else to use
+    expect(genderMatch(neerja, VOICES[1])).toBe("other");
+    expect(genderMatch(ravi, VOICES[1])).toBe("same");
+  });
+  it("waits for the device's voices to load, so the first line isn't read by the system default voice", async () => {
+    let voices = [], onChange;
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => voices, addEventListener: (_, fn) => { onChange = fn; }, removeEventListener: () => {} };
+    const { speakWith, VOICES } = await import("./voice.js");
+    speakWith(VOICES[1], "Hello there.");
+    vi.advanceTimersByTime(300);
+    expect(spoken).toEqual([]); // still waiting for the list
+    voices = [V("Veena", "en-IN"), V("Rishi", "en-IN")]; onChange();
+    expect(spoken.map(u => u.voice.name)).toEqual(["Rishi"]);
+  });
+  it("still speaks if the device never reports any voices", async () => {
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {} };
+    const { speakWith, VOICES } = await import("./voice.js");
+    speakWith(VOICES[2], "Hello there.");
+    vi.advanceTimersByTime(1000);
+    expect(spoken.map(u => u.text)).toEqual(["Hello there."]);
+  });
   it("reads sentence by sentence, with stressed words slower", async () => {
-    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     const { speakWith, VOICES } = await import("./voice.js");
     speakWith(VOICES[2], "The loop works only when BOTH are on. Try it!");
     vi.advanceTimersByTime(300);
@@ -155,7 +183,7 @@ describe("device voice choice and delivery", () => {
     expect(plain.lang).toBe("en-IN");
   });
   it("the Slowly button reads slower", async () => {
-    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [] };
+    window.speechSynthesis = { cancel: vi.fn(), speak: u => spoken.push(u), getVoices: () => [{ name: "Test voice", lang: "en-IN" }] };
     const { speakWith, VOICES } = await import("./voice.js");
     speakWith(VOICES[2], "Hello there.", { force: true }); vi.advanceTimersByTime(300);
     speakWith(VOICES[2], "Hello there.", { force: true, slow: true }); vi.advanceTimersByTime(300);

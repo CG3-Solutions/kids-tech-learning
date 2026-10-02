@@ -96,13 +96,17 @@ Parents choose milestone emails and/or a daily summary under **Parent area → N
 5. **SQL Editor:** open `supabase/notifications-setup.sql`, replace `YOUR-PROJECT-REF` and `YOUR-NOTIFY-SECRET`, and run it. Milestone emails go out as they happen; the daily summary goes out at 8 pm India time.
 
 ## Natural voices (optional, release 5)
-Lessons can be read by Google's Indian English neural voices: clearer, with stressed words and pauses, and the same on every phone. Each line is recorded once and then played from storage, so it costs very little. Lines with a child's or parent's name always use the device's own voice: names are never sent to Google. Without this setup (and in the demo), the device's voice is used.
+Lessons can be read by Google's Indian English voices: clearer, with stressed words and pauses, and the same on every phone. Each line is recorded once and then played from storage, so it costs very little. Lines with a child's or parent's name always use the device's own voice: names are never sent to Google. Without this setup (and in the demo), the device's voice is used.
 
 1. **Google Cloud:** create a project, enable the **Cloud Text-to-Speech API** (needs a billing account; there is a monthly free allowance), and set a budget alert under **Billing → Budgets & alerts**. Create an **API key** under **APIs & Services → Credentials** and restrict it to the Cloud Text-to-Speech API.
 2. **Supabase → SQL Editor:** run `supabase/release-5.sql` once. It adds the public `tts` storage bucket for the recordings and the usage table for the limits. It's safe to re-run.
 3. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `tts`, paste `supabase/functions/tts/index.ts`, and deploy. Turn **"Verify JWT" off** (the function checks the sign-in itself; with it on, the browser's CORS check is blocked).
 4. **Edge Functions → Secrets:** add `GOOGLE_TTS_KEY` (the API key). Optional limits: `TTS_DAILY_CHARS` (per family per day, default 20000) and `TTS_MONTHLY_CHARS` (whole app, default 900000).
 5. Parents can turn natural voices off under **Parent dashboard → Voice & sound**.
+
+**Voices used:** Google's Chirp 3 HD voices in Indian English, chosen to sound warm and friendly to children: Leda (Bright girl), Puck (Cheerful boy), Sulafat (Clear teacher) and Achird (Friendly robot). If Google refuses one, the function falls back to the older Neural2, WaveNet and Standard voices of the same gender.
+
+**When the voices change** (the `VERSION` number in `supabase/functions/tts/index.ts` and `web/src/lib/neuralVoice.js` goes up): redeploy the `tts` function *before* the new app goes live. The two must carry the same number; if the app is ahead of the function, every line falls back to the device voice. All lines are then recorded again in the new voices the first time they are heard, which counts towards the daily and monthly limits, so consider raising `TTS_DAILY_CHARS` for a few days.
 
 If a limit is reached or Google is unavailable, the app quietly uses the device voice. Changing `VERSION` in both `supabase/functions/tts/index.ts` and `web/src/lib/neuralVoice.js` re-records every line.
 

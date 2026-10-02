@@ -8,6 +8,9 @@
 // English neural voice (stressed words slower, pauses between sentences), and the MP3 is saved, so every
 // later play, by anyone, is free.
 //
+// Voices: Google's Chirp 3 HD voices first (the most natural and expressive, chosen to sound warm and
+// friendly to children), then the older Neural2 / WaveNet / Standard voices if a Chirp voice is refused.
+//
 // Secrets (Edge Functions → Secrets): GOOGLE_TTS_KEY (required).
 // Optional: TTS_DAILY_CHARS (per family per day, default 20000), TTS_MONTHLY_CHARS (whole app, default 900000).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
@@ -19,18 +22,21 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const env = (k: string, d = "") => Deno.env.get(k) ?? d;
 const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
 const BUCKET = "tts";
-export const VERSION = 1; // bump to re-record everything (the app sends the same number)
+export const VERSION = 2; // bump to re-record everything (the app sends the same number). 2: Chirp 3 HD voices
 const DAILY = Number(env("TTS_DAILY_CHARS", "20000"));
 const MONTHLY = Number(env("TTS_MONTHLY_CHARS", "900000"));
 
-// Google voices to try for each preset, best first (Neural2 → WaveNet → Standard).
-// A = female, B = male, C = male, D = female. Pitch is in semitones.
+// Google voices to try for each preset, best first (Chirp 3 HD → Neural2 → WaveNet → Standard).
+// Chirp 3 HD: Leda (youthful, female), Puck (upbeat, male), Sulafat (warm, female), Achird (friendly, male).
+// Older voices: A = female, B = male, C = male, D = female. Pitch is in semitones and is only sent
+// to the older voices (Chirp 3 HD voices have their own character and don't take a pitch).
 export const VOICES: Record<string, { names: string[]; pitch: number; rate: number }> = {
-  bright: { names: ["en-IN-Neural2-A", "en-IN-Wavenet-A", "en-IN-Standard-A"], pitch: 2, rate: 0.92 },
-  cheerful: { names: ["en-IN-Neural2-B", "en-IN-Wavenet-B", "en-IN-Standard-B"], pitch: 1.5, rate: 0.94 },
-  teacher: { names: ["en-IN-Neural2-D", "en-IN-Wavenet-D", "en-IN-Standard-D"], pitch: 0, rate: 0.9 },
-  robot: { names: ["en-IN-Neural2-C", "en-IN-Wavenet-C", "en-IN-Standard-C"], pitch: -2, rate: 0.9 },
+  bright: { names: ["en-IN-Chirp3-HD-Leda", "en-IN-Neural2-A", "en-IN-Wavenet-A", "en-IN-Standard-A"], pitch: 2, rate: 0.92 },
+  cheerful: { names: ["en-IN-Chirp3-HD-Puck", "en-IN-Neural2-B", "en-IN-Wavenet-B", "en-IN-Standard-B"], pitch: 1.5, rate: 0.94 },
+  teacher: { names: ["en-IN-Chirp3-HD-Sulafat", "en-IN-Neural2-D", "en-IN-Wavenet-D", "en-IN-Standard-D"], pitch: 0, rate: 0.9 },
+  robot: { names: ["en-IN-Chirp3-HD-Achird", "en-IN-Neural2-C", "en-IN-Wavenet-C", "en-IN-Standard-C"], pitch: -2, rate: 0.9 },
 };
+const isChirp = (name: string) => /Chirp/i.test(name);
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -82,7 +88,7 @@ export async function synthesize(voiceId: string, plan: Part[][], key: string, f
       const res = await fetcher(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(key)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, voice: { languageCode: "en-IN", name }, audioConfig: { audioEncoding: "MP3", speakingRate: v.rate, pitch: v.pitch } }),
+        body: JSON.stringify({ input, voice: { languageCode: "en-IN", name }, audioConfig: { audioEncoding: "MP3", speakingRate: v.rate, ...(isChirp(name) ? {} : { pitch: v.pitch }) } }),
       });
       if (res.ok) {
         const { audioContent } = await res.json();
