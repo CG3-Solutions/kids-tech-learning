@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "../lib/AppContext.jsx";
 import { starCount } from "../lib/progress.js";
 import { AREAS } from "../content/areas.js";
 import { Bolt } from "../components/TopBar.jsx";
+import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 
 const fmtLeft = s => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : `${Math.ceil(s / 60)} min`);
@@ -84,6 +85,15 @@ export default function KidLayout({ children }) {
   const { api, activeChild, childData, screen, notice, clearNotice, error, clearError } = useApp();
   useEffect(() => { screen.setKidActive(true); return () => screen.setKidActive(false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!notice) return; const t = setTimeout(clearNotice, 8000); return () => clearTimeout(t); }, [notice, clearNotice]);
+  // A new page starts at the top, and keyboard and screen-reader users start at its content.
+  const { pathname } = useLocation();
+  const mainRef = useRef(null);
+  const firstPage = useRef(true);
+  useEffect(() => {
+    if (firstPage.current) { firstPage.current = false; return; }
+    window.scrollTo({ top: 0 });
+    mainRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
   const low = screen.remaining != null && screen.remaining <= 300;
   return (
     <div className="kid-shell">
@@ -103,7 +113,7 @@ export default function KidLayout({ children }) {
             </NavLink>
           ))}
         </nav>
-        <main className="kid-main">{children}</main>
+        <main className="kid-main" ref={mainRef} tabIndex={-1}><ErrorBoundary key={pathname} home="#/learn">{children}</ErrorBoundary></main>
       </div>
       {screen.timesUp && <TimesUp />}
       {(notice || error) && (

@@ -2,11 +2,20 @@ import { Link } from "react-router-dom";
 import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats, nextSuggestion, badgeState } from "../../lib/progress.js";
 import { AREAS } from "../../content/areas.js";
+import { usePageTitle } from "../../lib/usePageTitle.js";
 import { dueQuestions } from "../../activities/computer/Review.jsx";
 
+// Shown while lessons load, so a page is never blank.
+export function PageLoading() {
+  return <div className="stack page"><p className="lead" role="status">⏳ Loading…</p></div>;
+}
+
+// "You are here", with a big Back button to the page above (easier for small hands than the trail).
 export function Crumbs({ items }) {
+  const up = items.filter(c => c.to).at(-1);
   return (
     <nav className="crumbs" aria-label="You are here">
+      {up && <Link className="btn back-btn" to={up.to} aria-label={`Back to ${up.label}`}>← {up.label}</Link>}
       {items.map((c, i) => (
         <span key={i}>{i > 0 && <span className="sep" aria-hidden="true">›</span>}{c.to ? <Link to={c.to}>{c.label}</Link> : <b aria-current="page">{c.label}</b>}</span>
       ))}
@@ -15,18 +24,20 @@ export function Crumbs({ items }) {
 }
 
 // Where to pick up: the subject of the most recent activity, else a suggestion.
+// If the last thing done was an adventure step (ids like "circuit-step-3"), go straight back to the adventure.
 function continueTarget(published, data, learner) {
   const last = [...data.progress].sort((a, b) => (b.done_at ?? "").localeCompare(a.done_at ?? ""))[0];
   const live = published.modules.filter(m => !m.coming_soon);
   const m = last && live.find(x => x.id === last.module_id);
-  if (m && moduleStats(m, published.cards, data).pct < 100) return { module: m, label: "Continue" };
+  if (m && moduleStats(m, published.cards, data).pct < 100) return { module: m, label: "Continue", tab: m.activity && last.item_id?.startsWith(`${m.activity}-`) ? m.activity : null };
   const s = nextSuggestion(live, published.cards, data, learner);
   return s ? { module: s.module, label: last ? "Try next" : "Start here" } : null;
 }
 
 export default function Home() {
   const { activeChild, childData, published } = useApp();
-  if (!published) return null;
+  usePageTitle("Home");
+  if (!published) return <PageLoading />;
   const target = continueTarget(published, childData, activeChild);
   const earned = badgeState(childData, published.modules).filter(b => b.earned);
   return (
@@ -49,7 +60,7 @@ export default function Home() {
       })()}
 
       {target && (
-        <Link className="continue" to={`/learn/${target.module.id}`} style={{ "--c": `var(--${target.module.color})` }}>
+        <Link className="continue" to={`/learn/${target.module.id}${target.tab ? `/${target.tab}` : ""}`} style={{ "--c": `var(--${target.module.color})` }}>
           <span className="em" aria-hidden="true">{target.module.emoji}</span>
           <span className="txt"><span className="eyebrow">{target.label}</span><b>{target.module.title}</b>
             <span className="bar"><i style={{ width: `${moduleStats(target.module, published.cards, childData).pct}%` }} /></span></span>

@@ -6,6 +6,7 @@ import { PROJECTS, UNITS } from "../../content/lab/projects.js";
 import { LAYOUTS } from "../../content/lab/layouts.js";
 import { local } from "../../lib/storage.js";
 import { sfx } from "../../lib/sfx.js";
+import { useUrlState } from "../../lib/useUrlState.js";
 
 const LEVEL = { explorer: "🌱", builder: "🔧", inventor: "💡", engineer: "🚀" };
 // A unit is open once every project in it has a guided layout.
@@ -13,7 +14,7 @@ export const unitReady = n => PROJECTS.filter(p => p.unit === n).every(p => LAYO
 
 export default function LabTab({ done, onProjectDone }) {
   const [view, setView] = useState(() => local.get("sparklab.lab.view", "projects"));
-  const [openId, setOpenId] = useState(null);
+  const [openId, setOpenId] = useUrlState("project"); // kept in the address so Back returns to the project list
   const pick = v => { setView(v); local.set("sparklab.lab.view", v); setOpenId(null); sfx.click(); };
   const project = PROJECTS.find(p => p.id === openId);
   const nextOf = p => { const list = PROJECTS.filter(x => unitReady(x.unit)); const i = list.indexOf(p); return list[i + 1]; };
