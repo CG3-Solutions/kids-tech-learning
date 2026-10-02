@@ -1835,3 +1835,9 @@ button.kb-key { cursor: pointer }
    scrolls sideways, so only an upward drag lifts a part. */
 @media (min-width: 700px) { .lab-tray-item { touch-action: none } }
 .lab-tray-item:not(:disabled):active { transform: scale(.96) }
+
+/* A placed part pressed in the tray: ringed on the board for a moment */
+.lab-tray-item.used { cursor: pointer }
+.lab-locate { fill: color-mix(in srgb, var(--spark) 22%, transparent); stroke: var(--spark); stroke-width: 5; pointer-events: none; animation: lab-locate .65s ease-in-out 4 alternate }
+@keyframes lab-locate { from { opacity: .25; stroke-width: 3 } to { opacity: 1; stroke-width: 7 } }
+@media (prefers-reduced-motion: reduce) { .lab-locate { animation: none } }
