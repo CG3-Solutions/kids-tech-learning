@@ -2,6 +2,8 @@
 // Everything is live: current flows along connectors, bulbs glow, fans spin, chips play.
 //
 // Made for small hands (from testing with children):
+// - Placing or moving a part never opens its toolbar: the buttons only appear when the child taps
+//   the part on purpose.
 // - Tapping a part only chooses it. A small toolbar appears next to it (switch ON/OFF, press,
 //   turn, flip, move, remove). Double-tapping a switch also flips it.
 // - Drag a part from anywhere on it. While dragging, the posts it will land on glow green (free)
@@ -109,6 +111,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const [drag, setDrag] = useState(null); // { uid, dx, dy, to, ok, moved }
   const [trayDrag, setTrayDrag] = useState(null); // { type, part, ok } while a part is dragged out of the tray
   const [editing, setEditing] = useState(null); // uid of the part whose editing tools are open, once the circuit is finished
+  const [located, setLocated] = useState(null); // { type, n }: a placed part pressed in the tray, shown ringed on the board for a moment
   const [notice, setNotice] = useState(null);
   const [cheer, setCheer] = useState(null); // { uid, n } for the ✓ after a right step
   const [showMe, setShowMe] = useState(false);
@@ -185,7 +188,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const others = uid => parts.filter(p => p.uid !== uid);
   const add = part => {
     if (clashes(parts, part)) { sfx.oops(); say("Another part is already there. Pick other posts."); return false; }
-    setParts([...parts, part]); setSelected(part.uid); sfx.click(); buzz(12); return true;
+    setParts([...parts, part]); setSelected(null); sfx.click(); buzz(12); return true;
   };
   const update = (uid, patch) => setParts(parts.map(p => (p.uid === uid ? { ...p, ...patch } : p)));
   const remove = uid => {
@@ -206,6 +209,14 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   };
   const flip = uid => place(uid, flipped(byUid(uid)));
   const moveTo = (uid, at) => place(uid, { ...byUid(uid), at });
+  // Pressing a part in the tray that is already on the board shows where it is.
+  const locate = type => {
+    const n = Date.now();
+    setSelected(null); setMode({ kind: "idle" }); setLocated({ type, n }); sfx.click(); buzz(10);
+    const count = parts.filter(p => p.type === type).length;
+    say(count > 1 ? `Your ${count} ${lower(type)}s are ringed on the board.` : `Your ${lower(type)} is ringed on the board.`);
+    setTimeout(() => setLocated(l => (l?.n === n ? null : l)), 2600);
+  };
   const cancel = msg => { setMode({ kind: "idle" }); if (msg) say(msg); };
   const pickType = type => {
     playerRef.current?.unlock();
@@ -308,7 +319,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     if (g.pan || e.type === "pointercancel") return;
     if (g.moved && d?.moved) {
       const p = byUid(d.uid);
-      setSelected(p.uid);
+      setSelected(null); // a drag moves the part; only a tap opens its buttons
       if (key(d.to) === key(p.at)) return;
       if (d.ok) moveTo(p.uid, d.to); else { sfx.oops(); say(fits({ ...p, at: d.to }) ? "That spot is taken, so it went back." : "That's off the board, so it went back."); }
       return;
@@ -338,7 +349,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     const g = trayGesture.current;
     if (!g || g.done) return;
     if (!g.dragged) {
-      if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) return;
+      if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 6) return;
       g.dragged = true; playerRef.current?.unlock(); setSelected(null); setShowMe(false); setMode({ kind: "idle" });
     }
     g.cx = e.clientX; g.cy = e.clientY; moveGhost();
@@ -507,6 +518,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
 
             {trayDrag?.part && <PartGlyph part={{ ...trayDrag.part, anchorXY: postXY(trayDrag.part.at) }} ghost showLabel={false} />}
             {trayDrag?.part && Object.values(pinPosts(trayDrag.part)).map(at => <circle key={`t${key(at)}`} className={`lab-landing ${trayDrag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
+            {located && parts.filter(p => p.type === located.type).map(p => { const [x0, y0, x1, y1] = partRect(p); return <rect key={`${p.uid}${located.n}`} className="lab-locate" x={x0 - 6} y={y0 - 6} width={x1 - x0 + 12} height={y1 - y0 + 12} rx={20} />; })}
             {landing.map(at => <circle key={`l${key(at)}`} className={`lab-landing ${drag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
             {mode.kind === "end" && <circle className="lab-from" cx={postXY(mode.from)[0]} cy={postXY(mode.from)[1]} r={17} />}
             {targets.map(o => <circle key={key(o.to)} className="lab-target" cx={postXY(o.to)[0]} cy={postXY(o.to)[1]} r={16} />)}
@@ -539,8 +551,9 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
                 const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
                 const used = Boolean(kit) && n <= 0; // in a project, a part that is on the board stays in the tray, ticked
                 return (
-                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0} title={PARTS[type].say}
-                    onClick={() => { if (!trayGesture.current?.dragged) pickType(type); }}
+                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0 && !used} title={PARTS[type].say}
+                    aria-label={used ? `${PARTS[type].name}, on the board. Press to show where it is` : undefined}
+                    onClick={() => { if (used) locate(type); else if (!trayGesture.current?.dragged) pickType(type); }}
                     onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
                     <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
                     <span className="nm">{PARTS[type].name}</span>
