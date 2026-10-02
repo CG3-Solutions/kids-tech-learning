@@ -6,11 +6,19 @@
 // `dir` turns the part clockwise in quarter turns: 0 → right, 1 → down, 2 → left, 3 → up.
 import { PARTS, KIT } from "../../content/lab/parts.js";
 
-export const COLS = 7, ROWS = 9;
+// Every project uses the standard board, 7 × 9 posts. In free build the child can add columns and
+// rows for a bigger circuit. One board is on screen at a time, so its size is kept here and set by
+// the lab that is showing.
+export const BOARD_MIN = [7, 9], BOARD_MAX = [20, 24];
+export const clampBoard = ([c, r]) => [Math.max(BOARD_MIN[0], Math.min(BOARD_MAX[0], Math.round(c) || BOARD_MIN[0])), Math.max(BOARD_MIN[1], Math.min(BOARD_MAX[1], Math.round(r) || BOARD_MIN[1]))];
+export let COLS = 7, ROWS = 9;
+export function setBoardSize(cols = 7, rows = 9) { COLS = cols; ROWS = rows; }
+const LETTERS = "ABCDEFGHIJKLMNOPQRST";
+export const colName = c => LETTERS[c];
 export const PITCH = 60, MARGIN = 40;
 export const postXY = ([c, r]) => [MARGIN + c * PITCH, MARGIN + r * PITCH];
-export const postName = ([c, r]) => `${"ABCDEFGHIJ"[c]}${r + 1}`;
-export const netOf = ([c, r]) => `${"ABCDEFGHIJ"[c]}${r + 1}`;
+export const postName = ([c, r]) => `${LETTERS[c]}${r + 1}`;
+export const netOf = ([c, r]) => `${LETTERS[c]}${r + 1}`;
 export const inBounds = ([c, r]) => c >= 0 && r >= 0 && c < COLS && r < ROWS;
 
 // Pin positions in the part's own frame: x along its direction, y to its right.

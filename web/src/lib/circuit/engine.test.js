@@ -130,3 +130,15 @@ describe("all 100 Circuit Lab projects, simulated", () => {
     expect((performance.now() - t0) / 50).toBeLessThan(20);
   });
 });
+
+describe("more than one battery (free build)", () => {
+  it("catches a short circuit on any battery, not only the first", async () => {
+    const { evaluate } = await import("./engine.js");
+    const { parseParts } = await import("../../content/lab/netlist.js");
+    expect(evaluate(parseParts("battery B1 p n | lamp L1 p n | battery B2 q q")).short).toBe(true);
+    const two = evaluate(parseParts("battery B1 p n | lamp L1 p n | battery B2 q r | lamp L2 q r"));
+    expect(two.short).toBe(false);
+    expect(two.outputs).toEqual({ L1: "on", L2: "on" });
+  });
+});
+

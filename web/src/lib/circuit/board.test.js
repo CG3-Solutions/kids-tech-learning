@@ -184,3 +184,30 @@ describe("flip, clashes, almost-right and spare parts", () => {
     expect(strays([backwards, extra], guide)).toEqual([extra]);
   });
 });
+
+describe("a bigger board for free build", () => {
+  it("grows and shrinks what fits, and names the extra posts", async () => {
+    const b = await import("./board.js");
+    expect([b.COLS, b.ROWS]).toEqual([7, 9]);
+    expect(b.inBounds([9, 11])).toBe(false);
+    b.setBoardSize(13, 15);
+    expect([b.COLS, b.ROWS]).toEqual([13, 15]);
+    expect(b.inBounds([12, 14])).toBe(true);
+    expect(b.inBounds([13, 14])).toBe(false);
+    expect(b.postName([12, 14])).toBe("M15");
+    const far = b.makePart([], "lamp", [10, 13], { dir: 0 });
+    expect(far && b.fits(far)).toBe(true);
+    b.setBoardSize(); // the standard board again
+    expect([b.COLS, b.ROWS]).toEqual([7, 9]);
+    expect(b.fits(far)).toBe(false);
+    expect(b.makePart([], "lamp", [10, 13], { dir: 0 })).toBe(null);
+  });
+  it("keeps the size between the standard board and the largest one", async () => {
+    const b = await import("./board.js");
+    expect(b.clampBoard([3, 4])).toEqual([7, 9]);
+    expect(b.clampBoard([8, 10])).toEqual([8, 10]);
+    expect(b.clampBoard([99, 99])).toEqual(b.BOARD_MAX);
+    expect(b.clampBoard(["x", null])).toEqual([7, 9]);
+    expect(b.postName([b.BOARD_MAX[0] - 1, b.BOARD_MAX[1] - 1])).toBe("T24");
+  });
+});

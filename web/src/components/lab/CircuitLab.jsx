@@ -34,7 +34,7 @@ import { VoltFace } from "../journey/Guide.jsx";
 import { PARTS } from "../../content/lab/parts.js";
 import { EXAMPLES } from "../../content/lab/examples.js";
 import {
-  COLS, ROWS, PITCH, MARGIN, postXY, postName, inBounds, makePart, endOptions, isTwoPin, coveredPosts, fits, layerFor, remaining,
+  COLS, ROWS, BOARD_MIN, BOARD_MAX, clampBoard, setBoardSize, colName, PITCH, MARGIN, postXY, postName, inBounds, makePart, endOptions, isTwoPin, coveredPosts, fits, layerFor, remaining,
   toCircuit, describe, serialize, deserialize, buildBoard, pinPosts, samePlace, turned, flipped, clashes, reversedOf, strays, HAS_DIRECTION,
 } from "../../lib/circuit/board.js";
 import { LiveCircuit } from "../../lib/circuit/live.js";
@@ -44,7 +44,6 @@ import { local } from "../../lib/storage.js";
 import { sfx, isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { speak, hush } from "../../lib/speech.js";
 
-const W = MARGIN * 2 + (COLS - 1) * PITCH, H = MARGIN * 2 + (ROWS - 1) * PITCH;
 const TRAY = [
   { title: "Power", types: ["battery", "wire"] },
   { title: "Switches", types: ["slide", "button", "changeover"] },
@@ -104,6 +103,14 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const { activeChild } = useApp();
   const young = (activeChild?.grade ?? 3) <= 2 && activeChild?.learner !== "adult";
   const saveKey = saveKeyProp ?? `sparklab.lab.free.${activeChild?.id ?? "guest"}`;
+  // Board size. Projects always use the standard board; in free build the child can add columns and
+  // rows, and every part is unlimited.
+  const freeBuild = !kit && !guide && !actions;
+  const [size, setSize] = useState(() => { const v = freeBuild ? local.get(`${saveKey}.size`, null) : null; return Array.isArray(v) ? clampBoard(v) : BOARD_MIN; });
+  const [cols, rows] = size;
+  setBoardSize(cols, rows); // before anything below checks what fits
+  useEffect(() => () => setBoardSize(), []); // leaving the lab: back to the standard board
+  const W = MARGIN * 2 + (cols - 1) * PITCH, H = MARGIN * 2 + (rows - 1) * PITCH;
   const saved = useMemo(() => { const s = local.get(saveKey, null); return s ? deserialize(s) : { parts: initial?.parts ?? [], inputs: initial?.inputs ?? {} }; }, [saveKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hist, dispatch] = useReducer(history, { past: [], now: saved.parts, future: [] });
   const parts = hist.now;
@@ -148,10 +155,19 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("fullscreenchange", onChange); document.removeEventListener("keydown", onKey); if (document.fullscreenElement) { try { document.exitFullscreen?.()?.catch?.(() => {}); } catch { /* ignore */ } } };
   }, []);
+  // Add or take away a column or a row. Taking one away is refused while a part still sits on it.
+  const resize = (dc, dr) => {
+    const [c, r] = clampBoard([cols + dc, rows + dr]);
+    if (c === cols && r === rows) return;
+    const outside = parts.filter(p => !Object.values(pinPosts(p)).every(([x, y]) => x < c && y < r));
+    if (outside.length) { sfx.oops(); say(`${outside.length === 1 ? "A part is" : `${outside.length} parts are`} on the last ${dc < 0 ? "column" : "row"}. Move or remove ${outside.length === 1 ? "it" : "them"} first.`); return; }
+    setSize([c, r]); local.set(`${saveKey}.size`, [c, r]);
+    setCursor(([x, y]) => [Math.min(x, c - 1), Math.min(y, r - 1)]); setSelected(null); setMode({ kind: "idle" }); sfx.click();
+  };
   const toggleLock = () => { const v = !locked; setLocked(v); setMode({ kind: "idle" }); setSelected(null); setDrag(null); sfx.click(); };
 
   // A project's board opens with its action row at the top of the screen, so the board, hint and tray all fit below it.
-  const actionsRef = useRef(null);
+  const actionsRef = useRef(null), exRef = useRef(null);
   useEffect(() => { actionsRef.current?.scrollIntoView({ block: "start" }); }, []);
   useEffect(() => { local.set(saveKey, serialize(parts, inputs)); onChange?.(parts, inputs); }, [saveKey, parts, inputs]); // eslint-disable-line react-hooks/exhaustive-deps
   const say = msg => { setNotice(msg); clearTimeout(noticeTimer.current); noticeTimer.current = setTimeout(() => setNotice(null), 3500); };
@@ -181,7 +197,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   }, []);
 
   // ── Guide: what's next, what's almost right, what's not needed ──
-  const left = type => (kit ? (type === "wire" ? 99 : (kit[type] ?? 0) - parts.filter(p => p.type === type).length) : remaining(parts, type));
+  // How many of a part can still be placed: the project's kit, or no limit in free build.
+  const left = type => (freeBuild ? 999 : kit ? (type === "wire" ? 99 : (kit[type] ?? 0) - parts.filter(p => p.type === type).length) : remaining(parts, type));
   const next = guide ? guide.find(g => !parts.some(p => samePlace(p, g))) : null;
   const almost = next ? reversedOf(parts, next) : null;
   const spare = guide ? strays(parts, guide)[0] ?? null : null;
@@ -495,10 +512,30 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const handPath = next && showMe ? Object.values(pinPosts(next)).map(postXY) : null;
 
   return (
-    <div className={`lab${full ? " full" : ""}${locked ? " is-locked" : ""}`}>
+    <div className={`lab${full ? " full" : ""}${locked ? " is-locked" : ""}`} style={{ "--lab-ratio": (W / H).toFixed(3) }}>
       {/* One bar: the project's actions (Test, goal, start again) on the left, the board's tools on the right. */}
       <div className="lab-bar">
-        {actions && <div className="lab-actions" ref={actionsRef}>{actions}</div>}
+        {actions ? <div className="lab-actions" ref={actionsRef}>{actions}</div> : examples && (
+          <div className="lab-actions" ref={actionsRef}>
+            <details className="proj-must" ref={exRef}>
+              <summary><Icon name="grid" size={18} /> Examples</summary>
+              <ul className="lab-ex-list">
+                {EXAMPLES.map(ex => <li key={ex.id}><button className="btn small" onClick={() => { loadExample(ex); exRef.current?.removeAttribute("open"); }}>{ex.emoji} {ex.title}</button></li>)}
+                <li className="muted">Loading one replaces your board. Undo brings it back.</li>
+              </ul>
+            </details>
+            {freeBuild && (
+              <details className="proj-must">
+                <summary><Icon name="expand" size={18} /> Board: {cols} × {rows}</summary>
+                <ul className="lab-ex-list lab-size">
+                  <li><span>Columns</span><button className="lab-ib" disabled={locked || cols <= BOARD_MIN[0]} onClick={() => resize(-1, 0)} aria-label="Remove a column"><Icon name="minus" /></button><b aria-live="polite">{cols}</b><button className="lab-ib" disabled={locked || cols >= BOARD_MAX[0]} onClick={() => resize(1, 0)} aria-label="Add a column"><Icon name="plus" /></button></li>
+                  <li><span>Rows</span><button className="lab-ib" disabled={locked || rows <= BOARD_MIN[1]} onClick={() => resize(0, -1)} aria-label="Remove a row"><Icon name="minus" /></button><b aria-live="polite">{rows}</b><button className="lab-ib" disabled={locked || rows >= BOARD_MAX[1]} onClick={() => resize(0, 1)} aria-label="Add a row"><Icon name="plus" /></button></li>
+                  <li className="muted">Add columns and rows for a bigger circuit, up to {BOARD_MAX[0]} × {BOARD_MAX[1]}. Use full screen, or pinch, to see it closer.</li>
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
           <div className="lab-toolbar" role="toolbar" aria-label="Board tools">
           <button className="lab-ib lab-undo" onClick={() => { dispatch({ type: "undo" }); setSelected(null); sfx.click(); }} disabled={locked || !hist.past.length} aria-label="Undo" title="Undo"><Icon name="undo" /><span className="lbl">Undo</span></button>
           <button className="lab-ib xl-only" onClick={() => dispatch({ type: "redo" })} disabled={locked || !hist.future.length} aria-label="Redo" title="Redo"><Icon name="redo" /></button>
@@ -541,7 +578,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
           <svg ref={svgRef} className={`lab-board${result?.short ? " short" : ""}${mode.kind !== "idle" ? " placing" : ""}`} viewBox={`0 0 ${W} ${H}`}
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onMouseDown={e => e.preventDefault()}>
             <rect className="lab-bg" x={8} y={8} width={W - 16} height={H - 16} rx={22} />
-            {Array.from({ length: COLS }, (_, c) => <text key={`c${c}`} className="lab-coord" x={MARGIN + c * PITCH} y={20} textAnchor="middle">{"ABCDEFG"[c]}</text>)}
+            {Array.from({ length: COLS }, (_, c) => <text key={`c${c}`} className="lab-coord" x={MARGIN + c * PITCH} y={20} textAnchor="middle">{colName(c)}</text>)}
             {Array.from({ length: ROWS }, (_, r) => <text key={`r${r}`} className="lab-coord" x={18} y={MARGIN + r * PITCH + 4} textAnchor="middle">{r + 1}</text>)}
             {Array.from({ length: COLS * ROWS }, (_, i) => { const at = [i % COLS, Math.floor(i / COLS)], [x, y] = postXY(at); return <circle key={i} className="lab-post" cx={x} cy={y} r={8} />; })}
 
@@ -570,12 +607,6 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
             <circle className="lab-cursor" cx={postXY(cursor)[0]} cy={postXY(cursor)[1]} r={22} />
           </svg>
         </div>
-        {!parts.length && examples && (
-          <div className="lab-empty">
-            <p><b>Start building!</b> Pick a 🔋 battery from the tray, then tap two posts. Or try an example:</p>
-            <div className="row center-row">{EXAMPLES.map(ex => <button key={ex.id} className="btn" onClick={() => loadExample(ex)}>{ex.emoji} {ex.title}</button>)}</div>
-          </div>
-        )}
       </div>
       <p className="sr-only" aria-live="polite">{status}</p>
 
@@ -594,7 +625,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
                     onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
                     <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
                     <span className="nm">{PARTS[type].name}</span>
-                    {type === "wire" ? <small>as many as you need</small> : <small>{used ? "✓ on the board" : n > 0 ? `${n} left` : "none left"}</small>}
+                    {freeBuild ? <small>{(c => (c ? `${c} on the board` : "no limit"))(parts.filter(p => p.type === type).length)}</small>
+                      : type === "wire" ? <small>as many as you need</small> : <small>{used ? "✓ on the board" : n > 0 ? `${n} left` : "none left"}</small>}
                   </button>
                 );
               })}
@@ -625,13 +657,6 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
         <ul>{describe(parts, result).map((l, i) => <li key={i}>{l}</li>)}</ul>
         <button className="btn ghost small" aria-pressed={meter} onClick={() => setMeter(m => !m)}>🔬 {meter ? "Hide" : "Show"} the meter for the chosen part</button>
       </details>
-      {parts.length > 0 && examples && (
-        <details className="lab-examples">
-          <summary>💡 Examples</summary>
-          <p className="muted">Loading an example replaces your board (you can undo).</p>
-          <div className="row">{EXAMPLES.map(ex => <button key={ex.id} className="btn" onClick={() => loadExample(ex)}>{ex.emoji} {ex.title}</button>)}</div>
-        </details>
-      )}
     </div>
   );
 }
