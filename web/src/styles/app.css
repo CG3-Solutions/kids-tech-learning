@@ -1829,3 +1829,9 @@ button.kb-key { cursor: pointer }
 .voice-log summary { cursor: pointer; font-weight: 700 }
 .voice-log ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: .92rem }
 .voice-log small { display: block; color: var(--muted) }
+
+/* Tablets and laptops: the parts panel sits beside the board and doesn't scroll, so a touch on a
+   part is always a drag (in any direction), never the start of a page scroll. On phones the tray
+   scrolls sideways, so only an upward drag lifts a part. */
+@media (min-width: 700px) { .lab-tray-item { touch-action: none } }
+.lab-tray-item:not(:disabled):active { transform: scale(.96) }

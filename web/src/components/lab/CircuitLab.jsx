@@ -2,6 +2,8 @@
 // Everything is live: current flows along connectors, bulbs glow, fans spin, chips play.
 //
 // Made for small hands (from testing with children):
+// - Placing or moving a part never opens its toolbar: the buttons only appear when the child taps
+//   the part on purpose.
 // - Tapping a part only chooses it. A small toolbar appears next to it (switch ON/OFF, press,
 //   turn, flip, move, remove). Double-tapping a switch also flips it.
 // - Drag a part from anywhere on it. While dragging, the posts it will land on glow green (free)
@@ -185,7 +187,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const others = uid => parts.filter(p => p.uid !== uid);
   const add = part => {
     if (clashes(parts, part)) { sfx.oops(); say("Another part is already there. Pick other posts."); return false; }
-    setParts([...parts, part]); setSelected(part.uid); sfx.click(); buzz(12); return true;
+    setParts([...parts, part]); setSelected(null); sfx.click(); buzz(12); return true;
   };
   const update = (uid, patch) => setParts(parts.map(p => (p.uid === uid ? { ...p, ...patch } : p)));
   const remove = uid => {
@@ -308,7 +310,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     if (g.pan || e.type === "pointercancel") return;
     if (g.moved && d?.moved) {
       const p = byUid(d.uid);
-      setSelected(p.uid);
+      setSelected(null); // a drag moves the part; only a tap opens its buttons
       if (key(d.to) === key(p.at)) return;
       if (d.ok) moveTo(p.uid, d.to); else { sfx.oops(); say(fits({ ...p, at: d.to }) ? "That spot is taken, so it went back." : "That's off the board, so it went back."); }
       return;
@@ -338,7 +340,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     const g = trayGesture.current;
     if (!g || g.done) return;
     if (!g.dragged) {
-      if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) return;
+      if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 6) return;
       g.dragged = true; playerRef.current?.unlock(); setSelected(null); setShowMe(false); setMode({ kind: "idle" });
     }
     g.cx = e.clientX; g.cy = e.clientY; moveGhost();
