@@ -1610,3 +1610,222 @@ button.kb-key { cursor: pointer }
 @media (min-width: 980px) { .lab { grid-template-areas: "tray toolbar" "tray act" "tray board" "tray hint" "tray insp" "tray desc" "tray ex" } }
 .lab-hint { min-height: 0 }
 @media (max-width: 979px) { .lab .lab-toolbar .lab-zoom { display: none } .lab .lab-toolbar .lab-undo { min-width: 84px !important; padding: 6px 10px } }
+
+/* Card mini-lessons (meet → play → check → star) and the part pictures */
+.part-art { display: block; flex: none }
+.tile .pic .part-art { margin: -4px 0 2px -4px }
+.tile.next { border-color: var(--spark); box-shadow: 0 0 0 4px color-mix(in srgb, var(--spark) 30%, transparent) }
+.tile .next-tag { position: absolute; top: 10px; right: 44px; background: var(--spark); color: var(--spark-ink); border-radius: 10px; padding: 2px 10px; font-family: var(--f-display); font-weight: 700; font-size: .85rem }
+.collected { font-family: var(--f-display); font-weight: 600; font-size: 1.1rem; margin-top: -10px }
+.lesson-dots { list-style: none; margin: 0; padding: 12px 20px 0; display: flex; gap: 8px; justify-content: center }
+.lesson-dots li { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; border: 3px solid var(--line); color: var(--muted) }
+.lesson-dots li.past { background: var(--c); border-color: var(--c); color: var(--spark-ink) }
+.lesson-dots li.now { border-color: var(--ink); color: var(--ink); transform: scale(1.15) }
+.lesson-bd { padding: 16px 20px 22px; display: grid; gap: 14px; justify-items: center; text-align: center }
+.lesson-big { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.2rem, 3.6vw, 1.5rem); line-height: 1.3; max-width: 30ch }
+.lesson-bd .like { background: color-mix(in srgb, var(--spark) 18%, var(--surface)); border-radius: 14px; padding: 10px 14px; max-width: 46ch }
+.lesson-bd .blk, .lesson-bd .parent-note { text-align: left; width: min(560px, 100%) }
+.lesson-opts, .toy-picks { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100% }
+.lesson-opts .opt { flex: 1 1 150px; max-width: 210px; flex-direction: column; text-align: center; font-size: 1.1rem; padding: 14px 10px }
+.lesson-opts .opt .e { font-size: 3rem; line-height: 1.1 }
+.lesson-opts .opt:disabled { opacity: .6 }
+.toy-picks .opt[aria-pressed="true"] { border-color: var(--ink); background: var(--surface-2) }
+.toy-say { font-weight: 700; min-height: 1.6em }
+.lesson-star { font-size: 5rem; line-height: 1; animation: star-pop .5s ease-out }
+@keyframes star-pop { from { transform: scale(.2) rotate(-40deg); opacity: 0 } to { transform: none; opacity: 1 } }
+.lesson .btn:disabled { opacity: .45; cursor: default }
+.scene { width: min(360px, 100%); height: auto; display: block }
+.scene-wire { fill: none; stroke: var(--wire); stroke-width: 7 }
+.scene-flow { fill: none; stroke: var(--spark); stroke-width: 7; stroke-dasharray: 10 18; stroke-linecap: round; animation: scene-flow .7s linear infinite }
+.scene-flow.back { animation-direction: reverse }
+@keyframes scene-flow { to { stroke-dashoffset: -28 } }
+.scene-pad { fill: var(--surface) }
+.scene-tap { cursor: pointer }
+.scene-tap .scene-pad { stroke: var(--spark); stroke-width: 3; stroke-dasharray: 6 5 }
+.art-spin { animation: art-spin .5s linear infinite }
+.art-spin.back { animation-direction: reverse }
+@keyframes art-spin { to { transform: rotate(360deg) } }
+.art-waves path { animation: art-wave .35s ease-out infinite alternate }
+@keyframes art-wave { from { opacity: .25 } to { opacity: 1 } }
+.room { display: flex; gap: 14px; align-items: center; justify-content: center; background: #2A3550; border-radius: 20px; padding: 14px 18px; transition: background .3s; width: min(360px, 100%) }
+.room.on { background: #FFF3C9 }
+.room svg { width: 30%; height: auto }
+.room .tv { font-size: clamp(3rem, 14vw, 4.4rem); line-height: 1 }
+.wall-switch { background: none; border: 0; padding: 0; display: grid; justify-items: center; gap: 2px; font-family: var(--f-display); font-size: 1.2rem }
+.wall-switch:active { transform: scale(.96) }
+@media (prefers-reduced-motion: reduce) { .scene-flow { animation: none } .art-spin { animation: none } }
+@media (max-width: 600px) {
+  .lesson .card-hd { flex-wrap: nowrap; padding: 10px 12px; gap: 10px }
+  .lesson .card-hd > div:nth-child(2) { min-width: 0; flex: 1 }
+  .lesson .card-hd h2 { font-size: 1.15rem; overflow-wrap: anywhere }
+  .lesson .card-hd .eyebrow { display: none }
+  .lesson .card-hd .part-art { width: 40px; height: 40px }
+  .lesson .card-hd .acts { flex-wrap: nowrap }
+  .lesson .card-hd .acts .btn { padding: 6px 10px }
+  .lesson-bd { padding: 12px 14px 18px; gap: 10px }
+}
+
+/* Toys for the Level 2 to 4 cards */
+.toy-range { display: grid; gap: 6px; justify-items: center; font-family: var(--f-display); font-weight: 600; font-size: 1.1rem; width: min(360px, 100%) }
+.toy-range input { width: 100%; height: 44px; accent-color: var(--spark) }
+.scene .clip, .scene .water, .scene .bar, .scene .sky { transition: transform .35s ease-out, height .3s, y .3s, fill .4s }
+.scene .walker { animation: walk 2.2s linear forwards }
+@keyframes walk { from { transform: translateX(-20px) } to { transform: translateX(290px) } }
+.art-shake { animation: art-shake .25s linear infinite }
+@keyframes art-shake { 25% { transform: translateX(-3px) } 75% { transform: translateX(3px) } }
+.seg-scene { width: min(240px, 70%) }
+.seg-bar { cursor: pointer }
+.btn.hold { touch-action: none; user-select: none; -webkit-user-select: none }
+.btn.hold.down { transform: translateY(3px) scale(.97) }
+@media (prefers-reduced-motion: reduce) { .scene .walker { animation: none; transform: translateX(140px) } }
+/* Typing on a phone: still shown, but marked as needing a bigger screen */
+.area-card.big-only { opacity: .8 }
+.area-card.big-only .ribbon { position: static; transform: none; justify-self: start; border-radius: 999px; padding: 4px 12px; font-size: .85rem; letter-spacing: 0 }
+.kid-nav-item.big-only { opacity: .5 }
+
+/* Circuit Lab projects: a focused page (no subject header while a project is open), a step
+   tracker, and part pictures that match the board. CSS only: nothing here runs while building. */
+.page:has(.proj) > .crumbs, .page:has(.proj) > .mod-head, .page:has(.proj) > .tabs { display: none }
+.stack:has(> .proj) > .lab-switch { display: none }
+.page:has(.proj) { gap: 10px; padding-top: 12px }
+.proj-head .back-btn { font-family: var(--f-display); min-height: 44px }
+.proj-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; align-items: center }
+.proj-steps li { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); font-family: var(--f-display); font-weight: 600; font-size: .95rem; white-space: nowrap }
+.proj-steps li + li::before { content: ""; width: 10px; height: 3px; border-radius: 2px; background: var(--line); margin-left: -18px; margin-right: 8px }
+.proj-steps li.past { border-color: var(--good); color: var(--good) }
+.proj-steps li.now { border-color: var(--ink); background: var(--spark); color: var(--spark-ink) }
+.proj-steps li:not(.now) .t { display: none }
+@media (min-width: 720px) { .proj-steps li:not(.now) .t { display: inline } }
+.proj-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 10px }
+.proj-mode { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 12px 14px; border: 3px solid var(--line); border-radius: 18px; background: var(--surface); font: inherit; color: var(--ink) }
+.proj-mode .e { font-size: 2rem; line-height: 1.1 }
+.proj-mode b { font-family: var(--f-display); font-size: 1.2rem }
+.proj-mode small { color: var(--muted); font-size: .9rem }
+.proj-mode[aria-pressed="true"] { border-color: var(--ink); background: color-mix(in srgb, var(--spark) 20%, var(--surface)); box-shadow: inset 0 -4px 0 var(--spark) }
+.gather-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 54px }
+.gather-pips { display: flex; align-items: center; gap: 6px; font-family: var(--f-display) }
+.gather-pips i { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--line); background: var(--surface) }
+.gather-pips i.on { background: var(--good); border-color: var(--good) }
+.gather-pips b { margin-left: 4px }
+.gather-item { position: relative; min-height: 104px; align-content: center; font-size: 1rem }
+.gather-item:active:not(:disabled) { transform: scale(.97) }
+.gather-item:disabled { opacity: 1; cursor: default }
+.gather-item:disabled:not(.yes) { opacity: .5 }
+.gather-item .tick { position: absolute; top: 6px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: var(--good); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: .9rem }
+.gather-item.no { animation: art-shake .25s linear 2 }
+.part-pic { display: block; overflow: visible; pointer-events: none }
+.part-pic .lab-part { cursor: inherit }
+.lab-tray-item .em { display: grid; place-items: center }
+.lab-toolbar .lbl { display: none; font-size: .85rem }
+@media (min-width: 720px) { .lab-toolbar .lbl { display: inline } }
+.proj-win { display: grid; justify-items: center; gap: 4px }
+
+/* Dragging a part out of the tray: the tray scrolls sideways on small screens and down on big ones,
+   so a drag the other way (towards the board) lifts the part instead. */
+.lab-tray-item { touch-action: pan-x; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none }
+@media (min-width: 980px) { .lab-tray-item { touch-action: pan-y } }
+.lab-tray-ghost { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; margin: -58px 0 0 -36px; opacity: .92; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); will-change: transform }
+@media (hover: hover) and (pointer: fine) { .lab-tray-ghost { margin-top: -20px } }
+
+/* A finished circuit: the part's toolbar shows just the switch, with editing behind "Change" */
+.lab-fbtn.change { font-size: .9rem; font-weight: 700; padding-inline: 10px; width: auto; white-space: nowrap }
+.lab-fname { align-self: center; padding: 0 8px 0 6px; font-family: var(--f-display); font-weight: 600; white-space: nowrap }
+
+/* The lab fits the screen: board, hint and parts tray are visible together.
+   --lab-fit is the board's width when its height is what is left under the top bar and the action
+   row, above the docked hint and tray (the board is 440 wide for every 560 tall). */
+.lab { --dock-b: 0px; --tray-h: 0px; --hint-h: 76px;
+  --lab-fit: calc((100vh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * .786) }
+@supports (height: 100dvh) { .lab { --lab-fit: calc((100dvh - 64px - 62px - var(--dock-b) - var(--tray-h) - var(--hint-h) - 28px) * .786) } }
+.lab-actions { scroll-margin-top: 72px }
+.lab-hint { position: sticky; z-index: 20; bottom: calc(var(--dock-b) + var(--tray-h) + 6px); box-shadow: 0 -4px 12px rgba(22, 35, 63, .1) }
+@media (max-width: 979px) {
+  .lab { --tray-h: 124px }
+  .lab-tray { position: sticky; z-index: 20; bottom: var(--dock-b); height: 120px; align-items: start; box-shadow: 0 -4px 12px rgba(22, 35, 63, .1) }
+}
+@media (max-width: 860px) { .lab { --dock-b: calc(76px + env(safe-area-inset-bottom, 0px)) } }
+.lab-actions .short { display: none }
+@media (max-width: 600px) {
+  /* One row on phones, so the space above the board is always the same height. */
+  .lab-actions { flex-wrap: nowrap; gap: 6px }
+  .lab-actions .long { display: none }
+  .lab-actions .short { display: inline }
+  .lab-actions > .btn { flex: none; padding-inline: 12px; min-height: 44px }
+  .lab-actions .proj-must { flex: 1; min-width: 0 }
+  .lab-actions .proj-must[open] { flex-basis: 100% }
+  .lab-actions:has(.proj-must[open]) { flex-wrap: wrap }
+}
+
+/* Lab layout, final: Volt's hint and the parts panel.
+   Phones: hint above the board (a fixed two lines, so the board never jumps), parts docked at the bottom.
+   Tablets and laptops: the board on the left at full height, hint and parts in a panel beside it. */
+.lab-hint { position: static; box-shadow: none; align-items: center; flex-wrap: nowrap; gap: 10px; padding: 8px 12px; background: var(--surface); border: 2px solid var(--line); border-radius: var(--r) }
+.lab-hint .bit-face { flex: none }
+.lab-hint > .txt { flex: 1 1 auto; min-width: 0; font-weight: 700; line-height: 1.3 }
+.lab-hint-actions { flex: none }
+.lab-tray-done { padding: 0; color: var(--good); letter-spacing: 0; text-transform: none }
+.lab-tray-item.used, .lab-tray-item.used:disabled { opacity: 1; cursor: default; background: color-mix(in srgb, var(--good) 10%, var(--surface)); border-color: color-mix(in srgb, var(--good) 45%, var(--line)) }
+.lab-tray-item.used .em { opacity: .45 }
+.lab-tray-item.used small { color: var(--good); font-weight: 700 }
+@media (max-width: 699px) {
+  .lab { grid-template-areas: "toolbar" "act" "hint" "board" "tray" "insp" "desc" "ex"; --hint-h: 74px; --tray-h: 124px }
+  .lab:has(.lab-tray-group:only-child) { --tray-h: 98px }
+  .lab-hint { min-height: 62px }
+  .lab-hint > .txt { font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden }
+  .lab-tray { height: auto }
+  .lab-tray-group:only-child > .eyebrow { display: none }
+  .lab-tray-item small { font-size: .68rem; line-height: 1.1 }
+}
+@media (min-width: 700px) {
+  .lab { --tray-h: 0px; --hint-h: 0px; --lab-board-w: calc(max(240px, var(--lab-fit)) + 4px); column-gap: 12px; align-items: start;
+    grid-template-columns: min(var(--lab-board-w), calc(100% - 222px)) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto auto 1fr;
+    grid-template-areas: "toolbar toolbar" "act act" "board hint" "board tray" "board insp" "board desc" "board ex" }
+  .lab-board-wrap { grid-row: 3 / -1 }
+  .lab-hint { flex-direction: column; align-items: flex-start; flex-wrap: nowrap; min-height: 112px }
+  .lab-hint .bit-face { width: 44px; height: auto }
+  .lab-hint-actions { align-self: stretch }
+  .lab-hint-actions .btn { flex: 1 }
+  .lab-tray { position: static; display: grid; height: auto; max-height: none; overflow: visible; box-shadow: none; padding: 10px; gap: 12px }
+  .lab-tray-group { gap: 6px }
+  .lab-tray-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px }
+  .lab-tray-item { width: auto; min-height: 84px; grid-template-columns: 1fr; grid-template-areas: "em" "nm" "n"; justify-items: center; text-align: center; padding: 8px 4px; row-gap: 2px; border-radius: 14px; background: var(--surface-2) }
+  .lab-tray-item .nm { font-size: .85rem }
+  .lab-tray-item small { font-size: .72rem }
+  .lab-tray-item:not(:disabled):hover { border-color: var(--ink) }
+  .lab-describe, .lab-inspector { min-width: 0 }
+}
+.lab-tray-item.used, .lab-tray-item.used:disabled { background: color-mix(in srgb, var(--good) 14%, var(--surface)); border-color: var(--good) }
+.lab-tray-item.used small { color: color-mix(in srgb, var(--good) 80%, var(--ink)) }
+@media (min-width: 700px) {
+  /* A project's few parts: one clear row each. Free build's many parts: small tiles, two across. */
+  .lab-tray-group:only-child .lab-tray-items { grid-template-columns: 1fr }
+  .lab-tray-group:only-child .lab-tray-item { grid-template-columns: auto 1fr; grid-template-areas: "em nm" "em n"; justify-items: start; text-align: left; column-gap: 10px; padding: 8px 10px; min-height: 60px }
+  .lab-tray-group:not(:only-child) .lab-tray-items { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px }
+  .lab-tray-group:not(:only-child) .lab-tray-item { min-height: 72px }
+  .lab-tray-group:not(:only-child) .lab-tray-item .nm { font-size: .78rem }
+}
+@media (max-width: 699px) {
+  .lab-hint { gap: 8px; padding: 6px 10px }
+  .lab-hint > .txt { font-size: .88rem }
+  .lab-hint-actions .btn { padding: 6px 8px; font-size: .85rem; min-height: 40px; white-space: nowrap }
+}
+@media (min-width: 700px) { .lab-hint, .lab-tray, .lab-inspector, .lab-describe, .lab-examples { max-width: 380px } }
+.lab-tray-item.used, .lab-tray-item.used:disabled { filter: none }
+/* Tablets and laptops: Volt's hint runs across the top of the board, parts sit beside the board,
+   and "Describe my circuit" (which can be long) goes underneath at full width. */
+@media (min-width: 700px) {
+  .lab { --hint-h: 74px;
+    grid-template-rows: auto auto auto auto 1fr auto auto;
+    grid-template-areas: "toolbar toolbar" "act act" "hint hint" "board tray" "board insp" "desc desc" "ex ex" }
+  .lab-board-wrap { grid-row: 4 / 6 }
+  .lab-hint { flex-direction: row; align-items: center; min-height: 62px; max-width: none }
+  .lab-hint-actions { align-self: center }
+  .lab-hint-actions .btn { flex: none }
+  .lab-describe, .lab-examples { max-width: none }
+}
+
+/* Voice & sound: which voice read each recent line */
+.voice-log summary { cursor: pointer; font-weight: 700 }
+.voice-log ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: .92rem }
+.voice-log small { display: block; color: var(--muted) }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
-import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, prefetchSpeech, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice } from "../../lib/voice.js";
+import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, prefetchSpeech, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice, voiceHistory } from "../../lib/voice.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { neuralAvailable, neuralEnabled, setNeuralEnabled, testNeural, neuralLastError, explain } from "../../lib/neuralVoice.js";
 
@@ -15,6 +15,7 @@ export default function VoiceSound() {
   useEffect(() => onMuteChange(setM), []);
   const [speed, setSpeed] = useState(voiceSpeed().id);
   const [natural, setNatural] = useState(neuralEnabled());
+  const [logTick, setLogTick] = useState(0); // re-reads the list when it is opened
   const [test, setTest] = useState(() => (neuralLastError() ? { ok: false, error: explain(new Error(neuralLastError())) } : null));
   const runTest = async () => {
     setTest({ busy: true });
@@ -77,6 +78,18 @@ export default function VoiceSound() {
             <button className="btn small" disabled={test?.busy} onClick={runTest}>{test?.busy ? "Testing…" : "▶ Test natural voice"}</button>
             {test && !test.busy && <p className={test.ok ? "ok" : "bad"} role="status">{test.ok ? "✓ Natural voices are working." : `✗ ${test.error}`}</p>}
           </div>
+        )}
+        {neuralAvailable() && natural && (
+          <details className="voice-log" onToggle={() => setLogTick(t => t + 1)}>
+            <summary>Which voice read the last lines?</summary>
+            {voiceHistory().length === 0 ? <p className="muted">Nothing has been read aloud since the app was opened. Play a lesson, then look here.</p> : (
+              <ul data-tick={logTick}>
+                {voiceHistory().slice(0, 12).map((h, i) => (
+                  <li key={i}><b>{h.natural ? "🟢 Natural" : "🟡 This device"}</b> “{h.text}”{!h.natural && h.why && <small> {h.why}</small>}</li>
+                ))}
+              </ul>
+            )}
+          </details>
         )}
         <div className="toggle-row"><span><b>Speaking speed</b><small>Slower helps younger children and new English speakers. Children can also tap 🐢 Slowly on any line.</small></span>
           <div className="seg" role="radiogroup" aria-label="Speaking speed">

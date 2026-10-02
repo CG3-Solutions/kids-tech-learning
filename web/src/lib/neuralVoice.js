@@ -3,24 +3,37 @@
 // once and then played from storage by everyone. The device voice is used instead when:
 //   • the app is in demo mode or nobody is signed in, or the parent turned natural voices off;
 //   • the line contains a child's name (names are never sent to Google);
-//   • storage or the function is slow or fails (then natural voices rest for a few minutes).
+//   • a line that isn't recorded yet can't be made (the service is slow, failing or over its limit).
+// A line that is already recorded always plays in the natural voice, whatever happened to the service
+// since: it comes straight from storage. That keeps a lesson in one voice.
 import { local } from "./storage.js";
 
 export const VERSION = 1; // must match supabase/functions/tts/index.ts
 
 let cfg = null; // { publicUrl(path), synth({ voice, plan }) → { path } }
-export function setNeural(c) { if (c !== cfg) { cfg = c; failedAt = 0; lastError = null; confirmed = false; } }
+export function setNeural(c) { if (c !== cfg) { cfg = c; failedAt = 0; restMs = REST_MS; lastError = null; confirmed = false; } }
 export const neuralAvailable = () => !!cfg;
 export const neuralEnabled = () => local.get("sparklab.neuralVoice", true);
 export const setNeuralEnabled = v => local.set("sparklab.neuralVoice", v);
-export const neuralOn = () => !!cfg && neuralEnabled() && Date.now() - failedAt > REST_MS;
+// Natural voices are wanted (signed in, and the parent has them on). Recorded lines play whenever this is true.
+export const neuralWanted = () => !!cfg && neuralEnabled();
+// New lines can be made right now (the service isn't resting after a failure).
+export const neuralOn = () => neuralWanted() && Date.now() - failedAt > restMs;
 
-let failedAt = 0, lastError = null, confirmed = false;
-// True once a recording has worked in this session. Until then the device voice speaks first,
-// so a missing setup never means silence.
-export const neuralConfirmed = () => confirmed;
-const REST_MS = 5 * 60 * 1000;
-export const neuralFailed = e => { failedAt = Date.now(); lastError = e?.message ?? String(e ?? "failed"); };
+const REST_MS = 5 * 60 * 1000, LIMIT_REST_MS = 60 * 60 * 1000;
+let failedAt = 0, restMs = REST_MS, lastError = null, confirmed = false;
+// True once a recording has worked: in this session, or on this device in the last week (so the first
+// line after opening the app is natural too). Until then the device voice speaks first, so a missing
+// setup never means silence. A setup failure forgets it.
+const OK_KEY = "sparklab.ttsOk", OK_MS = 7 * 24 * 60 * 60 * 1000;
+const worked = () => { if (!confirmed) { confirmed = true; local.set(OK_KEY, Date.now()); } };
+export const neuralConfirmed = () => confirmed || Date.now() - local.get(OK_KEY, 0) < OK_MS;
+// After a failure new lines use the device voice for a while (an hour when the daily limit is used up).
+export const neuralFailed = e => {
+  failedAt = Date.now(); restMs = e?.status === 429 ? LIMIT_REST_MS : REST_MS;
+  lastError = e?.message ?? String(e ?? "failed");
+  if (e?.status !== 429) { confirmed = false; local.remove(OK_KEY); }
+};
 export const neuralLastError = () => lastError;
 
 // Children's (and the parent's) names: lines containing them stay on the device.
@@ -54,18 +67,32 @@ export function forget(url) {
 }
 const pending = new Map(); // path → promise, so a line being prepared isn't asked for twice
 
+// Is this line already recorded (as far as this device knows)? No network.
+export async function neuralKnown(voice, plan) {
+  if (!cfg) return false;
+  return knownSet().has(`${voice}/${await sha256(canonical(voice, plan))}.mp3`);
+}
+
 // The URL of the recorded line, making it first if needed. Throws if it can't.
 export async function neuralUrl(voice, plan) {
   if (!cfg) throw new Error("natural voices are off");
   const path = `${voice}/${await sha256(canonical(voice, plan))}.mp3`;
   const url = cfg.publicUrl(path);
-  if (knownSet().has(path)) { confirmed = true; return url; }
+  if (knownSet().has(path)) { worked(); return url; }
   if (!pending.has(path)) {
     pending.set(path, cfg.synth({ voice, plan: cleanPlan(plan) })
-      .then(made => { if (made?.path !== path) throw new Error("unexpected voice file"); remember(path); confirmed = true; return url; })
+      .then(made => { if (made?.path !== path) throw new Error("unexpected voice file"); remember(path); worked(); return url; })
       .finally(() => pending.delete(path)));
   }
   return pending.get(path);
+}
+
+// Called once after sign-in: makes (or finds) one short line, so the service is awake and proven
+// before the first lesson line is spoken.
+const WARM = [[{ t: "Ready.", stress: false }]];
+export function warmNeural() {
+  if (!neuralOn()) return Promise.resolve(false);
+  return neuralUrl("teacher", WARM).then(() => true, e => { neuralFailed(e); return false; });
 }
 
 // For "Test natural voice" in Voice & sound: makes (or finds) a short line and says what went wrong, if anything.
@@ -74,7 +101,7 @@ export async function testNeural(voice = "teacher") {
   const plan = [[{ t: "Hello! This is my ", stress: false }, { t: "natural", stress: true }, { t: " voice.", stress: false }]];
   try {
     const url = await neuralUrl(voice, plan);
-    failedAt = 0; lastError = null;
+    failedAt = 0; restMs = REST_MS; lastError = null;
     return { ok: true, url };
   } catch (e) {
     neuralFailed(e);

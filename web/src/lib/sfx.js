@@ -36,6 +36,7 @@ export const sfx = {
   on: () => play(() => tone(440, 0, 0.12, { slideTo: 880 })),
   off: () => play(() => tone(660, 0, 0.12, { slideTo: 330 })),
   ding: () => play(() => { tone(880, 0, 0.18); tone(1320, 0.09, 0.25); }),
+  buzz: () => play(() => tone(880, 0, 0.28, { type: "square", vol: 0.05 })),
   bump: () => play(() => tone(200, 0, 0.07, { type: "triangle", vol: 0.05 })),
   oops: () => play(() => tone(220, 0, 0.25, { type: "triangle", vol: 0.07, slideTo: 150 })),
   bell: () => play(() => { tone(659, 0, 0.5, { type: "triangle", vol: 0.1 }); tone(523, 0.42, 0.8, { type: "triangle", vol: 0.1 }); }),

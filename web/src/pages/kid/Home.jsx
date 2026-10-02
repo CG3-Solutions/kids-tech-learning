@@ -3,7 +3,23 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats, nextSuggestion, badgeState } from "../../lib/progress.js";
 import { AREAS } from "../../content/areas.js";
 import { usePageTitle } from "../../lib/usePageTitle.js";
+import { useSmallScreen, BIG_SCREEN_AREAS } from "../../lib/useSmallScreen.js";
 import { dueQuestions } from "../../activities/computer/Review.jsx";
+
+// Shown instead of a subject that needs a bigger screen (typing on a phone).
+export function BigScreenOnly({ title }) {
+  return (
+    <div className="stack page">
+      <Crumbs items={[{ to: "/learn", label: "Home" }, { label: title }]} />
+      <div className="panel oops">
+        <div className="em" aria-hidden="true">💻</div>
+        <h2>{title} needs a bigger screen</h2>
+        <p className="lead">Open Spark Lab on a computer or a tablet with a keyboard to use {title}.</p>
+        <Link className="btn primary big" to="/learn">🏠 Go home</Link>
+      </div>
+    </div>
+  );
+}
 
 // Shown while lessons load, so a page is never blank.
 export function PageLoading() {
@@ -25,9 +41,9 @@ export function Crumbs({ items }) {
 
 // Where to pick up: the subject of the most recent activity, else a suggestion.
 // If the last thing done was an adventure step (ids like "circuit-step-3"), go straight back to the adventure.
-function continueTarget(published, data, learner) {
+function continueTarget(published, data, learner, small) {
   const last = [...data.progress].sort((a, b) => (b.done_at ?? "").localeCompare(a.done_at ?? ""))[0];
-  const live = published.modules.filter(m => !m.coming_soon);
+  const live = published.modules.filter(m => !m.coming_soon && !(small && BIG_SCREEN_AREAS.has(m.area)));
   const m = last && live.find(x => x.id === last.module_id);
   if (m && moduleStats(m, published.cards, data).pct < 100) return { module: m, label: "Continue", tab: m.activity && last.item_id?.startsWith(`${m.activity}-`) ? m.activity : null };
   const s = nextSuggestion(live, published.cards, data, learner);
@@ -37,8 +53,9 @@ function continueTarget(published, data, learner) {
 export default function Home() {
   const { activeChild, childData, published } = useApp();
   usePageTitle("Home");
+  const small = useSmallScreen();
   if (!published) return <PageLoading />;
-  const target = continueTarget(published, childData, activeChild);
+  const target = continueTarget(published, childData, activeChild, small);
   const earned = badgeState(childData, published.modules).filter(b => b.earned);
   return (
     <div className="stack page">
@@ -72,12 +89,14 @@ export default function Home() {
         <h2 className="sec">Choose an area</h2>
         <div className="areas">
           {AREAS.map(a => {
+            const bigOnly = small && BIG_SCREEN_AREAS.has(a.id); // shown, but marked: it opens a "needs a bigger screen" page
             const mods = published.modules.filter(m => m.area === a.id);
             const live = mods.filter(m => !m.coming_soon);
             const done = live.reduce((s, m) => s + moduleStats(m, published.cards, childData).done, 0);
             const total = live.reduce((s, m) => s + moduleStats(m, published.cards, childData).total, 0);
             return (
-              <Link key={a.id} className="area-card" to={`/learn/area/${a.id}`} style={{ "--c": `var(--${a.color})` }}>
+              <Link key={a.id} className={`area-card${bigOnly ? " big-only" : ""}`} to={`/learn/area/${a.id}`} style={{ "--c": `var(--${a.color})` }}>
+                {bigOnly && <span className="ribbon">💻 Needs a bigger screen</span>}
                 <span className="em" aria-hidden="true">{a.emoji}</span>
                 <h3>{a.title}</h3>
                 <p>{a.tagline}</p>
