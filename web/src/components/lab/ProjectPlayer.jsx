@@ -6,6 +6,7 @@
 //   6. Explain, in the world, try this, and the star.
 import { useEffect, useMemo, useState } from "react";
 import CircuitLab from "./CircuitLab.jsx";
+import PartPic from "./PartPic.jsx";
 import Guide, { VoltFace } from "../journey/Guide.jsx";
 import { PARTS, CONCEPTS } from "../../content/lab/parts.js";
 import { parseParts, parseCheck } from "../../content/lab/netlist.js";
@@ -44,6 +45,17 @@ export function checkLines(project) {
   });
 }
 
+// Where am I? The steps of every project, with the current one lit.
+const STEPS = { intro: ["❓", "Question"], gather: ["🧰", "Parts"], build: ["🔧", "Build"], test: ["⚡", "Test"], done: ["⭐", "Star"] };
+function Steps({ at, fixIt }) {
+  const order = ["intro", ...(fixIt ? [] : ["gather"]), "build", "test", "done"], now = order.indexOf(at);
+  return (
+    <ol className="proj-steps" aria-label={`Step ${now + 1} of ${order.length}: ${STEPS[at][1]}`}>
+      {order.map((s, i) => <li key={s} className={i === now ? "now" : i < now ? "past" : ""} aria-hidden="true"><span className="e">{i < now ? "✓" : STEPS[s][0]}</span><span className="t">{STEPS[s][1]}</span></li>)}
+    </ol>
+  );
+}
+
 export default function ProjectPlayer({ project, done, onComplete, onNext, onBack }) {
   const { activeChild } = useApp();
   const fixIt = Boolean(project.start && STARTS[project.id]);
@@ -60,20 +72,23 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   const [predicted, setPredicted] = useState(null);
   const [testing, setTesting] = useState(false);
   const [mark, setMark] = useState(null);
+  const [passed, setPassed] = useState(false); // the board as it stands has passed its test
   const [boardKey, setBoardKey] = useState(0);
   const guide = useMemo(() => (mode === "guided" && LAYOUTS[project.id] ? buildBoard(LAYOUTS[project.id]) : null), [mode, project.id]);
   const initial = useMemo(() => (fixIt ? { parts: buildBoard(STARTS[project.id]) ?? [], inputs: {} } : undefined), [fixIt, project.id]);
   const go = s => { hush(); setStage(s); window.scrollTo({ top: 0 }); };
   // A test result belongs to the board it tested: changing the build clears it (flipping switches doesn't).
-  useEffect(() => { setMark(null); }, [board]);
+  useEffect(() => { setMark(null); setPassed(false); }, [board]);
 
   const header = (
-    <div className="proj-head">
-      <span className="proj-emoji" aria-hidden="true">{project.emoji}</span>
-      <div><span className="eyebrow">Unit {project.unit} · {LEVEL[project.level]}</span><h2>{project.title}</h2></div>
-      <span className="spacer" />
-      <button className="btn ghost" onClick={() => { hush(); onBack(); }}>← Projects</button>
-    </div>
+    <>
+      <div className="proj-head">
+        <button className="btn back-btn" onClick={() => { hush(); onBack(); }}>← Projects</button>
+        <span className="proj-emoji" aria-hidden="true">{project.emoji}</span>
+        <div><span className="eyebrow">Unit {project.unit} · {LEVEL[project.level]}</span><h2>{project.title}</h2></div>
+      </div>
+      <Steps at={stage === "build" && testing ? "test" : stage} fixIt={fixIt} />
+    </>
   );
 
   if (stage === "intro") {
@@ -86,9 +101,9 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
         {!fixIt && (
           <div className="stack" style={{ gap: 6 }}>
             <span className="eyebrow">How do you want to build it?</span>
-            <div className="chips">
-              <button className="chip" aria-pressed={mode === "guided"} onClick={() => setMode("guided")}>🧭 Guided: a faint part shows where each one goes</button>
-              <button className="chip" aria-pressed={mode === "challenge"} onClick={() => setMode("challenge")}>🏆 Challenge: just what it must do</button>
+            <div className="proj-modes">
+              <button className="proj-mode" aria-pressed={mode === "guided"} onClick={() => { setMode("guided"); sfx.click(); }}><span className="e" aria-hidden="true">🧭</span><b>Guided</b><small>A faint part shows where each one goes</small></button>
+              <button className="proj-mode" aria-pressed={mode === "challenge"} onClick={() => { setMode("challenge"); sfx.click(); }}><span className="e" aria-hidden="true">🏆</span><b>Challenge</b><small>Just what it must do. You work out the rest!</small></button>
             </div>
           </div>
         )}
@@ -113,18 +128,20 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
             : said ? `Yes, a ${nameOf(said.t)}! ${PARTS[said.t].say}`
             : `First, gather the parts. Which ones does "${project.title}" need? Tap them.`}
         </Guide>
+        <div className="gather-bar">
+          <span className="gather-pips" role="status" aria-label={`Parts found: ${got} of ${types.length}`}>{types.map((t, i) => <i key={t} className={i < got ? "on" : ""} />)}<b>{got} of {types.length}</b></span>
+          {all && <button className="btn primary big" onClick={() => go("build")}>Start building 🔧</button>}
+        </div>
         <div className="gather">
           {gatherOrder.map(t => {
             const inBox = gathered.includes(t), wrong = said?.t === t && !said.ok;
             return (
               <button key={t} className={`gather-item${inBox ? " yes" : wrong ? " no" : ""}`} disabled={inBox || all} onClick={() => pick(t)} aria-pressed={inBox}>
-                <span className="em" aria-hidden="true">{PARTS[t].emoji}</span><b>{PARTS[t].name}</b>{inBox && need[t] > 1 && <small>× {need[t]}</small>}
+                <PartPic type={t} size={48} /><b>{PARTS[t].name}</b>{inBox && need[t] > 1 && <small>× {need[t]}</small>}{inBox && <span className="tick" aria-hidden="true">✓</span>}
               </button>
             );
           })}
         </div>
-        <p className="muted center">Parts found: {got} of {types.length}</p>
-        {all && <div className="row center-row"><button className="btn primary big" onClick={() => go("build")}>Start building 🔧</button></div>}
       </div>
     );
   }
@@ -133,7 +150,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
     return (
       <div className="stack proj">
         {header}
-        <div className="proj-win">🎉 It works!</div>
+        <div className="proj-win"><span className="lesson-star" aria-hidden="true">⭐</span>It works!</div>
         <Guide Face={VoltFace} mood="cheer">{project.explain}</Guide>
         <div className="proj-cards">
           <div className="proj-card"><b>🌍 In the world</b><p>{project.world}</p></div>
@@ -150,17 +167,17 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   }
 
   // Build, predict and test.
-  const runTest = () => { hush(); const m = markBuild(project, board); setMark(m); setTesting(true); m.pass ? sfx.tada() : sfx.oops(); };
+  const runTest = () => { hush(); const m = markBuild(project, board); setMark(m); setPassed(m.pass); setTesting(true); m.pass ? sfx.tada() : sfx.oops(); };
   const words = mark ? explainMark(project, mark, board, 3) : [];
   const actions = (
     <>
       <button className="btn primary" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}>⚡ Test my circuit</button>
       <details className="proj-must">
-        <summary>🎯 What it must do</summary>
+        <summary>🎯 <span className="long">What it must do</span><span className="short">Goal</span></summary>
         <ul>{checkLines(project).map((l, i) => <li key={i}>{l}</li>)}</ul>
       </details>
       {/* Always shown (just disabled), so the row above the board never changes size. */}
-      <button className="btn ghost" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }}>↺ Start again</button>
+      <button className="btn ghost" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }} aria-label="Start again">↺<span className="long"> Start again</span></button>
     </>
   );
 
@@ -198,7 +215,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
           )}
         </div>
       )}
-      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={need} trayTypes={[...types, "wire"]} guide={guide} actions={actions} examples={false}
+      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={need} trayTypes={[...types, "wire"]} guide={guide} actions={actions} examples={false} finished={passed}
         onChange={parts => setBoard(parts)} />
     </div>
   );

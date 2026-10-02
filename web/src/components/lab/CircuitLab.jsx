@@ -6,12 +6,23 @@
 //   turn, flip, move, remove). Double-tapping a switch also flips it.
 // - Drag a part from anywhere on it. While dragging, the posts it will land on glow green (free)
 //   or red (taken); it snaps there when you let go, or goes back if the spot is taken.
+// - A part can also be dragged straight from the tray onto the board. Dropped on the faint guide
+//   part, it snaps into exactly that place. (Tapping the tray part, then the posts, still works.)
+// - Once the circuit is finished (every guide part in place, or its test passed), a tap on a switch
+//   flips it straight away and the toolbar shows only the switch; turn, move and remove are tucked
+//   behind "Change", so playing with the circuit can't break it by accident.
 // - Every tap goes to the nearest post (a big target), and a tap that doesn't fit cancels.
-// - The board never scrolls by itself; the hint above it keeps the same height.
+// - The board, the hint and the parts tray are on screen together on phones, tablets and laptops:
+//   the board is sized to the height left over (see --lab-fit in app.css). Volt's hint is always
+//   above the board. On tablets and laptops the parts sit beside the board; on phones they are
+//   docked at the bottom. "Describe my circuit" is under the board. A project opens scrolled to its "Test my circuit" row; after
+//   that the board never scrolls by itself.
 // - In guided projects the next part pulses, each right step gets a ✓, "Show me" demonstrates
 //   the next step, and the hint names the real problem (a part the wrong way round, a spare part).
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import PartPic from "./PartPic.jsx";
 import PartGlyph from "./PartGlyph.jsx";
+import { VoltFace } from "../journey/Guide.jsx";
 import { PARTS } from "../../content/lab/parts.js";
 import { EXAMPLES } from "../../content/lab/examples.js";
 import {
@@ -79,8 +90,9 @@ function history(state, action) {
 //   guide     the parts of a reference layout: the next missing one is shown as a ghost to copy
 //   actions   extra buttons shown under the hint (e.g. "Test my circuit")
 //   examples  show the example boards (default true)
+//   finished  the circuit has passed its test: play with it, with the editing tools tucked away
 //   onChange(parts, inputs) whenever the board changes
-export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTypes, guide, actions, examples = true, onChange } = {}) {
+export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTypes, guide, actions, examples = true, finished: finishedProp = false, onChange } = {}) {
   const { activeChild } = useApp();
   const young = (activeChild?.grade ?? 3) <= 2 && activeChild?.learner !== "adult";
   const saveKey = saveKeyProp ?? `sparklab.lab.free.${activeChild?.id ?? "guest"}`;
@@ -95,6 +107,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const [zoom, setZoom] = useState(1);
   const [result, setResult] = useState(null);
   const [drag, setDrag] = useState(null); // { uid, dx, dy, to, ok, moved }
+  const [trayDrag, setTrayDrag] = useState(null); // { type, part, ok } while a part is dragged out of the tray
+  const [editing, setEditing] = useState(null); // uid of the part whose editing tools are open, once the circuit is finished
   const [notice, setNotice] = useState(null);
   const [cheer, setCheer] = useState(null); // { uid, n } for the ✓ after a right step
   const [showMe, setShowMe] = useState(false);
@@ -102,10 +116,15 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const [autoRead, setAutoRead] = useState(() => local.get("sparklab.lab.readHints", young));
   const [meter, setMeter] = useState((activeChild?.grade ?? 0) >= 9 || activeChild?.learner === "adult");
   const [clearArmed, setClearArmed] = useState(false);
+  const trayGesture = useRef(null), trayGhost = useRef(null);
   const floatRef = useRef(null), wrapRef = useRef(null), svgRef = useRef(null), liveRef = useRef(null), playerRef = useRef(null);
   const pointers = useRef(new Map()), gesture = useRef(null), lastTap = useRef({ uid: null, t: 0 }), satisfied = useRef(null), noticeTimer = useRef(null);
 
   useEffect(() => onMuteChange(setMutedState), []);
+  // A project's board opens with its action row at the top of the screen, so the board, hint and tray all fit below it.
+  const actionsRef = useRef(null);
+  useEffect(() => { actionsRef.current?.scrollIntoView({ block: "start" }); }, []);
+  useEffect(() => { setEditing(e => (e && e !== selected ? null : e)); }, [selected]);
   useEffect(() => { local.set(saveKey, serialize(parts, inputs)); onChange?.(parts, inputs); }, [saveKey, parts, inputs]); // eslint-disable-line react-hooks/exhaustive-deps
   const say = msg => { setNotice(msg); clearTimeout(noticeTimer.current); noticeTimer.current = setTimeout(() => setNotice(null), 3500); };
 
@@ -138,6 +157,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const next = guide ? guide.find(g => !parts.some(p => samePlace(p, g))) : null;
   const almost = next ? reversedOf(parts, next) : null;
   const spare = guide ? strays(parts, guide)[0] ?? null : null;
+  const finished = finishedProp || Boolean(guide && parts.length && !next && !spare);
   // A ✓ (with a sound and a buzz) each time a part lands where the guide wants it.
   useEffect(() => {
     if (!guide) return;
@@ -224,7 +244,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     const now = performance.now(), double = lastTap.current.uid === p.uid && now - lastTap.current.t < DOUBLE_TAP_MS;
     lastTap.current = { uid: p.uid, t: now };
     setSelected(p.uid);
-    if (double) toggleInput(p);
+    if (finished && editing !== p.uid) toggleInput(p); // finished: one tap flips a switch
+    else if (double) toggleInput(p);
   };
 
   // ── Pointer input: tap, drag from anywhere on a part, pinch to zoom ──
@@ -295,6 +316,49 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     tap(nearestPost(toBoard(e)), g.uid);
   };
 
+  // ── Dragging a part out of the tray ──
+  // The picture under the finger is moved directly (no re-render); the board only redraws when the
+  // posts it would land on change.
+  const trayPart = (type, e) => {
+    const xy = toBoard(e);
+    if (next?.type === type) { // near the faint guide part: land exactly on it
+      const [x0, y0, x1, y1] = partRect(next);
+      if (xy[0] >= x0 - 26 && xy[0] <= x1 + 26 && xy[1] >= y0 - 26 && xy[1] <= y1 + 26) return makePart(parts, type, next.at, { dir: next.dir, len: next.len, ohms: next.ohms, colour: next.colour });
+    }
+    const at = nearestPost([xy[0] - PITCH, xy[1]]) ?? nearestPost(xy); // the part's middle sits under the finger
+    return at ? makePart(parts, type, at, { dir: 0, len: 2 }) ?? makePart(parts, type, at, { len: 2 }) : null;
+  };
+  const moveGhost = () => { const g = trayGesture.current, el = trayGhost.current; if (g && el) el.style.transform = `translate(${g.cx}px, ${g.cy}px)`; };
+  const onTrayDown = (type, e) => {
+    if (left(type) <= 0 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    trayGesture.current = { type, x: e.clientX, y: e.clientY, cx: e.clientX, cy: e.clientY, dragged: false, sig: null };
+    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* the pointer has already gone */ }
+  };
+  const onTrayMove = e => {
+    const g = trayGesture.current;
+    if (!g || g.done) return;
+    if (!g.dragged) {
+      if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) return;
+      g.dragged = true; playerRef.current?.unlock(); setSelected(null); setShowMe(false); setMode({ kind: "idle" });
+    }
+    g.cx = e.clientX; g.cy = e.clientY; moveGhost();
+    const part = trayPart(g.type, e), ok = !!part && !clashes(parts, part);
+    const sig = part ? `${key(part.at)}:${part.dir}:${ok}` : "off";
+    if (sig !== g.sig) { g.sig = sig; g.part = part; g.ok = ok; setTrayDrag({ type: g.type, part, ok }); }
+  };
+  const onTrayUp = e => {
+    const g = trayGesture.current;
+    if (!g || g.done) return;
+    if (!g.dragged) { trayGesture.current = null; return; } // a tap: the click picks the part
+    g.done = true; setTrayDrag(null);
+    if (e.type !== "pointercancel") {
+      if (g.part && g.ok) add(g.part);
+      else if (g.part) { sfx.oops(); say("Another part is already there. Drop it on free posts."); }
+      else say("Drop the part on the board.");
+    }
+    setTimeout(() => { trayGesture.current = null; }, 0); // after the click that follows a drag, which is ignored
+  };
+
   // ── Keyboard ──
   const onKeyDown = e => {
     const k = e.key;
@@ -336,10 +400,13 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     : drag?.moved ? (drag.ok ? "Let go to snap it onto the green posts." : "Red means that spot is taken or off the board.")
     : almost ? `Almost! The ${lower(almost.type)} is the wrong way round: its + end should be at ${postName(almostPlus?.[1] ?? next.at)}. Tap ⇅ Flip.`
     : spare && !next ? `The ${lower(spare.type)} ${spare.type === "wire" ? "" : `${spare.id} `}isn't needed for this circuit. Remove it?`
-    : next ? `Next: ${describeGhost(next)}. Pick it from the tray, then tap the posts where the faint one is.`
+    : trayDrag ? (trayDrag.part ? (trayDrag.ok ? "Let go to snap it onto the green posts." : "Red means that spot is taken.") : "Drag it onto the board.")
+    : next ? `Next: ${describeGhost(next)}. Drag it onto the faint one.`
     : spare ? `The ${lower(spare.type)} ${spare.type === "wire" ? "" : `${spare.id} `}isn't in the plan. Remove it?`
+    : sel && finished && editing !== sel.uid ? (["slide", "changeover", "touch"].includes(sel.type) ? `Tap the ${lower(sel.type)} to flip it. Your circuit is built!` : sel.type === "button" ? "Press and hold the button to close the loop." : `Your circuit is built! Tap "Change" only if you want to move this part.`)
     : sel ? `${nameOf(sel.type)}${sel.type === "wire" ? "" : ` ${sel.id}`}: use the buttons next to it, or drag it to move it.`
-    : parts.length ? "Tap a part to choose it. Double-tap a switch to flip it." : "Pick a part from the tray, then tap the board.";
+    : finished && !sel ? "Your circuit is built! Tap a switch to turn it ON or OFF."
+    : parts.length ? "Tap a part to choose it. Double-tap a switch to flip it." : "Drag a part from the tray onto the board, or tap it and then tap the board.";
   useEffect(() => { if (autoRead && hint && !drag?.moved) speak(hint.replace(/[⚠️⇅✓]/g, "")); }, [hint, autoRead]); // eslint-disable-line react-hooks/exhaustive-deps
   const status = describe(parts, result).filter(l => / is /.test(l) || /^Short/.test(l)).join(" ");
   const reading = sel && result?.readings?.parts?.[sel.id];
@@ -351,6 +418,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   let floating = null;
   if (sel && mode.kind === "idle" && !drag?.moved) {
     const [x0, y0, x1, y1] = partRect(sel), below = y0 < 80;
+    const tools = !finished || editing === sel.uid; // turn, flip, move and remove
     floating = (
       <div ref={floatRef} data-cx={(x0 + x1) / 2 / W} className={`lab-float${below ? " below" : ""}`} style={{ top: `${((below ? y1 + 6 : y0 - 6) / H) * 100}%` }} role="toolbar" aria-label={`${nameOf(sel.type)} ${sel.id}`}>
         {sel.type === "slide" && <button className={`lab-fbtn sw${inputs[sel.id] === "on" ? " on" : ""}`} onClick={() => toggleInput(sel)} aria-label={`Switch ${sel.id} is ${inputs[sel.id] === "on" ? "ON" : "OFF"}. Tap to switch it ${inputs[sel.id] === "on" ? "OFF" : "ON"}`}>{inputs[sel.id] === "on" ? "ON" : "OFF"}</button>}
@@ -365,10 +433,14 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
         {sel.type === "changeover" && <button className="lab-fbtn sw" onClick={() => toggleInput(sel)} aria-label="Flip the two-way switch">{inputs[sel.id] === "down" ? "▼" : "▲"}</button>}
         {sel.type === "touch" && <button className={`lab-fbtn sw${inputs[sel.id] === "yes" ? " on" : ""}`} onClick={() => toggleInput(sel)} aria-label={inputs[sel.id] === "yes" ? "Take your finger off" : "Put your finger on"}>{inputs[sel.id] === "yes" ? "🫳" : "✋"}</button>}
         {sel.type === "piezo" && <button className="lab-fbtn" onClick={() => { playerRef.current?.unlock(); liveRef.current?.clap(sel.id); sfx.bump(); buzz(15); }} aria-label="Clap">👏</button>}
-        <button className="lab-fbtn" onClick={() => turn(sel.uid)} aria-label="Turn">⟳</button>
-        {HAS_DIRECTION.has(sel.type) && <button className={`lab-fbtn${almost?.uid === sel.uid ? " pulse" : ""}`} onClick={() => flip(sel.uid)} aria-label="Flip end for end">⇅</button>}
-        <button className="lab-fbtn" onClick={() => setMode({ kind: "move", uid: sel.uid })} aria-label="Move">✥</button>
-        <button className="lab-fbtn danger" onClick={() => remove(sel.uid)} aria-label="Remove">🗑</button>
+        {!tools && !["slide", "button", "changeover", "touch", "piezo"].includes(sel.type) && <span className="lab-fname">{nameOf(sel.type)}{sel.type !== "wire" && ` ${sel.id}`}</span>}
+        {!tools && <button className="lab-fbtn change" onClick={() => { setEditing(sel.uid); sfx.click(); }} aria-label="Change this part: turn, move or remove it">✏️ Change</button>}
+        {tools && <>
+          <button className="lab-fbtn" onClick={() => turn(sel.uid)} aria-label="Turn">⟳</button>
+          {HAS_DIRECTION.has(sel.type) && <button className={`lab-fbtn${almost?.uid === sel.uid ? " pulse" : ""}`} onClick={() => flip(sel.uid)} aria-label="Flip end for end">⇅</button>}
+          <button className="lab-fbtn" onClick={() => setMode({ kind: "move", uid: sel.uid })} aria-label="Move">✥</button>
+          <button className="lab-fbtn danger" onClick={() => remove(sel.uid)} aria-label="Remove">🗑</button>
+        </>}
       </div>
     );
   }
@@ -393,16 +465,17 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
         <button className="btn ghost lab-zoom" onClick={() => setZoom(1)} aria-label="Fit the board">{Math.round(zoom * 100)}%</button>
         <button className="btn ghost" onClick={() => setZoom(z => Math.min(2.4, +(z + 0.2).toFixed(1)))} aria-label="Zoom in">＋</button>
         <span className="spacer" />
-        <button className="btn ghost" onClick={() => setMuted(!muted)} aria-pressed={!muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"}>{muted ? "🔇" : "🔊"}</button>
-        <button className="btn ghost" aria-pressed={autoRead} onClick={() => { const v = !autoRead; setAutoRead(v); local.set("sparklab.lab.readHints", v); if (!v) hush(); }} aria-label={autoRead ? "Hints are read aloud. Stop reading hints" : "Read hints aloud"}>{autoRead ? "🗣" : "🤐"}</button>
+        <button className="btn ghost" onClick={() => setMuted(!muted)} aria-pressed={!muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"}>{muted ? "🔇" : "🔊"}<span className="lbl"> Sound</span></button>
+        <button className="btn ghost" aria-pressed={autoRead} onClick={() => { const v = !autoRead; setAutoRead(v); local.set("sparklab.lab.readHints", v); if (!v) hush(); }} aria-label={autoRead ? "Hints are read aloud. Stop reading hints" : "Read hints aloud"}>{autoRead ? "🗣" : "🤐"}<span className="lbl"> Read hints</span></button>
         <button className={`btn ghost${clearArmed ? " danger" : ""}`} disabled={!parts.length} aria-label={clearArmed ? "Tap again to clear the board" : "Clear the board"}
           onClick={() => { if (clearArmed) { setParts([]); setInputs({}); setSelected(null); setClearArmed(false); } else { setClearArmed(true); setTimeout(() => setClearArmed(false), 3000); } }}>
-          {clearArmed ? "Sure? 🧹" : "🧹"}
+          {clearArmed ? "Sure? 🧹" : <>🧹<span className="lbl"> Clear</span></>}
         </button>
       </div>
 
       <div className={`lab-hint${result?.short ? " bad" : ""}${almost || (spare && !next) ? " warn" : ""}`} role="status">
-        <span>{hint}</span>
+        <VoltFace size={38} lamp={false} mood={result?.short ? "wow" : finished ? "cheer" : "happy"} />
+        <span className="txt">{hint}</span>
         <span className="lab-hint-actions">
           {mode.kind !== "idle" && <button className="btn small" onClick={() => cancel()}>✕ Cancel</button>}
           {mode.kind === "idle" && almost && <button className="btn small primary" onClick={() => { setSelected(almost.uid); flip(almost.uid); }}>⇅ Flip it</button>}
@@ -410,12 +483,12 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
           {mode.kind === "idle" && next && !almost && <button className="btn small" onClick={showNext}>👀 Show me</button>}
         </span>
       </div>
-      {actions && <div className="lab-actions">{actions}</div>}
+      {actions && <div className="lab-actions" ref={actionsRef}>{actions}</div>}
 
       <div ref={wrapRef} className="lab-board-wrap" tabIndex={0} role="application" aria-roledescription="circuit board"
         aria-label={`Circuit board, ${COLS} by ${ROWS} posts. Arrow keys move, Enter places or chooses, T switches, R turns, F flips, Delete removes. Cursor at ${postName(cursor)}.`}
         onKeyDown={onKeyDown}>
-        <div className="lab-stage" style={{ width: `calc(min(100%, 58vh) * ${zoom})` }}>
+        <div className="lab-stage" style={{ width: `calc(min(100%, max(240px, var(--lab-fit, 58vh))) * ${zoom})` }}>
           <svg ref={svgRef} className={`lab-board${result?.short ? " short" : ""}${mode.kind !== "idle" ? " placing" : ""}`} viewBox={`0 0 ${W} ${H}`}
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onMouseDown={e => e.preventDefault()}>
             <rect className="lab-bg" x={8} y={8} width={W - 16} height={H - 16} rx={22} />
@@ -432,6 +505,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
                 offset={drag?.uid === p.uid && drag.moved ? [drag.dx, drag.dy] : [0, 0]} flagged={spare?.uid === p.uid || almost?.uid === p.uid} />
             ))}
 
+            {trayDrag?.part && <PartGlyph part={{ ...trayDrag.part, anchorXY: postXY(trayDrag.part.at) }} ghost showLabel={false} />}
+            {trayDrag?.part && Object.values(pinPosts(trayDrag.part)).map(at => <circle key={`t${key(at)}`} className={`lab-landing ${trayDrag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
             {landing.map(at => <circle key={`l${key(at)}`} className={`lab-landing ${drag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
             {mode.kind === "end" && <circle className="lab-from" cx={postXY(mode.from)[0]} cy={postXY(mode.from)[1]} r={17} />}
             {targets.map(o => <circle key={key(o.to)} className="lab-target" cx={postXY(o.to)[0]} cy={postXY(o.to)[1]} r={16} />)}
@@ -458,24 +533,27 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
       <div className="lab-tray" role="toolbar" aria-label="Parts tray">
         {(trayTypes ? [{ title: "Your parts", types: trayTypes }] : TRAY).map(g => (
           <div key={g.title} className="lab-tray-group">
-            <span className="eyebrow">{g.title}</span>
+            <span className="eyebrow">{g.title}{kit && g.types.every(t => t === "wire" || left(t) <= 0) && <b className="lab-tray-done"> · ✓ all placed</b>}</span>
             <div className="lab-tray-items">
               {g.types.map(type => {
                 const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
-                if (kit && n <= 0) return null; // in a project, used-up parts leave the tray
+                const used = Boolean(kit) && n <= 0; // in a project, a part that is on the board stays in the tray, ticked
                 return (
-                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}`} aria-pressed={active} disabled={n <= 0} onClick={() => pickType(type)} title={PARTS[type].say}>
-                    <span className="em" aria-hidden="true">{PARTS[type].emoji}</span>
+                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0} title={PARTS[type].say}
+                    onClick={() => { if (!trayGesture.current?.dragged) pickType(type); }}
+                    onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
+                    <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
                     <span className="nm">{PARTS[type].name}</span>
-                    {type !== "wire" && <small>{n > 0 ? `${n} left` : "none left"}</small>}
+                    {type === "wire" ? <small>as many as you need</small> : <small>{used ? "✓ on the board" : n > 0 ? `${n} left` : "none left"}</small>}
                   </button>
                 );
               })}
-              {kit && g.types.every(t => t === "wire" || left(t) <= 0) && <span className="lab-tray-done">✓ All parts placed</span>}
             </div>
           </div>
         ))}
       </div>
+
+      {trayDrag && <div className="lab-tray-ghost" ref={el => { trayGhost.current = el; moveGhost(); }} aria-hidden="true"><PartPic type={trayDrag.type} size={40} /></div>}
 
       {hasExtras && (
         <div className="lab-inspector" aria-label={`${nameOf(sel.type)} ${sel.id} settings`}>
