@@ -12,6 +12,7 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { assignmentStatus } from "../../lib/school.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { hush } from "../../lib/speech.js";
+import { useUrlState } from "../../lib/useUrlState.js";
 
 const MODES = [
   ["kids", "🐱 Kids mode", "Keyo the cat helps, big letters, no timer on screen."],
@@ -37,7 +38,7 @@ export default function TypingCourse() {
     if (!api?.assignmentsFor || !activeChild) return;
     api.assignmentsFor(activeChild.id).then(setTasks).catch(() => setTasks([]));
   }, [api, activeChild?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useUrlState("lesson"); // the open lesson, kept in the address so Back returns to the list
   const [section, setSection] = useState("lessons"); // lessons | ladder | tests | games | progress
   const [smart, setSmart] = useState(null);           // a smart-practice lesson, while open
   const [muted, setM] = useState(isMuted());
@@ -55,8 +56,8 @@ export default function TypingCourse() {
   const unlocked = (i, d = done) => unlockAll || !kids || isUnlocked(steps, i, d, 0);
   const lessonsDone = steps.filter(s => done.has(s.id)).length;
 
-  const idx = steps.findIndex(s => s.id === open);
-  const lesson = smart ?? steps[idx];
+  const idx = steps.findIndex((s, i) => s.id === open && unlocked(i));
+  const lesson = (open === "practice-smart" ? smart : null) ?? steps[idx];
   // Keys the learner has met so far (shown bright on the keyboard).
   const taught = useMemo(() => new Set(lesson ? [...lesson.pool, " "] : []), [lesson]);
   const go = id => { hush(); setSmart(null); setOpen(id); window.scrollTo({ top: 0 }); };

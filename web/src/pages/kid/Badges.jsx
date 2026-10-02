@@ -1,10 +1,12 @@
 import { useApp } from "../../lib/AppContext.jsx";
 import { badgeState, starCount } from "../../lib/progress.js";
-import { Crumbs } from "./Home.jsx";
+import { Crumbs, PageLoading } from "./Home.jsx";
+import { usePageTitle } from "../../lib/usePageTitle.js";
 
 export default function Badges() {
   const { childData, published } = useApp();
-  if (!published) return null;
+  usePageTitle("My badges");
+  if (!published) return <PageLoading />;
   const badges = badgeState(childData, published.modules);
   const earned = badges.filter(b => b.earned).length;
   return (

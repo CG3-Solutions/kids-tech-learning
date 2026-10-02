@@ -2,14 +2,16 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats } from "../../lib/progress.js";
 import { AREAS } from "../../content/areas.js";
-import { Crumbs } from "./Home.jsx";
+import { Crumbs, PageLoading } from "./Home.jsx";
+import { usePageTitle } from "../../lib/usePageTitle.js";
 
 export default function Area() {
   const { areaId } = useParams();
   const { childData, published } = useApp();
   const area = AREAS.find(a => a.id === areaId);
+  usePageTitle(area?.title);
   if (!area) return <Navigate to="/learn" replace />;
-  if (!published) return null;
+  if (!published) return <PageLoading />;
   const mods = published.modules.filter(m => m.area === area.id);
   return (
     <div className="stack page">

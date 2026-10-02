@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { isMuted, setMuted, onMuteChange, sfx } from "../../lib/sfx.js";
-import { hush } from "../../lib/speech.js";
+import { hush, speak } from "../../lib/speech.js";
+import { useUrlState } from "../../lib/useUrlState.js";
 import { useApp } from "../../lib/AppContext.jsx";
 
 // Is step `index` open for this child?
@@ -31,7 +32,8 @@ function ParentNote({ step }) {
 export default function Journey({ title, intro, Face, steps, parts = [], views, done, grade, onStepDone, top }) {
   const { unlockAll } = useApp(); // a parent may have opened every level for this learner
   const open_ = (i, d = done) => unlockAll || isUnlocked(steps, i, d, grade);
-  const [open, setOpen] = useState(null);
+  const [openParam, setOpen] = useUrlState("step"); // the open step, kept in the address so Back returns to the map
+  const [lockedTap, setLockedTap] = useState(null);  // a locked step the child tapped: say how to open it
   const [celebrate, setCelebrate] = useState(false);
   const [run, setRun] = useState(0);
   const [muted, setM] = useState(isMuted());
@@ -39,8 +41,10 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
   useEffect(() => () => hush(), []);
 
   const main = steps.filter(s => !s.bonus);
-  const idx = steps.findIndex(s => s.id === open);
+  // A step in the address only opens if it exists and is open for this child.
+  const idx = steps.findIndex((s, i) => s.id === openParam && open_(i));
   const step = steps[idx];
+  const open = step?.id ?? null;
   const View = step && views[step.id];
   const doneNow = new Set([...done, ...(open ? [open] : [])]);
   const next = steps.slice(idx + 1).find((_, k) => open_(idx + 1 + k, doneNow));
@@ -49,7 +53,9 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
 
   // Free-play steps (`quiet`) earn their star without leaving the activity.
   const complete = () => { onStepDone(step.id); sfx.tada(); if (!step.quiet) setCelebrate(true); };
-  const go = id => { hush(); setCelebrate(false); setOpen(id); window.scrollTo({ top: 0 }); };
+  const go = id => { hush(); setCelebrate(false); setLockedTap(null); setOpen(id); window.scrollTo({ top: 0 }); };
+  const lockedMsg = firstOpen => (firstOpen ? `Finish “${firstOpen.title}” first to open this one.` : "Finish the steps before this one first.");
+  const tapLocked = (s, firstOpen) => { sfx.click(); setLockedTap(s.id); speak(lockedMsg(firstOpen)); };
   // On phones the label is hidden and only the icon shows (see .sound-btn in app.css).
   const muteBtn = <button className="btn ghost sound-btn" onClick={() => setMuted(!muted)} aria-pressed={muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"}>
     <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span><span className="label">{muted ? " Sound off" : " Sound on"}</span></button>;
@@ -120,11 +126,12 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
               const isNext = s === firstOpen;
               return (
                 <li key={s.id} className={`stone${isDone ? " done" : ""}${unlocked ? "" : " locked"}${isNext ? " next" : ""}${s.bonus ? " bonus" : ""}`}>
-                  <button disabled={!unlocked} onClick={() => go(s.id)} aria-label={`${s.title}${isDone ? ", done" : unlocked ? "" : ", locked"}`}>
+                  <button aria-disabled={!unlocked} onClick={() => (unlocked ? go(s.id) : tapLocked(s, firstOpen))} aria-label={`${s.title}${isDone ? ", done" : unlocked ? "" : ", locked"}`}>
                     <span className="em">{unlocked ? s.emoji : "🔒"}</span>
                     <span className="txt"><span className="eyebrow">{s.bonus ? "Bonus" : `Step ${stepNo(s)}`}</span><b>{s.title}</b><small>{s.blurb}</small></span>
                     <span className="mark">{isDone ? "⭐" : isNext ? "Start" : ""}</span>
                   </button>
+                  {lockedTap === s.id && <p className="lock-hint" role="status">🔒 {lockedMsg(firstOpen)}</p>}
                 </li>
               );
             })}

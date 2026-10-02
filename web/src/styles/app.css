@@ -152,7 +152,8 @@ button { cursor: pointer }
 .mod-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding-top: 22px }
 .mod-head .em { font-size: 3rem; line-height: 1 }
 .mod-head h1 { font-size: clamp(1.8rem, 4.5vw, 2.4rem) }
-.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none }
+/* Sections wrap onto a second row rather than hiding off the edge, so every one can be seen. */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px }
 .tabs a, .tabs button { flex: none; border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 16px; font-family: var(--f-display); font-weight: 600; font-size: 1rem; text-decoration: none }
 .tabs .active { background: var(--ink); color: var(--board); border-color: var(--ink) }
 .lvl-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
@@ -613,7 +614,15 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 .tu-card { width: min(520px, 100%); border-color: var(--lv4) }
 .toast { z-index: 95 }
 
-.crumbs { display: flex; flex-wrap: wrap; gap: 4px; font-size: .95rem; color: var(--muted) }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: .95rem; color: var(--muted) }
+.crumbs a.back-btn { color: var(--ink); font-family: var(--f-display); font-size: 1.05rem; min-height: 44px; margin-right: 10px }
+.crumbs a.back-btn:hover { text-decoration: none }
+/* On phones the Back button is enough; the page title below says where you are. */
+@media (max-width: 600px) { .crumbs > span { display: none } }
+.kid-main:focus { outline: none }
+.lock-hint { margin: 6px 4px 0; font-weight: 700 }
+.oops { text-align: center; display: grid; gap: 12px; justify-items: center; margin: 32px auto; max-width: 560px }
+.oops .em { font-size: 4rem; line-height: 1 }
 .crumbs a { color: var(--muted); font-weight: 700; text-decoration: none }
 .crumbs a:hover { color: var(--ink); text-decoration: underline }
 .crumbs .sep { margin: 0 6px }

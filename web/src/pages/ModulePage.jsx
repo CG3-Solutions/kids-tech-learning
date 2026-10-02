@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
-import { Crumbs } from "./kid/Home.jsx";
+import { Crumbs, PageLoading } from "./kid/Home.jsx";
+import { usePageTitle } from "../lib/usePageTitle.js";
+import { useUrlState, viewKey } from "../lib/useUrlState.js";
 import { areaOf } from "../content/areas.js";
 import CardDetail from "../components/CardDetail.jsx";
 import Quiz from "../components/Quiz.jsx";
@@ -25,7 +27,7 @@ export default function ModulePage() {
   const { moduleId, tab: tabParam } = useParams();
   const location = useLocation();
   const { published, activeChild, childData, markDone, addAttempt, setChildState } = useApp();
-  const [openId, setOpenId] = useState(null);
+  const [openId, setOpenId] = useUrlState("card"); // the open card, kept in the address so Back closes it
   const [levelFilter, setLevelFilter] = useState("all");
 
   const m = published?.modules.find(x => x.id === moduleId);
@@ -33,20 +35,26 @@ export default function ModulePage() {
   const quiz = useMemo(() => published?.quiz.filter(q => q.module_id === moduleId) ?? [], [published, moduleId]);
   const done = useMemo(() => new Set(childData.progress.map(p => p.item_id)), [childData]);
 
-  if (!published) return null;
+  usePageTitle(m?.title);
+  if (!published) return <PageLoading />;
   if (!m || m.coming_soon) return <Navigate to="/learn" replace />;
   const area = areaOf(m.area);
-  // Subjects with an adventure (Binary, Electricity) open on its map; others open on their cards.
-  const hasJourney = ["binary", "circuit", "typing", "computer"].includes(m.activity) || PRACTICE_ACTIVITIES.has(m.activity);
+  // Subjects with an adventure (Binary, Computer) open on its map; others open on their cards.
+  // Electricity opens on its cards too: they are the introduction to Volt's adventure.
+  const hasJourney = ["binary", "typing", "computer"].includes(m.activity) || PRACTICE_ACTIVITIES.has(m.activity) || (m.activity === "circuit" && !cards.length);
   const glossary = GLOSSARY_MODULES.has(m.id) && m.activity === "computer"; // cards are reference only; the path gives the stars
   const chipQuiz = m.activity === "computer"; // Chip's mixed quiz replaces the card quiz
-  const tab = tabParam ?? (hasJourney ? m.activity : "cards");
 
   const levels = (m.levels?.length ? m.levels : [...new Set(cards.map(c => c.level))].map(id => ({ id, name: `Level ${id}`, note: "" })))
     .filter(l => cards.some(c => c.level === l.id));
   const color = lv => LV_COLORS[lv % LV_COLORS.length];
   const tabs = [...(cards.length ? ["cards"] : []), ...(m.activity ? [m.activity] : []), ...(EXTRA_ACTIVITIES[m.id] ?? []), ...(quiz.length || chipQuiz ? ["quiz"] : [])];
-  const open = cards.find(c => c.id === openId);
+  // An address with a section this subject doesn't have goes to the subject's first page.
+  if (tabParam && !tabs.includes(tabParam)) return <Navigate to={`/learn/${m.id}`} replace />;
+  const first = hasJourney ? m.activity : "cards";
+  const tab = tabParam ?? (tabs.includes(first) ? first : tabs[0]);
+  const vk = viewKey(location);
+  const open = tab === "cards" ? cards.find(c => c.id === openId) : undefined;
   const openIdx = open ? cards.indexOf(open) : -1;
   const levelOf = lv => levels.find(l => l.id === lv)?.name ?? `Level ${lv}`;
 
@@ -92,17 +100,17 @@ export default function ModulePage() {
           </div>
         )}
 
-        {PRACTICE_ACTIVITIES.has(tab) && tab === m.activity && <PracticeJourney key={`${tab}-${location.key}`} activity={tab} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
-        {tab === "circuit" && <CircuitJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
-        {tab === "lab" && <LabTab key={location.key} done={done} onProjectDone={id => markDone(m.id, id)} />}
-        {tab === "typing" && <TypingCourse key={location.key} />}
-        {tab === "computer" && <ComputerJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
-        {tab === "binary" && <BinaryJourney key={location.key} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
+        {PRACTICE_ACTIVITIES.has(tab) && tab === m.activity && <PracticeJourney key={`${tab}-${vk}`} activity={tab} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
+        {tab === "circuit" && <CircuitJourney key={vk} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
+        {tab === "lab" && <LabTab key={vk} done={done} onProjectDone={id => markDone(m.id, id)} />}
+        {tab === "typing" && <TypingCourse key={vk} />}
+        {tab === "computer" && <ComputerJourney key={vk} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
+        {tab === "binary" && <BinaryJourney key={vk} done={done} grade={activeChild?.grade ?? 0} onStepDone={id => markDone(m.id, id)} />}
         {tab === "coding" && <CodingPuzzles solved={done} onSolve={id => markDone(m.id, `puzzle-${id}`)} />}
         {tab === "hunt" && <Hunt marks={childData.state.hunt ?? {}} onChange={v => setChildState("hunt", v)} />}
         {tab === "machines" && <Machines />}
         {tab === "quiz" && (chipQuiz
-          ? <ChipQuiz key={location.key} done={done} onFinish={(score, total) => addAttempt(m.id, score, total)} />
+          ? <ChipQuiz key={vk} done={done} onFinish={(score, total) => addAttempt(m.id, score, total)} />
           : <Quiz questions={quiz} onFinish={(score, total) => addAttempt(m.id, score, total)} />)}
       </div>
 
