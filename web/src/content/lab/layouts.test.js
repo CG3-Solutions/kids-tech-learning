@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { LAYOUTS, STARTS } from "./layouts.js";
 import { PROJECTS, projectById } from "./projects.js";
 import { parseParts, parseCheck } from "./netlist.js";
-import { buildBoard, toCircuit } from "../../lib/circuit/board.js";
+import { buildBoard, toCircuit, clashes } from "../../lib/circuit/board.js";
 import { runChecks } from "../../lib/circuit/engine.js";
 import { badgeState } from "../../lib/progress.js";
 import { SEED } from "../index.js";
@@ -10,8 +10,15 @@ import { SEED } from "../index.js";
 const typesOf = parts => parts.filter(p => p.type !== "wire").map(p => `${p.type}:${p.id}${p.ohms ? `:${p.ohms}` : ""}${p.colour ? `:${p.colour}` : ""}`).sort();
 
 describe("Guided layouts on the board", () => {
-  it("every project in units 1–3 has a layout", () => {
-    for (const p of PROJECTS.filter(x => x.unit <= 3)) expect(LAYOUTS[p.id], p.id).toBeTruthy();
+  it("every project with a reference circuit has a layout (the open-ended invention has none)", () => {
+    for (const p of PROJECTS.filter(x => !x.open)) expect(LAYOUTS[p.id], p.id).toBeTruthy();
+    expect(PROJECTS.filter(x => x.open).map(x => x.id)).toEqual(["lab-11-8"]);
+  });
+  it("no part in a layout lies on top of another, so a child can really place each one", () => {
+    for (const [id, steps] of Object.entries(LAYOUTS)) {
+      const board = buildBoard(steps);
+      for (let i = 0; i < board.length; i++) expect(clashes(board.slice(0, i), board[i]), `${id}: ${board[i].type} ${board[i].id}`).toBe(false);
+    }
   });
   for (const [id, steps] of Object.entries(LAYOUTS)) {
     it(`${id}: fits the board, uses exactly the project's parts, and passes every check`, () => {

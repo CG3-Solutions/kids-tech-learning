@@ -169,9 +169,9 @@ It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/c
   - Phones vibrate when a part snaps on.
   - 🗣 reads every hint aloud: on by default for Classes 1–2, and anyone can switch it on or off.
 
-## Projects (release 4, built: units 1–3)
+## Projects (built: all eleven units)
 
-The Circuit Lab tab now opens on **🧩 Projects** (with **🛠️ Free build** beside it). Units 1–3 (24 projects) are open; units 4–11 show as coming soon until their layouts are ready.
+The Circuit Lab tab now opens on **🧩 Projects** (with **🛠️ Free build** beside it). All eleven units (100 projects) are open. Units 1–3 have hand-made layouts; units 4–11 were laid out by `web/scripts/lab-layout.mjs`, which places each circuit, joins it with connectors and proves the result before printing it. The last project, "Your own invention", is open-ended: it has no layout, offers the whole kit, and passes when an input really changes an output.
 
 How a project goes:
 1. **The big question and the goal.** The child chooses how to build:

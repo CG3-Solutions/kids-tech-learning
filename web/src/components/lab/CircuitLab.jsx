@@ -18,6 +18,9 @@
 // - Lock freezes the build: parts can't be picked up, moved, turned or removed, and the tray is
 //   off. No buttons pop up on a locked board: a tap flips a switch, pressing a push button holds
 //   it down, and the labels (S1, L1…) say which part is which.
+// - What is this part for? Pointing at a part in the tray (or pressing it on a touch screen) shows
+//   its purpose in a few words, in small text on the part's own row. It isn't read aloud. The
+//   same in every project and in free build.
 // - Every tap goes to the nearest post (a big target), and a tap that doesn't fit cancels.
 // - The board, the hint and the parts tray are on screen together on phones, tablets and laptops:
 //   the board is sized to the height left over (see --lab-fit in app.css). Volt's hint is always
@@ -126,6 +129,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const [located, setLocated] = useState(null); // { type, n }: a placed part pressed in the tray, shown ringed on the board for a moment
   const [locked, setLocked] = useState(false); // the build is frozen; only switches work
   const [full, setFull] = useState(false);     // the lab fills the screen
+  const [tip, setTip] = useState(null); // the part type being pointed at in the tray: its purpose shows on its row
   const [notice, setNotice] = useState(null);
   const [cheer, setCheer] = useState(null); // { uid, n } for the ✓ after a right step
   const [showMe, setShowMe] = useState(false);
@@ -170,7 +174,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   const actionsRef = useRef(null), exRef = useRef(null);
   useEffect(() => { actionsRef.current?.scrollIntoView({ block: "start" }); }, []);
   useEffect(() => { local.set(saveKey, serialize(parts, inputs)); onChange?.(parts, inputs); }, [saveKey, parts, inputs]); // eslint-disable-line react-hooks/exhaustive-deps
-  const say = msg => { setNotice(msg); clearTimeout(noticeTimer.current); noticeTimer.current = setTimeout(() => setNotice(null), 3500); };
+  const say = (msg, ms = 3500) => { setNotice(msg); clearTimeout(noticeTimer.current); noticeTimer.current = setTimeout(() => setNotice(null), ms); };
 
   // ── Live simulation and sound ──
   const circuitKey = useMemo(() => JSON.stringify(parts.map(p => [p.type, p.id, p.at, p.dir, p.len, p.ohms, p.colour])), [parts]);
@@ -306,7 +310,8 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     lastTap.current = { uid: p.uid, t: now };
     if (locked) { // no buttons pop up: a tap flips a switch or claps; parts with settings (light, gap) show them below
       setSelected(["ldr", "probe"].includes(p.type) ? p.uid : null);
-      if (p.type === "piezo") { liveRef.current?.clap(p.id); sfx.bump(); buzz(15); } else toggleInput(p);
+      if (p.type === "piezo") { liveRef.current?.clap(p.id); sfx.bump(); buzz(15); }
+      else toggleInput(p);
       return;
     }
     setSelected(p.uid);
@@ -339,7 +344,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     gesture.current = { xy, uid: p?.uid, moved: false, client: [e.clientX, e.clientY] };
     if (p && !locked) setDrag({ uid: p.uid, dx: 0, dy: 0, to: p.at, ok: true, moved: false }); // picked up: it lifts under your finger
     if (p && locked && p.type === "button") { playerRef.current?.unlock(); gesture.current.hold = p.id; setInput(p.id, "down"); buzz(10); } // locked: press the push button itself
-    svgRef.current.setPointerCapture?.(e.pointerId);
+    try { svgRef.current.setPointerCapture?.(e.pointerId); } catch { /* the pointer has already gone */ }
   };
   const onPointerMove = e => {
     if (!pointers.current.has(e.pointerId)) return;
@@ -561,7 +566,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
 
       <div className={`lab-hint${result?.short ? " bad" : ""}${almost || (spare && !next) ? " warn" : ""}`} role="status">
         <VoltFace size={38} lamp={false} mood={result?.short ? "wow" : finished ? "cheer" : "happy"} />
-        <span className="txt">{partActions ? <><b>{nameOf(sel.type)}{sel.type === "wire" ? "" : ` ${sel.id}`}</b><span className="long">: drag it to move it, or use these buttons.</span></> : hint}</span>
+        <span className="txt">{partActions && !notice ? <><b>{nameOf(sel.type)}{sel.type === "wire" ? "" : ` ${sel.id}`}</b><span className="long">: drag it to move it, or use these buttons.</span></> : hint}</span>
         <span className="lab-hint-actions">
           {locked && <button className="btn small" onClick={toggleLock}><Icon name="unlock" size={18} /> Unlock</button>}
           {partActions}
@@ -619,13 +624,15 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
                 const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
                 const used = Boolean(kit) && n <= 0; // in a project, a part that is on the board stays in the tray, ticked
                 return (
-                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0 && !used} title={PARTS[type].say}
+                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0 && !used} aria-description={PARTS[type].use}
+                    onPointerEnter={() => setTip(type)} onPointerLeave={() => setTip(t => (t === type ? null : t))} onFocus={() => setTip(type)} onBlur={() => setTip(t => (t === type ? null : t))}
                     aria-label={used ? `${PARTS[type].name}, on the board. Press to show where it is` : undefined}
                     onClick={() => { if (used) locate(type); else if (!trayGesture.current?.dragged) pickType(type); }}
                     onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
                     <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
                     <span className="nm">{PARTS[type].name}</span>
-                    {freeBuild ? <small>{(c => (c ? `${c} on the board` : "no limit"))(parts.filter(p => p.type === type).length)}</small>
+                    {tip === type ? <small className="use">{PARTS[type].use}</small>
+                      : freeBuild ? <small>{(c => (c ? `${c} on the board` : "no limit"))(parts.filter(p => p.type === type).length)}</small>
                       : type === "wire" ? <small>as many as you need</small> : <small>{used ? "✓ on the board" : n > 0 ? `${n} left` : "none left"}</small>}
                   </button>
                 );

@@ -40,6 +40,25 @@ export function markBuild(project, boardParts) {
   return { pass: Boolean(best?.pass), missing: [], results: best?.results ?? [], mapping: best?.mapping ?? {} };
 }
 
+// An open-ended project ("your own invention") has no reference circuit. It passes when the build
+// has an input that really controls an output: flipping one switch, button or sensor changes
+// what a light, motor or sound part does, without a short circuit.
+const INPUT_STATES = { slide: ["off", "on"], button: ["up", "down"], changeover: ["up", "down"], touch: ["no", "yes"], ldr: ["bright", "dark"], probe: ["air", "spoon"] };
+export function markOpenBuild(boardParts) {
+  const circuit = toCircuit(boardParts);
+  if (!circuit.some(p => p.type === "battery")) return { pass: false, open: true, missing: [{ type: "battery", count: 1 }], results: [], mapping: {} };
+  const inputs = circuit.filter(p => INPUT_STATES[p.type]);
+  const c = compile(circuit);
+  for (const input of inputs) {
+    const [a, b] = INPUT_STATES[input.type];
+    const one = evaluate(c, { [input.id]: a }), two = evaluate(c, { [input.id]: b });
+    if (one.short || two.short) continue;
+    const changed = Object.keys(two.outputs).find(id => one.outputs[id] !== two.outputs[id]);
+    if (changed) return { pass: true, open: true, missing: [], results: [], mapping: {}, input: input.id, output: changed };
+  }
+  return { pass: false, open: true, missing: [], results: [], mapping: {}, noInput: !inputs.length };
+}
+
 // Run the checks with the board's parts renamed to the project's names.
 function runMapped(circuit, checks, mapping) {
   const toProject = Object.fromEntries(Object.entries(mapping).map(([pid, bid]) => [bid, pid]));
@@ -108,6 +127,7 @@ export function explainMark(project, mark, boardParts, limit = 2) {
 // A tip for the most likely mistake.
 export function hintFor(mark) {
   if (mark.missing.length) return "Pick the missing parts from the tray.";
+  if (mark.open) return mark.noInput ? "Add a switch, a button or a sensor: something that can change what your circuit does." : "Put your input in the same loop as a light, a motor or a sound part, so that changing it changes what they do.";
   const got = mark.results.flatMap(r => r.mismatches.map(m => m.got));
   if (mark.results.some(r => r.short && !r.expect.short)) return "Look for a connector or switch that joins + straight to − without going through a part.";
   if (got.includes("damage")) return "An LED needs a resistor in its loop to protect it.";

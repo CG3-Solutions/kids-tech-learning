@@ -9,11 +9,11 @@ import CircuitLab from "./CircuitLab.jsx";
 import PartPic from "./PartPic.jsx";
 import Icon from "./Icon.jsx";
 import Guide, { VoltFace } from "../journey/Guide.jsx";
-import { PARTS, CONCEPTS } from "../../content/lab/parts.js";
+import { PARTS, CONCEPTS, KIT } from "../../content/lab/parts.js";
 import { parseParts, parseCheck } from "../../content/lab/netlist.js";
 import { LAYOUTS, STARTS } from "../../content/lab/layouts.js";
 import { buildBoard } from "../../lib/circuit/board.js";
-import { markBuild, explainMark, hintFor, inputWords, stateWords } from "../../lib/circuit/marking.js";
+import { markBuild, markOpenBuild, explainMark, hintFor, inputWords, stateWords } from "../../lib/circuit/marking.js";
 import { useApp } from "../../lib/AppContext.jsx";
 import { local } from "../../lib/storage.js";
 import { sfx } from "../../lib/sfx.js";
@@ -25,6 +25,7 @@ const nameOf = type => (type === "led" ? "LED" : PARTS[type].name.toLowerCase())
 
 // The parts a project needs, by type: { lamp: 2, slide: 1, … } (connectors are always in the tray).
 export function partsNeeded(project) {
+  if (!project.circuit) return {}; // an open-ended project: the child chooses
   const need = {};
   for (const p of parseParts(project.circuit)) need[p.type] = (need[p.type] ?? 0) + 1;
   return need;
@@ -37,6 +38,7 @@ export function distractorsFor(project) {
 }
 // "With switch S1 ON → bulb L1 on" for every check, in the project's own labels.
 export function checkLines(project) {
+  if (project.open) return ["It has an input: a switch, a button or a sensor", "Changing the input changes an output: a light, a motor or a sound"];
   const parts = parseParts(project.circuit), typeOf = id => parts.find(p => p.id === id)?.type;
   return project.checks.map(text => {
     const { when, expect } = parseCheck(text);
@@ -48,8 +50,8 @@ export function checkLines(project) {
 
 // Where am I? The steps of every project, with the current one lit.
 const STEPS = { intro: "Question", gather: "Parts", build: "Build", test: "Test", done: "Star" };
-function Steps({ at, fixIt }) {
-  const order = ["intro", ...(fixIt ? [] : ["gather"]), "build", "test", "done"], now = order.indexOf(at);
+function Steps({ at, fixIt, skipParts }) {
+  const order = ["intro", ...(fixIt || skipParts ? [] : ["gather"]), "build", "test", "done"], now = order.indexOf(at);
   return (
     <ol className="proj-steps" aria-label={`Step ${now + 1} of ${order.length}: ${STEPS[at]}`}>
       {order.map((s, i) => <li key={s} className={i === now ? "now" : i < now ? "past" : ""} aria-hidden="true"><span className="n">{i < now ? <Icon name="check" size={14} /> : i + 1}</span><span className="t">{STEPS[s]}</span></li>)}
@@ -60,13 +62,14 @@ function Steps({ at, fixIt }) {
 export default function ProjectPlayer({ project, done, onComplete, onNext, onBack }) {
   const { activeChild } = useApp();
   const fixIt = Boolean(project.start && STARTS[project.id]);
+  const open = Boolean(project.open); // your own invention: the whole kit, no guide, no parts to gather
   const need = useMemo(() => partsNeeded(project), [project]);
   const types = Object.keys(need);
   const distract = useMemo(() => distractorsFor(project), [project]);
   const gatherOrder = useMemo(() => [...types, ...distract].sort((a, b) => PARTS[a].name.localeCompare(PARTS[b].name)), [types, distract]);
   const saveKey = `sparklab.lab.project.${activeChild?.id ?? "guest"}.${project.id}`;
   const [stage, setStage] = useState("intro"); // intro → gather → build → done
-  const [mode, setMode] = useState(fixIt ? "fix" : "guided");
+  const [mode, setMode] = useState(fixIt ? "fix" : open ? "challenge" : "guided");
   const [gathered, setGathered] = useState([]);
   const [said, setSaid] = useState(null);
   const [board, setBoard] = useState([]);
@@ -90,7 +93,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
           <h2>{project.title}</h2>
           <p>{stage === "build" ? project.goal : `Unit ${project.unit} · ${LEVEL[project.level]}`}</p>
         </div>
-        <Steps at={stage === "build" && testing ? "test" : stage} fixIt={fixIt} />
+        <Steps at={stage === "build" && testing ? "test" : stage} fixIt={fixIt} skipParts={open} />
       </div>
     </>
   );
@@ -100,9 +103,9 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
       <div className="stack proj">
         {header}
         <Guide Face={VoltFace}>{project.q}</Guide>
-        <p className="lead">{project.goal}</p>
+        <p className="lead">{project.brief ?? project.goal}</p>
         {project.safety && <p className="proj-safety">⚠️ This one shows a danger safely in the lab. Never try it with real batteries.</p>}
-        {!fixIt && (
+        {!fixIt && !open && (
           <div className="stack" style={{ gap: 6 }}>
             <span className="eyebrow">How do you want to build it?</span>
             <div className="proj-modes">
@@ -111,7 +114,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
             </div>
           </div>
         )}
-        <div className="row"><button className="btn primary big" onClick={() => { sfx.click(); go(fixIt ? "build" : "gather"); }}>{fixIt ? "🔧 Open the broken circuit" : "Let's go →"}</button>
+        <div className="row"><button className="btn primary big" onClick={() => { sfx.click(); go(fixIt || open ? "build" : "gather"); }}>{fixIt ? "🔧 Open the broken circuit" : open ? "🛠️ Start inventing" : "Let's go →"}</button>
           {done && <span className="muted">⭐ You've finished this one. Build it again any time.</span>}</div>
       </div>
     );
@@ -171,8 +174,8 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   }
 
   // Build, predict and test.
-  const runTest = () => { hush(); const m = markBuild(project, board); setMark(m); setPassed(m.pass); setTesting(true); m.pass ? sfx.tada() : sfx.oops(); };
-  const words = mark ? explainMark(project, mark, board, 3) : [];
+  const runTest = () => { hush(); const m = open ? markOpenBuild(board) : markBuild(project, board); setMark(m); setPassed(m.pass); setTesting(true); m.pass ? sfx.tada() : sfx.oops(); };
+  const words = !mark ? [] : open ? [mark.missing.length ? "Your invention needs a battery." : mark.noInput ? "I can't find an input yet." : "Your input doesn't change an output yet."] : explainMark(project, mark, board, 3);
   const actions = (
     <>
       <button className="btn primary lab-test" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}><Icon name="bolt" size={18} /> Test my circuit</button>
@@ -218,7 +221,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
           )}
         </div>
       )}
-      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={need} trayTypes={[...types, "wire"]} guide={guide} actions={actions} examples={false} finished={passed}
+      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={open ? KIT : need} trayTypes={open ? Object.keys(KIT) : [...types, "wire"]} guide={guide} actions={actions} examples={false} finished={passed}
         onChange={parts => setBoard(parts)} />
     </div>
   );
