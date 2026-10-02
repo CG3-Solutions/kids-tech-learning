@@ -4,6 +4,7 @@ import { useApp } from "../lib/AppContext.jsx";
 import { starCount } from "../lib/progress.js";
 import { AREAS } from "../content/areas.js";
 import { Bolt } from "../components/TopBar.jsx";
+import { useSmallScreen, BIG_SCREEN_AREAS } from "../lib/useSmallScreen.js";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 
@@ -11,7 +12,7 @@ const fmtLeft = s => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3
 
 export const NAV = [
   { to: "/learn", label: "Home", icon: "🏠", end: true },
-  ...AREAS.map(a => ({ to: `/learn/area/${a.id}`, label: a.id === "science" ? "Science" : a.title, icon: a.emoji })),
+  ...AREAS.map(a => ({ to: `/learn/area/${a.id}`, label: a.id === "science" ? "Science" : a.title, icon: a.emoji, bigOnly: BIG_SCREEN_AREAS.has(a.id) })),
   { to: "/learn/badges", label: "Badges", icon: "🏅" },
 ];
 
@@ -94,6 +95,7 @@ export default function KidLayout({ children }) {
     window.scrollTo({ top: 0 });
     mainRef.current?.focus({ preventScroll: true });
   }, [pathname]);
+  const small = useSmallScreen();
   const low = screen.remaining != null && screen.remaining <= 300;
   return (
     <div className="kid-shell">
@@ -108,7 +110,8 @@ export default function KidLayout({ children }) {
       <div className="kid-body">
         <nav className="kid-nav" aria-label="Main">
           {NAV.map(n => (
-            <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `kid-nav-item${isActive ? " active" : ""}`}>
+            <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `kid-nav-item${isActive ? " active" : ""}${small && n.bigOnly ? " big-only" : ""}`}
+              aria-label={small && n.bigOnly ? `${n.label}, needs a bigger screen` : undefined}>
               <span className="ic" aria-hidden="true">{n.icon}</span><span className="lb">{n.label}</span>
             </NavLink>
           ))}

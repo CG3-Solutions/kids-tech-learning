@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
-import { Crumbs, PageLoading } from "./kid/Home.jsx";
+import { Crumbs, PageLoading, BigScreenOnly } from "./kid/Home.jsx";
+import { useSmallScreen, BIG_SCREEN_AREAS } from "../lib/useSmallScreen.js";
 import { usePageTitle } from "../lib/usePageTitle.js";
 import { useUrlState, viewKey } from "../lib/useUrlState.js";
 import { areaOf } from "../content/areas.js";
@@ -39,9 +40,11 @@ export default function ModulePage() {
   const done = useMemo(() => new Set(childData.progress.map(p => p.item_id)), [childData]);
 
   usePageTitle(m?.title);
+  const small = useSmallScreen();
   if (!published) return <PageLoading />;
   if (!m || m.coming_soon) return <Navigate to="/learn" replace />;
   const area = areaOf(m.area);
+  if (small && BIG_SCREEN_AREAS.has(area.id)) return <BigScreenOnly title={m.title} />;
   // Subjects with an adventure (Binary, Computer) open on its map; others open on their cards.
   // Electricity opens on its cards too: they are the introduction to Volt's adventure.
   const hasJourney = ["binary", "typing", "computer"].includes(m.activity) || PRACTICE_ACTIVITIES.has(m.activity) || (m.activity === "circuit" && !cards.length);

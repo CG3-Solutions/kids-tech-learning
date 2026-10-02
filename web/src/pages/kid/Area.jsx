@@ -2,7 +2,8 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats } from "../../lib/progress.js";
 import { AREAS } from "../../content/areas.js";
-import { Crumbs, PageLoading } from "./Home.jsx";
+import { Crumbs, PageLoading, BigScreenOnly } from "./Home.jsx";
+import { useSmallScreen, BIG_SCREEN_AREAS } from "../../lib/useSmallScreen.js";
 import { usePageTitle } from "../../lib/usePageTitle.js";
 
 export default function Area() {
@@ -10,7 +11,9 @@ export default function Area() {
   const { childData, published } = useApp();
   const area = AREAS.find(a => a.id === areaId);
   usePageTitle(area?.title);
+  const small = useSmallScreen();
   if (!area) return <Navigate to="/learn" replace />;
+  if (small && BIG_SCREEN_AREAS.has(area.id)) return <BigScreenOnly title={area.title} />;
   if (!published) return <PageLoading />;
   const mods = published.modules.filter(m => m.area === area.id);
   return (

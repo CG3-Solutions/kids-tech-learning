@@ -1678,3 +1678,7 @@ button.kb-key { cursor: pointer }
 .btn.hold { touch-action: none; user-select: none; -webkit-user-select: none }
 .btn.hold.down { transform: translateY(3px) scale(.97) }
 @media (prefers-reduced-motion: reduce) { .scene .walker { animation: none; transform: translateX(140px) } }
+/* Typing on a phone: still shown, but marked as needing a bigger screen */
+.area-card.big-only { opacity: .8 }
+.area-card.big-only .ribbon { position: static; transform: none; justify-self: start; border-radius: 999px; padding: 4px 12px; font-size: .85rem; letter-spacing: 0 }
+.kid-nav-item.big-only { opacity: .5 }
