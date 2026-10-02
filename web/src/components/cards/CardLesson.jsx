@@ -1,35 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PartArt, { Battery, Bulb, Buzzer, Motor, Lever, PushButton, Wire } from "./PartArt.jsx";
+import LoopScene, { Gap, Emoji, Holder, Batteries } from "./LoopScene.jsx";
+import { MORE_TOYS } from "./MoreToys.jsx";
 import { speak, hush } from "../../lib/speech.js";
 import { sfx } from "../../lib/sfx.js";
-
-// A circuit drawn as one loop: something on the left (the battery), something on top (the bulb,
-// buzzer or motor) and something at the bottom (a switch or a gap). Moving dashes show the flow.
-function LoopScene({ live, reverse = false, left, top, bottom, onBottom, bottomLabel }) {
-  const slot = (cx, cy, art, s = 0.62) => (
-    <g>
-      <rect x={cx - 38} y={cy - 38} width="76" height="76" rx="14" className="scene-pad" />
-      <g transform={`translate(${cx - 60 * s} ${cy - 60 * s}) scale(${s})`}>{art}</g>
-    </g>
-  );
-  return (
-    <svg className="scene" viewBox="0 0 320 250" role="img" aria-label={live ? "The loop is closed. Electricity is flowing." : "Electricity is not flowing."}>
-      <rect x="56" y="58" width="208" height="134" rx="18" className="scene-wire" />
-      {live && <rect x="56" y="58" width="208" height="134" rx="18" className={`scene-flow${reverse ? " back" : ""}`} />}
-      {slot(56, 125, left)}
-      {slot(160, 58, top, 0.8)}
-      <g onClick={onBottom} className={onBottom ? "scene-tap" : undefined} role={onBottom ? "button" : undefined} aria-label={bottomLabel} tabIndex={onBottom ? 0 : undefined}
-        onKeyDown={onBottom ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBottom(); } } : undefined}>
-        {slot(160, 192, bottom)}
-      </g>
-    </svg>
-  );
-}
-
-const Gap = () => <g><circle cx="26" cy="74" r="9" fill="#B9C2CC" stroke="#7C8794" strokeWidth="3" /><circle cx="94" cy="74" r="9" fill="#B9C2CC" stroke="#7C8794" strokeWidth="3" /><text x="60" y="84" textAnchor="middle" fontSize="34" fontWeight="700" fill="var(--muted)">?</text></g>;
-const Emoji = ({ e }) => <text x="60" y="88" textAnchor="middle" fontSize="64">{e}</text>;
-const Holder = () => <rect x="36" y="14" width="48" height="98" rx="10" fill="none" stroke="var(--muted)" strokeWidth="4" strokeDasharray="8 7" />;
-const Batteries = ({ n }) => <g>{Array.from({ length: n }, (_, i) => <g key={i} transform={`translate(${(i - (n - 1) / 2) * 34 + (n > 1 ? 18 : 0)} ${n > 1 ? 14 : 0}) scale(${n > 1 ? 0.72 : 1})`}><Battery /></g>)}</g>;
 
 // --- The toys. Each calls onGoal() once the child has done what was asked. ---
 
@@ -164,7 +138,7 @@ function MotorToy({ onGoal }) {
   );
 }
 
-const TOYS = { power: PowerToy, loop: LoopToy, battery: BatteryToy, wire: WireToy, switch: SwitchToy, bulb: BulbToy, buzzer: BuzzerToy, motor: MotorToy };
+const TOYS = { power: PowerToy, loop: LoopToy, battery: BatteryToy, wire: WireToy, switch: SwitchToy, bulb: BulbToy, buzzer: BuzzerToy, motor: MotorToy, ...MORE_TOYS };
 const SCREENS = ["Meet", "Play", "Check", "Star"];
 
 // One card as a mini-lesson: meet the part, play with it, answer one question, earn the star.
@@ -176,6 +150,8 @@ export default function CardLesson({ card, lesson, levelName, color, learned, on
   const [right, setRight] = useState(false);
   const closeRef = useRef(null);
   const Toy = TOYS[lesson.toy];
+  // The answers are mixed up each time, so the right one is not always in the same place.
+  const options = useMemo(() => lesson.check.options.map(o => [Math.random(), o]).sort((a, b) => a[0] - b[0]).map(x => x[1]), [card.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const say = [`${d.n}. ${lesson.meet}`, lesson.play, lesson.check.q, `You collected ${d.n}! ${lesson.check.why}`];
   useEffect(() => { setAt(0); setPlayed(false); setWrong([]); setRight(false); closeRef.current?.focus(); }, [card.id]);
@@ -233,7 +209,7 @@ export default function CardLesson({ card, lesson, levelName, color, learned, on
             <>
               <p className="lesson-big">{lesson.check.q}</p>
               <div className="lesson-opts">
-                {lesson.check.options.map((o, i) => (
+                {options.map((o, i) => (
                   <button key={o.label} className={`opt${right && o.ok ? " right" : wrong.includes(i) ? " wrong" : ""}`} disabled={wrong.includes(i)} onClick={() => answer(o, i)}>
                     <span className="e" aria-hidden="true">{o.e}</span>{o.label}
                   </button>
