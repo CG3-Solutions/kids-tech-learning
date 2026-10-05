@@ -22,11 +22,13 @@
 //   its purpose in a few words, in small text on the part's own row. It isn't read aloud. The
 //   same in every project and in free build.
 // - Every tap goes to the nearest post (a big target), and a tap that doesn't fit cancels.
-// - The board, the hint and the parts tray are on screen together on phones, tablets and laptops:
-//   the board is sized to the height left over (see --lab-fit in app.css). Volt's hint is always
-//   above the board. On tablets and laptops the parts sit beside the board; on phones they are
-//   docked at the bottom. "Describe my circuit" is under the board. A project opens scrolled to its "Test my circuit" row; after
-//   that the board never scrolls by itself.
+// - Three fixed areas (see .lab2 in app.css), nothing moves while building:
+//   the mission, Volt's hint and the project's buttons on the left; the board in the middle with its
+//   tools above and "Right now" (what the circuit is doing, in words) below; the parts and the chosen
+//   part's controls on the right. Tablets put the left and right areas in one column; phones stack
+//   everything, with the parts docked at the bottom. The lab fills the screen height; a project opens
+//   scrolled to its header, and after that the board never scrolls by itself.
+// - Fit circuit shows just the part of the board in use; a finished circuit fits itself when it locks.
 // - In guided projects the next part pulses, each right step gets a ✓, "Show me" demonstrates
 //   the next step, and the hint names the real problem (a part the wrong way round, a spare part).
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -46,6 +48,7 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { local } from "../../lib/storage.js";
 import { sfx, isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { speak, hush } from "../../lib/speech.js";
+import { circuitBox, nowLine } from "../../lib/circuit/workspace.js";
 
 const TRAY = [
   { title: "Power", types: ["battery", "wire"] },
@@ -98,11 +101,13 @@ function history(state, action) {
 //   kit       { type: count } limits instead of the full kit (connectors are always available)
 //   trayTypes which parts the tray shows
 //   guide     the parts of a reference layout: the next missing one is shown as a ghost to copy
-//   actions   extra buttons shown under the hint (e.g. "Test my circuit")
+//   actions   the project's buttons, under Volt's hint (e.g. "Test my circuit")
+//   mission   what the project asks for, shown above Volt's hint (goal, checklist, test results)
+//   highlight uids of parts to ring on the board (a failed test's "Show me where")
 //   examples  show the example boards (default true)
 //   finished  the circuit has passed its test: play with it, with the editing tools tucked away
 //   onChange(parts, inputs) whenever the board changes
-export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTypes, guide, actions, examples = true, finished: finishedProp = false, onChange } = {}) {
+export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTypes, guide, actions, mission, highlight = [], examples = true, finished: finishedProp = false, onChange } = {}) {
   const { activeChild } = useApp();
   const young = (activeChild?.grade ?? 3) <= 2 && activeChild?.learner !== "adult";
   const saveKey = saveKeyProp ?? `sparklab.lab.free.${activeChild?.id ?? "guest"}`;
@@ -168,11 +173,14 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     setSize([c, r]); local.set(`${saveKey}.size`, [c, r]);
     setCursor(([x, y]) => [Math.min(x, c - 1), Math.min(y, r - 1)]); setSelected(null); setMode({ kind: "idle" }); sfx.click();
   };
-  const toggleLock = () => { const v = !locked; setLocked(v); setMode({ kind: "idle" }); setSelected(null); setDrag(null); sfx.click(); };
+  const toggleLock = () => { const v = !locked; setLocked(v); if (!v) setFit(false); setMode({ kind: "idle" }); setSelected(null); setDrag(null); sfx.click(); };
 
-  // A project's board opens with its action row at the top of the screen, so the board, hint and tray all fit below it.
-  const actionsRef = useRef(null), exRef = useRef(null);
-  useEffect(() => { actionsRef.current?.scrollIntoView({ block: "start" }); }, []);
+  // The page around the lab (ProjectPlayer or free build) scrolls itself to its header.
+  const rootRef = useRef(null), exRef = useRef(null);
+  // Fit circuit: show just the part of the board the circuit uses. It turns on by itself when a
+  // finished circuit locks (time to play, not build) and off when the child unlocks to change parts.
+  const [fit, setFit] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => { local.set(saveKey, serialize(parts, inputs)); onChange?.(parts, inputs); }, [saveKey, parts, inputs]); // eslint-disable-line react-hooks/exhaustive-deps
   const say = (msg, ms = 3500) => { setNotice(msg); clearTimeout(noticeTimer.current); noticeTimer.current = setTimeout(() => setNotice(null), ms); };
 
@@ -211,7 +219,7 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
   // until the circuit is changed and finished again.
   const wasFinished = useRef(false);
   useEffect(() => {
-    if (finished && !wasFinished.current) { setLocked(true); setSelected(null); setMode({ kind: "idle" }); }
+    if (finished && !wasFinished.current) { setLocked(true); setFit(true); setSelected(null); setMode({ kind: "idle" }); }
     wasFinished.current = finished;
   }, [finished]);
   // A ✓ (with a sound and a buzz) each time a part lands where the guide wants it.
@@ -478,51 +486,63 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
     : trayDrag ? (trayDrag.part ? (trayDrag.ok ? "Let go to snap it onto the green posts." : "Red means that spot is taken.") : "Drag it onto the board.")
     : next ? `Next: ${describeGhost(next)}. Drag it onto the faint one.`
     : spare ? `The ${lower(spare.type)} ${spare.type === "wire" ? "" : `${spare.id} `}isn't in the plan. Remove it?`
-    : locked ? (finished ? "Built and locked! Tap a switch to try it. Tap Unlock to change parts." : "Locked: parts stay put. Tap a switch to try it. Tap Unlock to change parts.")
-    : sel ? `${nameOf(sel.type)}${sel.type === "wire" ? "" : ` ${sel.id}`}: drag it to move it, or use these buttons.`
+    : locked ? (finished ? "It's built, so it's locked to keep it safe. Tap a switch to play with it. To move parts, tap Change parts." : "Locked: parts stay put. Tap a switch to play with it. To move parts, tap Change parts.")
+    : sel ? `${nameOf(sel.type)}${sel.type === "wire" ? "" : ` ${sel.id}`} chosen. Drag it to move it, or use its buttons.`
     : parts.length ? "Tap a part to choose it. Double-tap a switch to flip it." : "Drag a part from the tray onto the board, or tap it and then tap the board.";
   useEffect(() => { if (autoRead && hint && !drag?.moved) speak(hint.replace(/[⚠️⇅✓]/g, "")); }, [hint, autoRead]); // eslint-disable-line react-hooks/exhaustive-deps
   const status = describe(parts, result).filter(l => / is /.test(l) || /^Short/.test(l)).join(" ");
   const reading = sel && result?.readings?.parts?.[sel.id];
   const dragged = drag?.moved ? byUid(drag.uid) : null;
   const landing = dragged ? Object.values(pinPosts({ ...dragged, at: drag.to })) : [];
-  const hasExtras = sel && (["ldr", "probe", "resistor", "led"].includes(sel.type) || meter);
 
-  // The chosen part's actions. They sit in Volt's hint card, above the board, not on top of the
-  // circuit: nothing covers the parts the child is working on.
+  // The chosen part's controls, in the "Chosen part" panel beside the board (under it on phones):
+  // nothing covers the parts the child is working on, and every button says what it does.
   let partActions = null;
   if (sel && !locked && mode.kind === "idle" && !drag?.moved) {
     partActions = (
       <>
-        {sel.type === "slide" && <button className={`btn small sw${inputs[sel.id] === "on" ? " on" : ""}`} onClick={() => toggleInput(sel)} aria-label={`Switch ${sel.id} is ${inputs[sel.id] === "on" ? "ON" : "OFF"}. Tap to switch it ${inputs[sel.id] === "on" ? "OFF" : "ON"}`}>{inputs[sel.id] === "on" ? "ON" : "OFF"}</button>}
+        {sel.type === "slide" && <button className={`lab-act sw${inputs[sel.id] === "on" ? " on" : ""}`} onClick={() => toggleInput(sel)} aria-label={`Switch ${sel.id} is ${inputs[sel.id] === "on" ? "ON" : "OFF"}. Tap to switch it ${inputs[sel.id] === "on" ? "OFF" : "ON"}`}>{inputs[sel.id] === "on" ? "ON" : "OFF"}</button>}
         {sel.type === "button" && (
-          <button className={`btn small sw${inputs[sel.id] === "down" ? " on" : ""}`} aria-label="Press and hold"
+          <button className={`lab-act sw${inputs[sel.id] === "down" ? " on" : ""}`} aria-label="Press and hold"
             onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); playerRef.current?.unlock(); setInput(sel.id, "down"); buzz(10); }}
             onPointerUp={() => setInput(sel.id, "up")} onPointerCancel={() => setInput(sel.id, "up")} onContextMenu={e => e.preventDefault()}
             onKeyDown={e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); setInput(sel.id, "down"); } }} onKeyUp={() => setInput(sel.id, "up")}>
-            {inputs[sel.id] === "down" ? "Pressed!" : "Hold"}
+            {inputs[sel.id] === "down" ? "Pressed!" : "Press and hold"}
           </button>
         )}
-        {sel.type === "changeover" && <button className="btn small sw" onClick={() => toggleInput(sel)} aria-label="Flip the two-way switch">{inputs[sel.id] === "down" ? "▼" : "▲"}</button>}
-        {sel.type === "touch" && <button className={`btn small sw${inputs[sel.id] === "yes" ? " on" : ""}`} onClick={() => toggleInput(sel)} aria-label={inputs[sel.id] === "yes" ? "Take your finger off" : "Put your finger on"}>{inputs[sel.id] === "yes" ? "🫳" : "✋"}</button>}
-        {sel.type === "piezo" && <button className="btn small" onClick={() => { playerRef.current?.unlock(); liveRef.current?.clap(sel.id); sfx.bump(); buzz(15); }} aria-label="Clap">👏</button>}
-        <button className="btn small" onClick={() => turn(sel.uid)} aria-label="Turn"><Icon name="turn" size={18} /><span className="lbl"> Turn</span></button>
-        {HAS_DIRECTION.has(sel.type) && <button className={`btn small${almost?.uid === sel.uid ? " primary" : ""}`} onClick={() => flip(sel.uid)} aria-label="Flip end for end"><Icon name="flip" size={18} /><span className="lbl"> Flip</span></button>}
-        <button className="btn small" onClick={() => setMode({ kind: "move", uid: sel.uid })} aria-label="Move"><Icon name="move" size={18} /><span className="lbl"> Move</span></button>
-        <button className="btn small remove" onClick={() => remove(sel.uid)} aria-label="Remove"><Icon name="clear" size={18} /><span className="lbl"> Remove</span></button>
+        {sel.type === "changeover" && <button className="lab-act sw" onClick={() => toggleInput(sel)} aria-label="Flip the two-way switch">{inputs[sel.id] === "down" ? "Down ▼" : "Up ▲"}</button>}
+        {sel.type === "touch" && <button className={`lab-act sw${inputs[sel.id] === "yes" ? " on" : ""}`} onClick={() => toggleInput(sel)}>{inputs[sel.id] === "yes" ? "Take finger off" : "Put finger on"}</button>}
+        {sel.type === "piezo" && <button className="lab-act sw" onClick={() => { playerRef.current?.unlock(); liveRef.current?.clap(sel.id); sfx.bump(); buzz(15); }}>Clap 👏</button>}
+        <button className="lab-act" onClick={() => turn(sel.uid)}><Icon name="turn" size={20} /> Turn</button>
+        {HAS_DIRECTION.has(sel.type) && <button className={`lab-act${almost?.uid === sel.uid ? " primary" : ""}`} onClick={() => flip(sel.uid)}><Icon name="flip" size={20} /> Flip ends</button>}
+        <button className="lab-act" onClick={() => setMode({ kind: "move", uid: sel.uid })}><Icon name="move" size={20} /> Move</button>
+        <button className="lab-act remove" onClick={() => remove(sel.uid)}><Icon name="clear" size={20} /> Remove</button>
       </>
     );
   }
+  // A switch on a locked board still works from the panel.
+  const lockedSwitch = sel && locked && ["slide", "changeover", "touch"].includes(sel.type)
+    ? <button className={`lab-act sw${["on", "down", "yes"].includes(inputs[sel.id]) ? " on" : ""}`} onClick={() => toggleInput(sel)}>{sel.type === "slide" ? (inputs[sel.id] === "on" ? "ON" : "OFF") : "Flip it"}</button> : null;
+
+  // What to show: the whole board, or (Fit circuit) just the part the circuit uses.
+  const box = useMemo(() => circuitBox(next ? [...parts, next] : parts, { cols, rows }), [parts, next, cols, rows]);
+  const fitted = fit && box && !box.whole;
+  const view = fitted ? box.viewBox : [0, 0, W, H];
+  const now = nowLine(parts, inputs, result);
+  const selNow = sel && now.items.find(i => i.uid === sel.uid);
+  const ringed = highlight.map(byUid).filter(Boolean);
 
   const handPath = next && showMe ? Object.values(pinPosts(next)).map(postXY) : null;
 
+  const toolBtn = (props, icon, label, extra = "") => <button type="button" className={`lab-tool${extra}`} aria-label={label} {...props}><Icon name={icon} size={20} /><span className="lbl" aria-hidden="true">{label}</span></button>;
   return (
-    <div className={`lab${full ? " full" : ""}${locked ? " is-locked" : ""}`} style={{ "--lab-ratio": (W / H).toFixed(3) }}>
-      {/* One bar: the project's actions (Test, goal, start again) on the left, the board's tools on the right. */}
-      <div className="lab-bar">
-        {actions ? <div className="lab-actions" ref={actionsRef}>{actions}</div> : examples && (
-          <div className="lab-actions" ref={actionsRef}>
-            <details className="proj-must" ref={exRef}>
+    <div ref={rootRef} className={`lab lab2${full ? " full" : ""}${locked ? " is-locked" : ""}${mission ? " has-mission" : ""}`} style={{ "--view-ratio": (view[2] / view[3]).toFixed(3) }}>
+      {/* Left: the mission, Volt's hint and the project's buttons. */}
+      <div className="lab-side">
+        {mission}
+        {!actions && examples && (
+          <div className="lab-free">
+            <details className="lab-pop" ref={exRef}>
               <summary><Icon name="grid" size={18} /> Examples</summary>
               <ul className="lab-ex-list">
                 {EXAMPLES.map(ex => <li key={ex.id}><button className="btn small" onClick={() => { loadExample(ex); exRef.current?.removeAttribute("open"); }}>{ex.emoji} {ex.title}</button></li>)}
@@ -530,140 +550,189 @@ export default function CircuitLab({ saveKey: saveKeyProp, initial, kit, trayTyp
               </ul>
             </details>
             {freeBuild && (
-              <details className="proj-must">
-                <summary><Icon name="expand" size={18} /> Board: {cols} × {rows}</summary>
+              <details className="lab-pop">
+                <summary><Icon name="board" size={18} /> Board: {cols} × {rows}</summary>
                 <ul className="lab-ex-list lab-size">
                   <li><span>Columns</span><button className="lab-ib" disabled={locked || cols <= BOARD_MIN[0]} onClick={() => resize(-1, 0)} aria-label="Remove a column"><Icon name="minus" /></button><b aria-live="polite">{cols}</b><button className="lab-ib" disabled={locked || cols >= BOARD_MAX[0]} onClick={() => resize(1, 0)} aria-label="Add a column"><Icon name="plus" /></button></li>
                   <li><span>Rows</span><button className="lab-ib" disabled={locked || rows <= BOARD_MIN[1]} onClick={() => resize(0, -1)} aria-label="Remove a row"><Icon name="minus" /></button><b aria-live="polite">{rows}</b><button className="lab-ib" disabled={locked || rows >= BOARD_MAX[1]} onClick={() => resize(0, 1)} aria-label="Add a row"><Icon name="plus" /></button></li>
-                  <li className="muted">Add columns and rows for a bigger circuit, up to {BOARD_MAX[0]} × {BOARD_MAX[1]}. Use full screen, or pinch, to see it closer.</li>
+                  <li className="muted">Add columns and rows for a bigger circuit, up to {BOARD_MAX[0]} × {BOARD_MAX[1]}.</li>
                 </ul>
               </details>
             )}
           </div>
         )}
-          <div className="lab-toolbar" role="toolbar" aria-label="Board tools">
-          <button className="lab-ib lab-undo" onClick={() => { dispatch({ type: "undo" }); setSelected(null); sfx.click(); }} disabled={locked || !hist.past.length} aria-label="Undo" title="Undo"><Icon name="undo" /><span className="lbl">Undo</span></button>
-          <button className="lab-ib xl-only" onClick={() => dispatch({ type: "redo" })} disabled={locked || !hist.future.length} aria-label="Redo" title="Redo"><Icon name="redo" /></button>
-          <span className="lab-sep xl-only" aria-hidden="true" />
-          <button className="lab-ib xl-only" onClick={() => setZoom(z => Math.max(0.6, +(z - 0.2).toFixed(1)))} aria-label="Zoom out" title="Zoom out"><Icon name="minus" /></button>
-          <button className="lab-ib lab-zoom xl-only" onClick={() => setZoom(1)} aria-label="Fit the board" title="Fit the board">{Math.round(zoom * 100)}%</button>
-          <button className="lab-ib xl-only" onClick={() => setZoom(z => Math.min(2.4, +(z + 0.2).toFixed(1)))} aria-label="Zoom in" title="Zoom in"><Icon name="plus" /></button>
-          <span className="lab-sep" aria-hidden="true" />
-          <button className="lab-ib toggle" onClick={() => setMuted(!muted)} aria-pressed={!muted} aria-label={muted ? "Sound is off. Turn sound on" : "Sound is on. Turn sound off"} title={muted ? "Sounds are off: clicks, dings and buzzers" : "Sounds are on: clicks, dings and buzzers"}><Icon name={muted ? "mute" : "sound"} /><span className="lbl xl-only">Sounds</span></button>
-          <button className="lab-ib toggle" aria-pressed={autoRead} onClick={() => { const v = !autoRead; setAutoRead(v); local.set("sparklab.lab.readHints", v); if (!v) hush(); }} aria-label={autoRead ? "Hints are read aloud. Stop reading hints" : "Read hints aloud"} title={autoRead ? "Read to me is on: Volt reads each hint aloud" : "Read to me is off: Volt stays quiet"}><Icon name={autoRead ? "read" : "readOff"} /><span className="lbl xl-only">Read to me</span></button>
-          {/* A project has its own "Start again"; free build clears the board here. */}
+        <div className={`lab-hint${result?.short ? " bad" : ""}${almost || (spare && !next) ? " warn" : ""}`} role="status">
+          <VoltFace size={52} lamp={!locked} mood={result?.short ? "wow" : finished ? "cheer" : "happy"} />
+          <p className="txt">{hint}</p>
+          <span className="lab-hint-actions">
+            {hint && <button className="btn small" onClick={() => speak(hint.replace(/[⚠️⇅✓]/g, ""), { force: true })}><Icon name="sound" size={18} /> Hear it</button>}
+            {locked && <button className="btn small primary" onClick={toggleLock}><Icon name="unlock" size={18} /> Change parts</button>}
+            {mode.kind !== "idle" && <button className="btn small" onClick={() => cancel()}>Cancel</button>}
+            {mode.kind === "idle" && !sel && almost && <button className="btn small primary" onClick={() => { setSelected(almost.uid); flip(almost.uid); }}><Icon name="flip" size={18} /> Flip it</button>}
+            {mode.kind === "idle" && !sel && !locked && !almost && spare && <button className="btn small" onClick={() => remove(spare.uid)}><Icon name="clear" size={18} /> Remove it</button>}
+            {mode.kind === "idle" && !sel && next && !almost && <button className="btn small" onClick={showNext}><Icon name="eye" size={18} /> Show me</button>}
+          </span>
+        </div>
+        {actions && <div className="lab-actions">{actions}</div>}
+      </div>
+
+      {/* Centre: the board, its tools above and what the circuit is doing below. */}
+      <div className="lab-center">
+        <div className="lab-toolbar" role="toolbar" aria-label="Board tools">
+          <div className="lab-tgroup">
+            {toolBtn({ onClick: () => { dispatch({ type: "undo" }); setSelected(null); sfx.click(); }, disabled: locked || !hist.past.length, title: "Undo (Ctrl+Z)" }, "undo", "Undo", " lab-undo keep")}
+            {toolBtn({ onClick: () => dispatch({ type: "redo" }), disabled: locked || !hist.future.length, title: "Redo (Ctrl+Y)" }, "redo", "Redo", " lab-redo")}
+          </div>
+          <div className="lab-tgroup">
+            <button type="button" className="lab-tool icon" onClick={() => setZoom(z => Math.max(0.6, +(z - 0.2).toFixed(1)))} aria-label="Zoom out" title="Zoom out"><Icon name="minus" /></button>
+            {toolBtn({ onClick: () => { setFit(f => !f); setZoom(1); sfx.click(); }, disabled: !box || box.whole, "aria-pressed": fitted, title: fitted ? "Show the whole board" : "Zoom to the parts you're using" }, fitted ? "board" : "fit", fitted ? "Whole board" : "Fit circuit", " keep")}
+            <button type="button" className="lab-tool icon" onClick={() => setZoom(z => Math.min(2.4, +(z + 0.2).toFixed(1)))} aria-label="Zoom in" title="Zoom in"><Icon name="plus" /></button>
+            {zoom !== 1 && <button type="button" className="lab-tool zoom" onClick={() => setZoom(1)} title="Back to 100%">{Math.round(zoom * 100)}%</button>}
+          </div>
+          <span className="lab-spacer" />
           {!actions && (
-            <button className={`lab-ib${clearArmed ? " danger" : ""}`} disabled={locked || !parts.length} aria-label={clearArmed ? "Tap again to clear the board" : "Clear the board"} title="Clear the board"
+            <button type="button" className={`lab-tool${clearArmed ? " danger" : ""}`} disabled={locked || !parts.length} title="Clear the board"
               onClick={() => { if (clearArmed) { setParts([]); setInputs({}); setSelected(null); setClearArmed(false); } else { setClearArmed(true); setTimeout(() => setClearArmed(false), 3000); } }}>
-              <Icon name="clear" />{clearArmed && <span className="lbl show">Sure?</span>}
+              <Icon name="clear" size={20} /><span className="lbl">{clearArmed ? "Tap again to clear" : "Clear"}</span>
             </button>
           )}
-          <span className="lab-sep" aria-hidden="true" />
-          <button className={`lab-ib${locked ? " on" : ""}`} aria-pressed={locked} onClick={toggleLock} aria-label={locked ? "The board is locked. Unlock it to change parts" : "Lock the board, so parts can't be moved by accident"} title={locked ? "Locked. Tap to unlock" : "Lock the board"}><Icon name={locked ? "lock" : "unlock"} /></button>
-          <button className={`lab-ib${full ? " on" : ""}`} aria-pressed={full} onClick={() => { setFull(f => !f); sfx.click(); }} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen" : "Full screen"}><Icon name={full ? "collapse" : "expand"} /></button>
-        </div>
-      </div>
-
-      <div className={`lab-hint${result?.short ? " bad" : ""}${almost || (spare && !next) ? " warn" : ""}`} role="status">
-        <VoltFace size={38} lamp={false} mood={result?.short ? "wow" : finished ? "cheer" : "happy"} />
-        <span className="txt">{partActions && !notice ? <><b>{nameOf(sel.type)}{sel.type === "wire" ? "" : ` ${sel.id}`}</b><span className="long">: drag it to move it, or use these buttons.</span></> : hint}</span>
-        <span className="lab-hint-actions">
-          {locked && <button className="btn small" onClick={toggleLock}><Icon name="unlock" size={18} /> Unlock</button>}
-          {partActions}
-          {mode.kind !== "idle" && <button className="btn small" onClick={() => cancel()}>✕ Cancel</button>}
-          {mode.kind === "idle" && !partActions && almost && <button className="btn small primary" onClick={() => { setSelected(almost.uid); flip(almost.uid); }}>⇅ Flip it</button>}
-          {mode.kind === "idle" && !partActions && !locked && !almost && spare && <button className="btn small" onClick={() => remove(spare.uid)}>🗑 Remove it</button>}
-          {mode.kind === "idle" && !partActions && next && !almost && <button className="btn small" onClick={showNext}>👀 Show me</button>}
-        </span>
-      </div>
-      <div ref={wrapRef} className="lab-board-wrap" tabIndex={0} role="application" aria-roledescription="circuit board"
-        aria-label={`Circuit board, ${COLS} by ${ROWS} posts. Arrow keys move, Enter places or chooses, T switches, R turns, F flips, Delete removes. Cursor at ${postName(cursor)}.`}
-        onKeyDown={onKeyDown}>
-        <div className="lab-stage" style={{ width: `calc(min(100%, max(240px, var(--lab-fit, 58vh))) * ${zoom})` }}>
-          <svg ref={svgRef} className={`lab-board${result?.short ? " short" : ""}${mode.kind !== "idle" ? " placing" : ""}`} viewBox={`0 0 ${W} ${H}`}
-            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onMouseDown={e => e.preventDefault()}>
-            <rect className="lab-bg" x={8} y={8} width={W - 16} height={H - 16} rx={22} />
-            {Array.from({ length: COLS }, (_, c) => <text key={`c${c}`} className="lab-coord" x={MARGIN + c * PITCH} y={20} textAnchor="middle">{colName(c)}</text>)}
-            {Array.from({ length: ROWS }, (_, r) => <text key={`r${r}`} className="lab-coord" x={18} y={MARGIN + r * PITCH + 4} textAnchor="middle">{r + 1}</text>)}
-            {Array.from({ length: COLS * ROWS }, (_, i) => { const at = [i % COLS, Math.floor(i / COLS)], [x, y] = postXY(at); return <circle key={i} className="lab-post" cx={x} cy={y} r={8} />; })}
-
-            {next && <PartGlyph part={{ ...next, anchorXY: postXY(next.at) }} ghost showMe={showMe} showLabel={false} />}
-            {next && Object.values(pinPosts(next)).map(at => <circle key={`g${key(at)}`} className="lab-ghost-pin" cx={postXY(at)[0]} cy={postXY(at)[1]} r={15} />)}
-
-            {placed.map(p => (
-              <PartGlyph key={p.uid} part={p} out={out[p.id]} input={inputs[p.id]} amps={result?.readings?.parts?.[p.id]?.amps ?? 0}
-                chip={result?.chips?.[p.id]} selected={p.uid === selected} lifted={drag?.uid === p.uid} dragging={drag?.uid === p.uid && drag.moved}
-                offset={drag?.uid === p.uid && drag.moved ? [drag.dx, drag.dy] : [0, 0]} flagged={spare?.uid === p.uid || almost?.uid === p.uid} />
-            ))}
-
-            {trayDrag?.part && <PartGlyph part={{ ...trayDrag.part, anchorXY: postXY(trayDrag.part.at) }} ghost showLabel={false} />}
-            {trayDrag?.part && Object.values(pinPosts(trayDrag.part)).map(at => <circle key={`t${key(at)}`} className={`lab-landing ${trayDrag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
-            {located && parts.filter(p => p.type === located.type).map(p => { const [x0, y0, x1, y1] = partRect(p); return <rect key={`${p.uid}${located.n}`} className="lab-locate" x={x0 - 6} y={y0 - 6} width={x1 - x0 + 12} height={y1 - y0 + 12} rx={20} />; })}
-            {landing.map(at => <circle key={`l${key(at)}`} className={`lab-landing ${drag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
-            {mode.kind === "end" && <circle className="lab-from" cx={postXY(mode.from)[0]} cy={postXY(mode.from)[1]} r={17} />}
-            {targets.map(o => <circle key={key(o.to)} className="lab-target" cx={postXY(o.to)[0]} cy={postXY(o.to)[1]} r={16} />)}
-            {cheer && (() => { const p = byUid(cheer.uid); if (!p) return null; const [x0, y0, x1] = partRect(p); return <text key={cheer.n} className="lab-cheer" x={(x0 + x1) / 2} y={y0 - 4} textAnchor="middle">✓</text>; })()}
-            {handPath && (
-              <text className="lab-hand" fontSize={34} textAnchor="middle">
-                👆
-                <animateMotion dur="1.4s" repeatCount="2" path={`M${handPath[0][0]} ${handPath[0][1] + 26} L${handPath.at(-1)[0]} ${handPath.at(-1)[1] + 26}`} />
-              </text>
-            )}
-            <circle className="lab-cursor" cx={postXY(cursor)[0]} cy={postXY(cursor)[1]} r={22} />
-          </svg>
-        </div>
-      </div>
-      <p className="sr-only" aria-live="polite">{status}</p>
-
-      <div className={`lab-tray${locked ? " locked" : ""}`} role="toolbar" aria-label={locked ? "Parts tray, locked" : "Parts tray"}>
-        {(trayTypes ? [{ title: "Your parts", types: trayTypes }] : TRAY).map(g => (
-          <div key={g.title} className="lab-tray-group">
-            <span className="eyebrow">{g.title}{kit && g.types.every(t => t === "wire" || left(t) <= 0) && <b className="lab-tray-done"> · ✓ all placed</b>}</span>
-            <div className="lab-tray-items">
-              {g.types.map(type => {
-                const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
-                const used = Boolean(kit) && n <= 0; // in a project, a part that is on the board stays in the tray, ticked
-                return (
-                  <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0 && !used} aria-description={PARTS[type].use}
-                    onPointerEnter={() => setTip(type)} onPointerLeave={() => setTip(t => (t === type ? null : t))} onFocus={() => setTip(type)} onBlur={() => setTip(t => (t === type ? null : t))}
-                    aria-label={used ? `${PARTS[type].name}, on the board. Press to show where it is` : undefined}
-                    onClick={() => { if (used) locate(type); else if (!trayGesture.current?.dragged) pickType(type); }}
-                    onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
-                    <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
-                    <span className="nm">{PARTS[type].name}</span>
-                    {tip === type ? <small className="use">{PARTS[type].use}</small>
-                      : freeBuild ? <small>{(c => (c ? `${c} on the board` : "no limit"))(parts.filter(p => p.type === type).length)}</small>
-                      : type === "wire" ? <small>as many as you need</small> : <small>{used ? "✓ on the board" : n > 0 ? `${n} left` : "none left"}</small>}
-                  </button>
-                );
-              })}
+          <div className="lab-tgroup">
+            {toolBtn({ onClick: toggleLock, "aria-pressed": locked, title: locked ? "Locked: parts can't move. Tap to change parts" : "Lock the board so parts can't move by accident" }, locked ? "lock" : "unlock", locked ? "Locked" : "Lock", locked ? " on" : "")}
+            {toolBtn({ onClick: () => { setFull(f => !f); sfx.click(); }, "aria-pressed": full, title: full ? "Leave full screen" : "Full screen" }, full ? "collapse" : "expand", full ? "Exit full screen" : "Full screen", ` lab-full${full ? " on" : ""}`)}
+            {toolBtn({ onClick: () => { const v = !autoRead; setAutoRead(v); local.set("sparklab.lab.readHints", v); if (!v) hush(); }, "aria-pressed": autoRead, title: autoRead ? "Volt reads each hint aloud" : "Volt stays quiet" }, autoRead ? "read" : "readOff", "Read to me", ` lab-read${autoRead ? " on" : ""}`)}
+            <div className="lab-settings">
+              {toolBtn({ onClick: () => setSettingsOpen(o => !o), "aria-expanded": settingsOpen, title: "Lab settings" }, "gear", "Settings")}
+              {settingsOpen && (
+                <div className="lab-settings-menu" role="group" aria-label="Lab settings">
+                  <label className="toggle-row"><span><b>Sounds</b><small>Clicks, dings and buzzers</small></span><input type="checkbox" checked={!muted} onChange={() => setMuted(!muted)} /><span className="switch" aria-hidden="true" /></label>
+                  <label className="toggle-row"><span><b>Read to me</b><small>Volt reads each hint aloud</small></span><input type="checkbox" checked={autoRead} onChange={() => { const v = !autoRead; setAutoRead(v); local.set("sparklab.lab.readHints", v); if (!v) hush(); }} /><span className="switch" aria-hidden="true" /></label>
+                  <label className="toggle-row"><span><b>Full screen</b><small>Hide the rest of the app</small></span><input type="checkbox" checked={full} onChange={() => { setFull(f => !f); setSettingsOpen(false); }} /><span className="switch" aria-hidden="true" /></label>
+                  <label className="toggle-row"><span><b>Meter</b><small>Current and voltage for the chosen part</small></span><input type="checkbox" checked={meter} onChange={() => setMeter(m => !m)} /><span className="switch" aria-hidden="true" /></label>
+                  <button type="button" className="btn small" onClick={() => setSettingsOpen(false)}>Done</button>
+                </div>
+              )}
             </div>
           </div>
-        ))}
+          <span className="lab-saved" title="Your board saves by itself on this device"><Icon name="saved" size={16} /> Saved</span>
+        </div>
+
+        <div ref={wrapRef} className="lab-board-wrap" tabIndex={0} role="application" aria-roledescription="circuit board"
+          aria-label={`Circuit board, ${COLS} by ${ROWS} posts${fitted ? ", zoomed to your circuit" : ""}. Arrow keys move, Enter places or chooses, T switches, R turns, F flips, Delete removes. Cursor at ${postName(cursor)}.`}
+          onKeyDown={onKeyDown}>
+          <div className="lab-stage" style={{ "--zoom": zoom }}>
+            <svg ref={svgRef} className={`lab-board${result?.short ? " short" : ""}${mode.kind !== "idle" ? " placing" : ""}`} viewBox={view.join(" ")} preserveAspectRatio="xMidYMid meet"
+              onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onMouseDown={e => e.preventDefault()}>
+              <rect className="lab-bg" x={8} y={8} width={W - 16} height={H - 16} rx={22} />
+              {Array.from({ length: COLS }, (_, c) => <text key={`c${c}`} className="lab-coord" x={MARGIN + c * PITCH} y={fitted ? view[1] + 20 : 20} textAnchor="middle">{colName(c)}</text>)}
+              {Array.from({ length: ROWS }, (_, r) => <text key={`r${r}`} className="lab-coord" x={fitted ? view[0] + 18 : 18} y={MARGIN + r * PITCH + 4} textAnchor="middle">{r + 1}</text>)}
+              {Array.from({ length: COLS * ROWS }, (_, i) => { const at = [i % COLS, Math.floor(i / COLS)], [x, y] = postXY(at); return <circle key={i} className="lab-post" cx={x} cy={y} r={8} />; })}
+
+              {next && <PartGlyph part={{ ...next, anchorXY: postXY(next.at) }} ghost showMe={showMe} showLabel={false} />}
+              {next && Object.values(pinPosts(next)).map(at => <circle key={`g${key(at)}`} className="lab-ghost-pin" cx={postXY(at)[0]} cy={postXY(at)[1]} r={15} />)}
+
+              {placed.map(p => (
+                <PartGlyph key={p.uid} part={p} out={out[p.id]} input={inputs[p.id]} amps={result?.readings?.parts?.[p.id]?.amps ?? 0}
+                  chip={result?.chips?.[p.id]} selected={p.uid === selected} lifted={drag?.uid === p.uid} dragging={drag?.uid === p.uid && drag.moved}
+                  offset={drag?.uid === p.uid && drag.moved ? [drag.dx, drag.dy] : [0, 0]} flagged={spare?.uid === p.uid || almost?.uid === p.uid} />
+              ))}
+
+              {trayDrag?.part && <PartGlyph part={{ ...trayDrag.part, anchorXY: postXY(trayDrag.part.at) }} ghost showLabel={false} />}
+              {trayDrag?.part && Object.values(pinPosts(trayDrag.part)).map(at => <circle key={`t${key(at)}`} className={`lab-landing ${trayDrag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
+              {located && parts.filter(p => p.type === located.type).map(p => { const [x0, y0, x1, y1] = partRect(p); return <rect key={`${p.uid}${located.n}`} className="lab-locate" x={x0 - 6} y={y0 - 6} width={x1 - x0 + 12} height={y1 - y0 + 12} rx={20} />; })}
+              {ringed.map(p => { const [x0, y0, x1, y1] = partRect(p); return <rect key={`h${p.uid}`} className="lab-problem" x={x0 - 8} y={y0 - 8} width={x1 - x0 + 16} height={y1 - y0 + 16} rx={22} />; })}
+              {landing.map(at => <circle key={`l${key(at)}`} className={`lab-landing ${drag.ok ? "ok" : "bad"}`} cx={postXY(at)[0]} cy={postXY(at)[1]} r={17} />)}
+              {mode.kind === "end" && <circle className="lab-from" cx={postXY(mode.from)[0]} cy={postXY(mode.from)[1]} r={17} />}
+              {targets.map(o => <circle key={key(o.to)} className="lab-target" cx={postXY(o.to)[0]} cy={postXY(o.to)[1]} r={16} />)}
+              {cheer && (() => { const p = byUid(cheer.uid); if (!p) return null; const [x0, y0, x1] = partRect(p); return <text key={cheer.n} className="lab-cheer" x={(x0 + x1) / 2} y={y0 - 4} textAnchor="middle">✓</text>; })()}
+              {handPath && (
+                <text className="lab-hand" fontSize={34} textAnchor="middle">
+                  👆
+                  <animateMotion dur="1.4s" repeatCount="2" path={`M${handPath[0][0]} ${handPath[0][1] + 26} L${handPath.at(-1)[0]} ${handPath.at(-1)[1] + 26}`} />
+                </text>
+              )}
+              <circle className="lab-cursor" cx={postXY(cursor)[0]} cy={postXY(cursor)[1]} r={22} />
+            </svg>
+          </div>
+          {fitted && <span className="lab-view-note">Showing your circuit · <button type="button" className="linklike" onClick={() => setFit(false)}>whole board</button></span>}
+        </div>
+        <p className="sr-only" aria-live="polite">{status}</p>
+
+        <div className={`lab-now loop-${now.loop}`} aria-label="What your circuit is doing">
+          <span className="lab-now-h">Right now</span>
+          <span className="lab-now-loop"><i aria-hidden="true" />{{ empty: "The board is empty", waiting: "Starting…", nobattery: "No battery yet", short: "Short circuit: the board switched off", flowing: "Loop closed: current is flowing", open: "No current: the loop is open" }[now.loop]}</span>
+          {now.items.map(it => (
+            <button key={it.uid} type="button" className={`lab-now-item ${it.kind}${it.on ? " on" : ""}${it.uid === selected ? " sel" : ""}`} onClick={() => { if (!locked && mode.kind === "idle") setSelected(it.uid); }} title={`Choose ${it.name.toLowerCase()} ${it.id}`}>
+              {it.name} {it.id} · <b>{it.text}</b>
+            </button>
+          ))}
+          <details className="lab-describe">
+            <summary>Describe my circuit</summary>
+            <ul>{describe(parts, result).map((l, i) => <li key={i}>{l}</li>)}</ul>
+          </details>
+        </div>
       </div>
 
-      {trayDrag && <div className="lab-tray-ghost" ref={el => { trayGhost.current = el; moveGhost(); }} aria-hidden="true"><PartPic type={trayDrag.type} size={40} /></div>}
-
-      {hasExtras && (
-        <div className="lab-inspector" aria-label={`${nameOf(sel.type)} ${sel.id} settings`}>
-          <div className="lab-insp-head">
-            <span className="em" aria-hidden="true">{PARTS[sel.type].emoji}</span>
-            <div><b>{nameOf(sel.type)} {sel.type !== "wire" && sel.id}</b><p className="muted">{PARTS[sel.type].say}</p></div>
-          </div>
-          {sel.type === "ldr" && <div className="chips">{LDR_CHOICES.map(([v, l]) => <button key={v} className="chip" aria-pressed={(inputs[sel.id] ?? "bright") === v} onClick={() => setInput(sel.id, v)}>{l}</button>)}</div>}
-          {sel.type === "probe" && <><span className="eyebrow">Put in the gap</span><div className="chips">{MATERIALS.map(([v, l]) => <button key={v} className="chip" aria-pressed={(inputs[sel.id] ?? "air") === v} onClick={() => setInput(sel.id, v)}>{l}</button>)}</div></>}
-          {sel.type === "resistor" && !locked && <div className="chips">{[100, 1000, 10000].map(v => <button key={v} className="chip" aria-pressed={sel.ohms === v} onClick={() => update(sel.uid, { ohms: v })}>{v >= 1000 ? `${v / 1000} kΩ` : `${v} Ω`}</button>)}</div>}
-          {sel.type === "led" && !locked && <div className="chips">{["red", "yellow", "green"].map(v => <button key={v} className="chip" aria-pressed={sel.colour === v} onClick={() => update(sel.uid, { colour: v })}>{{ red: "🔴", yellow: "🟡", green: "🟢" }[v]} {v}</button>)}</div>}
-          {meter && reading && sel.type !== "battery" && <p className="lab-meter">🔬 Current: <b>{fmtA(Math.abs(reading.amps))}</b>{sel.type !== "wire" && <> · Voltage across: <b>{Math.abs(reading.volts).toFixed(2)} V</b></>}</p>}
-          {meter && sel.type === "battery" && result && <p className="lab-meter">🔬 Battery current: <b>{fmtA(result.readings.batteryAmps)}</b></p>}
+      {/* Right: the parts, and the chosen part with its controls. */}
+      <div className="lab-panel">
+        <div className={`lab-tray${locked ? " locked" : ""}`} role="toolbar" aria-label={locked ? "Parts tray, locked" : "Parts tray"}>
+          {(trayTypes ? [{ title: "Your parts", types: trayTypes }] : TRAY).map(g => {
+            const counted = g.types.filter(t => t !== "wire"), placedN = counted.filter(t => left(t) <= 0).length;
+            return (
+              <div key={g.title} className="lab-tray-group">
+                <span className="lab-tray-h"><span className="eyebrow">{g.title}</span>{kit && counted.length > 0 && <b className={`lab-tray-count${placedN === counted.length ? " done" : ""}`}>{placedN} of {counted.length} placed</b>}</span>
+                <div className="lab-tray-items">
+                  {g.types.map(type => {
+                    const n = left(type), active = mode.kind !== "idle" && mode.kind !== "move" && mode.type === type, isNext = next?.type === type && !active;
+                    const used = Boolean(kit) && n <= 0; // in a project, a part that is on the board stays in the tray, ticked
+                    return (
+                      <button key={type} className={`lab-tray-item${active ? " on" : ""}${isNext ? " next" : ""}${used ? " used" : ""}`} aria-pressed={active} disabled={n <= 0 && !used} aria-description={PARTS[type].use}
+                        onPointerEnter={() => setTip(type)} onPointerLeave={() => setTip(t => (t === type ? null : t))} onFocus={() => setTip(type)} onBlur={() => setTip(t => (t === type ? null : t))}
+                        aria-label={used ? `${PARTS[type].name}, on the board. Press to show where it is` : undefined}
+                        onClick={() => { if (used) locate(type); else if (!trayGesture.current?.dragged) pickType(type); }}
+                        onPointerDown={e => onTrayDown(type, e)} onPointerMove={onTrayMove} onPointerUp={onTrayUp} onPointerCancel={onTrayUp}>
+                        <span className="em" aria-hidden="true"><PartPic type={type} size={30} /></span>
+                        <span className="nm">{PARTS[type].name}</span>
+                        {tip === type ? <small className="use">{PARTS[type].use}</small>
+                          : freeBuild ? <small>{(c => (c ? `${c} on the board` : "no limit"))(parts.filter(p => p.type === type).length)}</small>
+                          : type === "wire" ? <small>Joins two posts · unlimited</small> : <small>{used ? "On the board · find it" : n > 0 ? `${n} left` : "none left"}</small>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
 
-      <details className="lab-describe">
-        <summary>🗣 Describe my circuit</summary>
-        <ul>{describe(parts, result).map((l, i) => <li key={i}>{l}</li>)}</ul>
-        <button className="btn ghost small" aria-pressed={meter} onClick={() => setMeter(m => !m)}>🔬 {meter ? "Hide" : "Show"} the meter for the chosen part</button>
-      </details>
+        {trayDrag && <div className="lab-tray-ghost" ref={el => { trayGhost.current = el; moveGhost(); }} aria-hidden="true"><PartPic type={trayDrag.type} size={40} /></div>}
+
+        <section className={`lab-inspector${sel ? "" : " empty"}`} aria-label={sel ? `${nameOf(sel.type)} ${sel.type === "wire" ? "" : sel.id}, chosen` : "Chosen part"}>
+          <span className="eyebrow">Chosen part</span>
+          {!sel ? <p className="muted">Tap a part on the board to see what it does and change it.</p> : (
+            <>
+              <div className="lab-insp-head">
+                <span className="lab-insp-pic" aria-hidden="true"><PartPic type={sel.type} size={40} /></span>
+                <div>
+                  <b>{nameOf(sel.type)}{sel.type === "wire" ? "" : ` ${sel.id}`}</b>
+                  <span className="muted">{selNow ? `${selNow.text[0].toUpperCase()}${selNow.text.slice(1)} · ` : ""}{(pins => (pins.length === 2 ? `from ${pins[0]} to ${pins[1]}` : `at ${pins[0]}`))(Object.values(pinPosts(sel)).map(postName))}</span>
+                </div>
+              </div>
+              <p className="lab-insp-say">{PARTS[sel.type].say}</p>
+              {(partActions || lockedSwitch) && <div className="lab-acts">{partActions ?? lockedSwitch}</div>}
+              {locked && !lockedSwitch && <p className="muted small-note">The board is locked. Tap Change parts to move or remove it.</p>}
+              {sel.type === "ldr" && <div className="chips">{LDR_CHOICES.map(([v, l]) => <button key={v} className="chip" aria-pressed={(inputs[sel.id] ?? "bright") === v} onClick={() => setInput(sel.id, v)}>{l}</button>)}</div>}
+              {sel.type === "probe" && <><span className="eyebrow">Put in the gap</span><div className="chips">{MATERIALS.map(([v, l]) => <button key={v} className="chip" aria-pressed={(inputs[sel.id] ?? "air") === v} onClick={() => setInput(sel.id, v)}>{l}</button>)}</div></>}
+              {sel.type === "resistor" && !locked && <div className="chips">{[100, 1000, 10000].map(v => <button key={v} className="chip" aria-pressed={sel.ohms === v} onClick={() => update(sel.uid, { ohms: v })}>{v >= 1000 ? `${v / 1000} kΩ` : `${v} Ω`}</button>)}</div>}
+              {sel.type === "led" && !locked && <div className="chips">{["red", "yellow", "green"].map(v => <button key={v} className="chip" aria-pressed={sel.colour === v} onClick={() => update(sel.uid, { colour: v })}>{{ red: "🔴 Red", yellow: "🟡 Yellow", green: "🟢 Green" }[v]}</button>)}</div>}
+              {meter && reading && sel.type !== "battery" && (
+                <div className="lab-meter"><span className="eyebrow">Meter</span><span><small>Current</small><b>{fmtA(Math.abs(reading.amps))}</b></span>{sel.type !== "wire" && <span><small>Voltage across</small><b>{Math.abs(reading.volts).toFixed(2)} V</b></span>}</div>
+              )}
+              {meter && sel.type === "battery" && result && <div className="lab-meter"><span className="eyebrow">Meter</span><span><small>Battery current</small><b>{fmtA(result.readings.batteryAmps)}</b></span></div>}
+              <button type="button" className="btn ghost small" onClick={() => setSelected(null)}>Done</button>
+            </>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

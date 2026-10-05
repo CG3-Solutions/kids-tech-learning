@@ -4,7 +4,7 @@
 //   2. Gather the parts: pick the ones this project needs; the others say why not.
 //   3. Build on the board.  4. Predict.  5. Test: every check runs on the child's own circuit.
 //   6. Explain, in the world, try this, and the star.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CircuitLab from "./CircuitLab.jsx";
 import PartPic from "./PartPic.jsx";
 import Icon from "./Icon.jsx";
@@ -14,6 +14,8 @@ import { parseParts, parseCheck } from "../../content/lab/netlist.js";
 import { LAYOUTS, STARTS } from "../../content/lab/layouts.js";
 import { buildBoard } from "../../lib/circuit/board.js";
 import { markBuild, markOpenBuild, explainMark, hintFor, inputWords, stateWords } from "../../lib/circuit/marking.js";
+import { problemParts } from "../../lib/circuit/workspace.js";
+import { useSmallScreen } from "../../lib/useSmallScreen.js";
 import { useApp } from "../../lib/AppContext.jsx";
 import { local } from "../../lib/storage.js";
 import { sfx } from "../../lib/sfx.js";
@@ -36,6 +38,22 @@ export function distractorsFor(project) {
   const seed = [...project.id].reduce((s, ch) => s + ch.charCodeAt(0), 0);
   return [pool[seed % pool.length], pool[(seed * 7 + 3) % pool.length]].filter((t, i, a) => a.indexOf(t) === i);
 }
+// A lab page (a project's build, or free build): it opens scrolled to its header, and the lab under
+// it is told the header's height (--head-h) so header and lab fill the screen together.
+export function useLabPage(active = true) {
+  const headRef = useRef(null), projRef = useRef(null);
+  useEffect(() => {
+    const head = headRef.current, root = projRef.current;
+    if (!active || !head || !root) return;
+    head.scrollIntoView({ block: "start" });
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => root.style.setProperty("--head-h", `${Math.round(head.getBoundingClientRect().height) + 12}px`));
+    ro.observe(head);
+    return () => ro.disconnect();
+  }, [active]);
+  return { headRef, projRef };
+}
+
 // "With switch S1 ON → bulb L1 on" for every check, in the project's own labels.
 export function checkLines(project) {
   if (project.open) return ["It has an input: a switch, a button or a sensor", "Changing the input changes an output: a light, a motor or a sound"];
@@ -78,6 +96,13 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
   const [mark, setMark] = useState(null);
   const [passed, setPassed] = useState(false); // the board as it stands has passed its test
   const [boardKey, setBoardKey] = useState(0);
+  const [ringed, setRinged] = useState([]);          // parts ringed on the board by "Show me where"
+  const [restartArmed, setRestartArmed] = useState(false); // Start again asks once before clearing
+  const small = useSmallScreen();
+  const [missionOpen, setMissionOpen] = useState(!small); // on phones the mission folds to one line
+  const ringTimer = useRef(null), restartTimer = useRef(null);
+  const { headRef, projRef } = useLabPage(stage === "build");
+  useEffect(() => () => { clearTimeout(ringTimer.current); clearTimeout(restartTimer.current); }, []);
   const guide = useMemo(() => (mode === "guided" && LAYOUTS[project.id] ? buildBoard(LAYOUTS[project.id]) : null), [mode, project.id]);
   const initial = useMemo(() => (fixIt ? { parts: buildBoard(STARTS[project.id]) ?? [], inputs: {} } : undefined), [fixIt, project.id]);
   const go = s => { hush(); setStage(s); window.scrollTo({ top: 0 }); };
@@ -86,7 +111,7 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
 
   const header = (
     <>
-      <div className="proj-head">
+      <div className="proj-head" ref={headRef}>
         <button className="btn back-btn" onClick={() => { hush(); onBack(); }} aria-label="Back to projects"><Icon name="back" size={18} /><span className="lbl">Projects</span></button>
         <span className="proj-emoji" aria-hidden="true">{project.emoji}</span>
         <div className="proj-title">
@@ -173,55 +198,82 @@ export default function ProjectPlayer({ project, done, onComplete, onNext, onBac
     );
   }
 
-  // Build, predict and test.
-  const runTest = () => { hush(); const m = open ? markOpenBuild(board) : markBuild(project, board); setMark(m); setPassed(m.pass); setTesting(true); m.pass ? sfx.tada() : sfx.oops(); };
+  // Build, predict and test. Everything about the project (goal, checklist, predict, results) sits in
+  // the mission column beside the board, so the board never moves while the child works.
+  const runTest = () => { hush(); const m = open ? markOpenBuild(board) : markBuild(project, board); setMark(m); setPassed(m.pass); setTesting(true); setRinged([]); m.pass ? sfx.tada() : sfx.oops(); };
   const words = !mark ? [] : open ? [mark.missing.length ? "Your invention needs a battery." : mark.noInput ? "I can't find an input yet." : "Your input doesn't change an output yet."] : explainMark(project, mark, board, 3);
-  const actions = (
-    <>
-      <button className="btn primary lab-test" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}><Icon name="bolt" size={18} /> Test my circuit</button>
-      <details className="proj-must">
-        <summary><Icon name="target" size={18} /> <span className="long">What it must do</span><span className="short">Goal</span></summary>
-        <ul>{checkLines(project).map((l, i) => <li key={i}>{l}</li>)}</ul>
-      </details>
-      {/* Always shown (just disabled), so the row above the board never changes size. */}
-      <button className="lab-ib" title="Start again" disabled={!board.length && !fixIt} onClick={() => { local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); }} aria-label="Start again"><Icon name="restart" /></button>
-    </>
-  );
+  const lines = checkLines(project);
+  const passedN = mark?.results?.filter(r => r.pass).length ?? 0;
+  const showWhere = () => { const uids = problemParts(mark, board); setRinged(uids); sfx.click(); clearTimeout(ringTimer.current); ringTimer.current = setTimeout(() => setRinged([]), 4500); };
+  const restart = () => {
+    if (!restartArmed) { setRestartArmed(true); clearTimeout(restartTimer.current); restartTimer.current = setTimeout(() => setRestartArmed(false), 4000); return; }
+    setRestartArmed(false); local.remove(saveKey); setBoardKey(k => k + 1); setMark(null); setTesting(false); setPredicted(null); setRinged([]);
+  };
 
-  return (
-    <div className="stack proj">
-      {header}
+  const mission = (
+    <section className={`lab-mission${!small || missionOpen ? " open" : ""}`} aria-label="Your mission">
+      {(() => {
+        const head = <><span className="eyebrow">Your mission</span><span className="lm-count">{mark && !mark.missing?.length && mark.results?.length ? `${passedN} of ${lines.length} work` : `${lines.length} checks`}</span></>;
+        return small
+          ? <button type="button" className="lm-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen(o => !o)}>{head}<span aria-hidden="true">{missionOpen ? "▴" : "▾"}</span></button>
+          : <div className="lm-toggle">{head}</div>;
+      })()}
+      <div className="lm-body">
+        <p className="lm-goal">{project.goal}</p>
+        <span className="eyebrow">What it must do</span>
+        <ul className="lm-checks">
+          {lines.map((l, i) => {
+            const r = mark?.results?.[i];
+            const st = mark?.pass ? "ok" : r ? (r.pass ? "ok" : "bad") : "todo";
+            return <li key={i} className={st}><span className="lm-dot" aria-hidden="true">{st === "ok" ? <Icon name="check" size={14} /> : null}</span><span>{l}</span><span className="sr-only">{st === "ok" ? " (works)" : st === "bad" ? " (not yet)" : ""}</span></li>;
+          })}
+        </ul>
+        {!mark && <p className="lm-note">Ticks appear when you test.</p>}
+      </div>
       {testing && (
         <div className="proj-test" role="region" aria-label="Testing">
           {predicted == null ? (
             <>
-              <Guide Face={VoltFace}>{`Before we test, predict! ${project.predict.q}`}</Guide>
-              <div className="choices">{project.predict.options.map((o, i) => <button key={i} className="choice" onClick={() => { setPredicted(i); i === project.predict.answer ? sfx.ding() : sfx.click(); }}>{o}</button>)}</div>
+              <p className="lm-q"><b>Predict first!</b> {project.predict.q}</p>
+              <div className="lm-choices">{project.predict.options.map((o, i) => <button key={i} className="choice" onClick={() => { setPredicted(i); i === project.predict.answer ? sfx.ding() : sfx.click(); }}>{o}</button>)}</div>
             </>
           ) : !mark ? (
             <>
-              <Guide Face={VoltFace} mood={predicted === project.predict.answer ? "cheer" : "happy"}>
-                {`${predicted === project.predict.answer ? "Good prediction!" : `Interesting guess! The answer is "${project.predict.options[project.predict.answer]}".`} ${project.predict.why}`}
-              </Guide>
-              <div className="row"><button className="btn primary big" onClick={runTest}>⚡ Test it now</button></div>
+              <p className="lm-q">{predicted === project.predict.answer ? "Good prediction! " : `Interesting guess! The answer is "${project.predict.options[project.predict.answer]}". `}{project.predict.why}</p>
+              <button className="btn primary big lab-test" onClick={runTest}><Icon name="bolt" size={20} /> Test it now</button>
             </>
           ) : mark.pass ? (
-            <>
-              <Guide Face={VoltFace} mood="cheer">Every check passed! Your circuit does exactly what it should.</Guide>
-              <ul className="proj-results">{checkLines(project).map((l, i) => <li key={i} className="ok">✓ {l}</li>)}</ul>
-              <div className="row"><button className="btn primary big" onClick={() => go("done")}>See what you learned ⭐</button></div>
-            </>
+            <div className="fb-bar right" role="status">
+              <span className="fb-txt"><b>It works!</b><span>Every check passed.</span></span>
+              <button className="btn play big" onClick={() => go("done")}>See what you learned</button>
+            </div>
           ) : (
             <>
-              <Guide Face={VoltFace} mood="wow">{`Not yet! ${words.join(" ")}`}</Guide>
-              <p className="proj-hint">💡 {hintFor(mark)}</p>
-              {mark.results.length > 0 && <ul className="proj-results">{checkLines(project).map((l, i) => <li key={i} className={mark.results[i]?.pass ? "ok" : "bad"}>{mark.results[i]?.pass ? "✓" : "✗"} {l}</li>)}</ul>}
-              <div className="row"><button className="btn primary" onClick={() => { setTesting(false); setMark(null); }}>Keep building 🔧</button><button className="btn" onClick={runTest}>Test again</button></div>
+              <div className="fb-bar wrong" role="status">
+                <span className="fb-txt"><b>{mark.missing?.length ? "Not yet" : `Almost! ${passedN} of ${lines.length} work`}</b><span>{words.join(" ")}</span></span>
+              </div>
+              <p className="proj-hint">{hintFor(mark)}</p>
+              <div className="row">
+                {problemParts(mark, board).length > 0 && <button className="btn primary" onClick={showWhere}><Icon name="target" size={18} /> Show me where</button>}
+                <button className="btn" onClick={() => { setTesting(false); setMark(null); setRinged([]); }}>Keep building</button>
+              </div>
             </>
           )}
         </div>
       )}
-      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={open ? KIT : need} trayTypes={open ? Object.keys(KIT) : [...types, "wire"]} guide={guide} actions={actions} examples={false} finished={passed}
+    </section>
+  );
+  const actions = (
+    <>
+      <button className="btn primary big lab-test" onClick={() => { if (predicted != null) runTest(); else { setMark(null); setTesting(true); } }}><Icon name="bolt" size={22} /> {mark ? "Test again" : "Test my circuit"}</button>
+      <button className={`btn lab-restart${restartArmed ? " armed" : ""}`} disabled={!board.length && !fixIt} onClick={restart}><Icon name="restart" size={18} /> {restartArmed ? "Tap again to start over" : "Start again…"}</button>
+    </>
+  );
+
+  return (
+    <div className="stack proj proj-build" ref={projRef}>
+      {header}
+      <CircuitLab key={`${project.id}-${boardKey}`} saveKey={saveKey} initial={initial} kit={open ? KIT : need} trayTypes={open ? Object.keys(KIT) : [...types, "wire"]} guide={guide} actions={actions} mission={mission} highlight={ringed} examples={false} finished={passed}
         onChange={parts => setBoard(parts)} />
     </div>
   );
