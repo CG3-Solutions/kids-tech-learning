@@ -2,10 +2,14 @@ import { Link, useParams } from "react-router-dom";
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
 import { useFamily, daysBack } from "../../lib/useFamily.js";
-import { badgeState, moduleStats, starCount } from "../../lib/progress.js";
+import { badgeState, moduleStats, starCount, dayStreak } from "../../lib/progress.js";
+import { Avatar, Guide, guideForModule } from "../../components/Character.jsx";
+import { Star, Flame } from "../../components/TopBar.jsx";
+import Icon from "../../components/Icon.jsx";
+import { ordinal } from "../Profiles.jsx";
 import { isUnlocked } from "../../components/journey/Journey.jsx";
 import { JOURNEYS } from "../../content/journeys.js";
-import { AREAS } from "../../content/areas.js";
+import { AREAS, areaStyle } from "../../content/areas.js";
 import { timeline, fmtWhen } from "../../lib/activity.js";
 import UsageChart from "./UsageChart.jsx";
 import ConceptReport from "./ConceptReport.jsx";
@@ -18,7 +22,7 @@ const keyName = c => (c === ";" ? ";" : c.toUpperCase());
 
 // Typing numbers for one child: speed, accuracy, keys to practise and recent lessons.
 function TypingReport({ sessions }) {
-  if (!sessions.length) return <p className="muted">No typing lessons yet. Open ⌨️ Typing from the child's home screen to start.</p>;
+  if (!sessions.length) return <p className="muted">No typing lessons yet. Open Typing from the child's home screen to start.</p>;
   const sum = typingSummary(sessions);
   return (
     <>
@@ -48,7 +52,7 @@ function TypingReport({ sessions }) {
                 <td>{t.mode === "pro" ? "Pro" : "Kids"}{t.input === "touch" ? " · tapped" : ""}</td>
                 <td>{t.wpm} wpm</td>
                 <td>{t.accuracy}%</td>
-                <td>{t.passed ? "✓ Passed" : "Try again"}</td>
+                <td>{t.passed ? <span className="mastery m-strong"><Icon name="check" size={14} stroke={3} /> Passed</span> : <span className="mastery m-weak">Try again</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -58,7 +62,7 @@ function TypingReport({ sessions }) {
   );
 }
 
-const PATHS = Object.values(JOURNEYS);
+const PATHS = Object.entries(JOURNEYS).map(([activity, j]) => ({ ...j, activity, title: j.name.replace(/^\S+\s/, "") }));
 
 export default function Reports() {
   const { childId } = useParams();
@@ -70,39 +74,53 @@ export default function Reports() {
   const week = child ? daysBack(7).reduce((s, day) => s + minutesOn(child.id, day), 0) : 0;
   const done = d ? new Set(d.progress.map(p => p.item_id)) : new Set();
   const avg = d?.attempts.length ? Math.round((d.attempts.reduce((s, a) => s + a.score / a.total, 0) / d.attempts.length) * 100) : null;
+  const SECTIONS = [["time", "Learning time"], ["subjects", "Subjects"], ["adventures", "Adventures"], ["computer", "Computer concepts"], ["typing", "Typing"], ["activity", "Activity"]];
   return (
-    <ParentLayout title="Progress reports">
-      <div className="seg" role="tablist" aria-label="Child">
-        {children.map(c => <Link key={c.id} role="tab" aria-selected={c.id === child.id} className={c.id === child.id ? "on" : ""} to={`/parent/reports/${c.id}`}>{c.avatar} {c.name}</Link>)}
+    <ParentLayout>
+      <div className="report-head">
+        <Avatar value={child.avatar} size="lg" />
+        <div className="rh-txt">
+          <span className="eyebrow">Progress report</span>
+          <h1>{child.name}</h1>
+          <span className="muted">{child.learner === "adult" ? "Grown-up · typing" : child.grade ? `${ordinal(child.grade)} standard` : "Class not set"}</span>
+        </div>
+        <button className="btn no-print" onClick={() => window.print()}><Icon name="download" size={18} /> Print or save as PDF</button>
       </div>
+      {children.length > 1 && (
+        <div className="learner-tabs no-print" role="tablist" aria-label="Learner">
+          {children.map(c => <Link key={c.id} role="tab" aria-selected={c.id === child.id} className={c.id === child.id ? "on" : ""} to={`/parent/reports/${c.id}`}><Avatar value={c.avatar} size="xs" />{c.name}</Link>)}
+        </div>
+      )}
       {(!d || !published || loading) ? <p className="muted">Loading…</p> : (
         <>
           <div className="kpis wide">
             <div className="kpi"><span>This week</span><b>{week} min</b><small>learning time</small></div>
-            <div className="kpi"><span>Stars</span><b>★ {starCount(d)}</b><small>all time</small></div>
+            <div className="kpi"><span>Streak</span><b className="kpi-ic"><Flame /> {dayStreak(d)}</b><small>days in a row</small></div>
+            <div className="kpi"><span>Stars</span><b className="kpi-ic"><Star /> {starCount(d)}</b><small>all time</small></div>
             <div className="kpi"><span>Quiz average</span><b>{avg == null ? "—" : `${avg}%`}</b><small>{d.attempts.length} quizzes</small></div>
             <div className="kpi"><span>Badges</span><b>{badgeState(d, published.modules).filter(b => b.earned).length}</b><small>earned</small></div>
           </div>
+          <nav className="report-nav no-print" aria-label="Report sections">{SECTIONS.map(([id, l]) => <a key={id} href={`#r-${id}`} onClick={e => { e.preventDefault(); document.getElementById(`r-${id}`)?.scrollIntoView({ behavior: "smooth" }); }}>{l}</a>)}</nav>
 
-          <section className="pc-card">
+          <section className="pc-card" id="r-time">
             <h2>Learning time, last 7 days</h2>
             <UsageChart childId={child.id} minutesOn={minutesOn} limit={child.daily_limit_min} />
           </section>
 
-          <section className="pc-card">
+          <section className="pc-card" id="r-subjects">
             <h2>Subjects</h2>
             {AREAS.map(a => {
               const mods = published.modules.filter(m => m.area === a.id);
               return (
-                <div key={a.id} className="subj-group">
-                  <h3>{a.emoji} {a.title}</h3>
+                <div key={a.id} className="subj-group" style={areaStyle(a.id)}>
+                  <h3><Guide id={a.guide} size={36} />{a.title}</h3>
                   {mods.map(m => {
-                    if (m.coming_soon) return <div key={m.id} className="modrow soon"><span className="n">{m.emoji} {m.title}</span><span className="muted">Coming soon</span><span /></div>;
+                    if (m.coming_soon) return <div key={m.id} className="modrow soon"><span className="n">{m.title}</span><span className="muted">Coming soon</span><span /></div>;
                     const st = moduleStats(m, published.cards, d);
                     return (
-                      <div key={m.id} className="modrow" style={{ "--c": `var(--${m.color})` }}>
-                        <span className="n">{m.emoji} {m.title}</span>
-                        <div className="bar"><i style={{ width: `${st.pct}%` }} /></div>
+                      <div key={m.id} className="modrow">
+                        <span className="n">{m.title}</span>
+                        <span className="bar-track" role="img" aria-label={`${st.pct}% done`}><i style={{ width: `${st.pct}%` }} /></span>
                         <span className="v">{st.done}/{st.total}{st.best ? ` · best quiz ${st.best.score}/${st.best.total}` : ""}</span>
                       </div>
                     );
@@ -112,33 +130,38 @@ export default function Reports() {
             })}
           </section>
 
-          <section className="pc-card">
+          <section className="pc-card" id="r-adventures">
             <h2>Adventures</h2>
             {PATHS.map(p => {
               const main = p.steps.filter(s => !s.bonus);
               const n = main.filter(s => done.has(s.id)).length;
               const next = p.steps.find((s, i) => !done.has(s.id) && isUnlocked(p.steps, i, done, child.grade ?? 0));
+              const mod = published.modules.find(m => m.activity === p.activity);
               return (
-                <div key={p.name} className="path-row">
-                  <b>{p.name}</b>
-                  <span className="muted">{n} of {main.length} steps{next ? ` · next: ${next.emoji} ${next.title}` : " · all done ⭐"}</span>
+                <div key={p.name} className="path-row" style={areaStyle(mod?.area ?? "science")}>
+                  <Guide id={guideForModule(mod ?? { activity: p.activity })} size={40} />
+                  <div className="pr-txt">
+                    <b>{p.title}</b>
+                    <span className="muted">{n} of {main.length} steps{next ? ` · next: ${next.title}` : " · all done"}</span>
+                  </div>
+                  <span className="bar-track" role="img" aria-label={`${n} of ${main.length} steps`}><i style={{ width: `${main.length ? (n / main.length) * 100 : 0}%` }} /></span>
                   <Link to={`/parent/guides/${p.guide}`}>Course guide</Link>
                 </div>
               );
             })}
           </section>
 
-          <section className="pc-card">
-            <h2>💻 Inside a Computer: concepts</h2>
+          <section className="pc-card" id="r-computer">
+            <h2>Inside a Computer: concepts</h2>
             <ConceptReport state={d.state} done={done} />
           </section>
 
-          <section className="pc-card">
+          <section className="pc-card" id="r-typing">
             <h2>Typing</h2>
             <TypingReport sessions={d.typing ?? []} />
           </section>
 
-          <section className="pc-card">
+          <section className="pc-card" id="r-activity">
             <h2>Activity</h2>
             {(() => {
               const feed = timeline([{ child, data: d }], published, 30);

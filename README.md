@@ -1,6 +1,6 @@
 # Spark Lab
 
-A learning app for kids (1st to 12th standard) covering **language**, **maths**, **electricity & parts**, **inside a computer**, **binary**, **coding puzzles** and **touch typing** (for adults too). It has picture cards with real-life examples, hands-on games, quizzes, badges, a parent dashboard and an admin content editor.
+A learning app for kids (1st to 12th standard) covering **language**, **maths**, **electricity & parts**, **inside a computer**, **binary**, **coding puzzles** and **touch typing** (for adults too). It has picture cards with real-life examples, hands-on games, quizzes, badges, a Family hub and an admin content editor.
 
 Live site: https://cg3-solutions.github.io/kids-tech-learning/
 
@@ -15,8 +15,8 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 
 ### Features
 - **Accounts and two modes:** only grown-ups have accounts (email + password, sign-in link, optional Google). Children are profiles with a first name and an animal avatar, never an email.
-  - **👪 Parent dashboard:** where a grown-up lands after signing in. It holds learners, progress reports, **⚙️ Settings** (screen time, email notifications, voice & sound, account), teaching guides and classes.
-  - **🧒 Kids' mode:** started from the dashboard with **Start kids' mode**. It shows only the "Who's learning today?" picker, lessons and games. Getting back to the dashboard needs the **parent password** (the account's sign-in password), even if the address is typed in. After 5 wrong tries it pauses for 30 seconds. Accounts made with Google or an email link can use **Email me a sign-in link**, or set a password in Settings → Account.
+  - **👪 Family hub:** where a grown-up lands after signing in. It holds learners, progress reports, **⚙️ Settings** (screen time, email notifications, voice & sound, account), teaching guides and classes.
+  - **🧒 Learner mode:** started from the dashboard with **Start learner mode**. It shows only the "Who's learning today?" picker, lessons and games. Getting back to the dashboard needs the **parent password** (the account's sign-in password), even if the address is typed in. After 5 wrong tries it pauses for 30 seconds. Accounts made with Google or an email link can use **Email me a sign-in link**, or set a password in Settings → Account.
 - **Kids:** subject cards with **Read to me**, a treasure hunt, robot puzzles, quizzes, stars and badges.
 - **Adventures** (step-by-step, with a story character, sounds and a map):
   - **Volt's circuit adventure** (Electricity): 15 steps in three parts, from a simple loop to AND/OR/NOT/XOR gates, an adder and memory, plus a **Free workshop** for building circuits with parts or gates. See `docs/04-circuits-and-gates.md`.
@@ -28,9 +28,10 @@ Live site: https://cg3-solutions.github.io/kids-tech-learning/
 - **Schools:** a grown-up can turn on **I'm a teacher**, create classes with join codes, set typing tasks with due dates, see a class dashboard and download it as a spreadsheet. Parents join their child with the code, and teachers see typing results only.
   - The Language and Maths steps use one shared practice engine. It supports picture choices, a number pad, word and letter tiles, and learning cards, with visuals such as counting grids, place-value blocks, fractions and shapes. Questions are generated fresh each time.
   - Steps adapt to the child's class (standard): younger children unlock steps in order; older children can open later parts straight away.
-  - **Levels switch:** in Parent dashboard → Learners, set each learner to **🔒 In order** (the default) or **🔓 All open**. All open opens every level of every subject, including the typing games and tests, which is handy for testing, revision or a confident learner.
-- **Kid navigation:** four areas (🔤 Language · 🔢 Maths · 🔬 Science & Tech · ⌨️ Typing), a "Continue where you left off" card, breadcrumbs, a bottom tab bar on phones and tablets and a side rail on computers. Account menu: Switch learner · Parent dashboard & settings · Sign out.
-- **Parent dashboard** (behind the parent password): Overview · Learners · Progress reports (7-day learning time, subjects, adventures, typing speed and weak keys, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
+  - **Levels switch:** in Family hub → Learners, set each learner to **Guided path** (the default) or **Open exploration**. Open exploration opens every level of every subject, including the typing games and tests, which is handy for testing, revision or a confident learner.
+- **Kid navigation:** four areas, each led by its guide (Polly for Language, Ollie for Maths, Volt for Science & Tech, Keyo for Typing). The home screen has a "Continue" card, **Today's quest** (three short tasks) and a day streak. Adventures are winding trail maps. A bottom bar on phones and a side rail on bigger screens. Account menu: Switch learner · Family hub · Sign out.
+- **Design:** "Play mode" for everything a child touches (sky scenes, the Spark crew, chunky buttons) and "Calm mode" for grown-ups, from one set of colour and font tokens in `web/src/styles/app.css`. The characters are in `web/src/assets/characters/` and `web/src/components/journey/Crew.jsx`.
+- **Family hub** (behind the parent password): Overview · Learners · Progress reports (7-day learning time, subjects, adventures, typing speed and weak keys, activity timeline) · Screen time · Notifications · Voice & sound · Teaching guides · Account.
 - **Screen time:** a daily limit per child, counting active time only, with a 5-minute warning, a "Time's up" screen, and "+15 minutes" for grown-ups.
 - **Voices:** four voices (Bright girl, Cheerful boy, Clear teacher, Friendly robot), chosen by default from the child's gender and changeable per child, with a preview button. Lines are read sentence by sentence with key words stressed, with 🐢 Slowly and Stop buttons and a speaking-speed setting. Optional natural voices: Google's Indian English neural voices (see below).
 - **Email:** milestone emails (badges, finished subjects) and an 8 pm daily summary, sent by a Supabase Edge Function through Resend.
@@ -102,7 +103,7 @@ Lessons can be read by Google's Indian English voices: clearer, with stressed wo
 2. **Supabase → SQL Editor:** run `supabase/release-5.sql` once. It adds the public `tts` storage bucket for the recordings and the usage table for the limits. It's safe to re-run.
 3. **Supabase → Edge Functions → Deploy a new function → Via editor.** Name it `tts`, paste `supabase/functions/tts/index.ts`, and deploy. Turn **"Verify JWT" off** (the function checks the sign-in itself; with it on, the browser's CORS check is blocked).
 4. **Edge Functions → Secrets:** add `GOOGLE_TTS_KEY` (the API key). Optional limits: `TTS_DAILY_CHARS` (per family per day, default 20000) and `TTS_MONTHLY_CHARS` (whole app, default 900000).
-5. Parents can turn natural voices off under **Parent dashboard → Voice & sound**.
+5. Parents can turn natural voices off under **Family hub → Voice & sound**.
 
 **Voices used:** Google's Chirp 3 HD voices in Indian English, chosen to sound warm and friendly to children: Leda (Bright girl), Puck (Cheerful boy), Sulafat (Clear teacher) and Achird (Friendly robot). If Google refuses one, the function falls back to the older Neural2, WaveNet and Standard voices of the same gender.
 

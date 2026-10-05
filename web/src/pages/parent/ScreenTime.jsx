@@ -1,6 +1,7 @@
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp, localDay } from "../../lib/AppContext.jsx";
 import { useFamily } from "../../lib/useFamily.js";
+import { Avatar } from "../../components/Character.jsx";
 
 const LIMITS = [null, 15, 30, 45, 60, 90, 120, 180];
 const label = m => (m == null ? "No limit" : m < 60 ? `${m} min` : `${m / 60} ${m === 60 ? "hour" : "hours"}`);
@@ -23,7 +24,7 @@ export default function ScreenTime() {
               const used = minutesOn(c.id, today), lim = c.daily_limit_min;
               return (
                 <tr key={c.id}>
-                  <td><span className="face sm">{c.avatar}</span> <b>{c.name}</b></td>
+                  <td><span className="who-cell"><Avatar value={c.avatar} size="sm" /><b>{c.name}</b></span></td>
                   <td>
                     <label className="sr-only" htmlFor={`lim-${c.id}`}>Daily limit for {c.name}</label>
                     <select id={`lim-${c.id}`} className="select" value={lim ?? ""} onChange={e => setLimit(c.id, e.target.value === "" ? null : Number(e.target.value))}>

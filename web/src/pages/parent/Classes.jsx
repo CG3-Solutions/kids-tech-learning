@@ -5,6 +5,7 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { ASSIGNMENT_KINDS, assignmentLabel, rosterCsv, studentRow } from "../../lib/school.js";
 import { LADDER, TESTS, TYPING_JOURNEY, TYPING_PARTS } from "../../content/typing.js";
 import { fmtWhen } from "../../lib/activity.js";
+import { Avatar } from "../../components/Character.jsx";
 
 const fmtDay = d => (d ? new Date(`${d}T00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "");
 
@@ -101,7 +102,7 @@ function ClassDetail({ cls, onDeleted }) {
               <tbody>
                 {rows.map(r => (
                   <tr key={r.child.id}>
-                    <td><span className="face sm">{r.child.avatar}</span> <b>{r.child.name}</b></td>
+                    <td><span className="who-cell"><Avatar value={r.child.avatar} size="sm" /><b>{r.child.name}</b></span></td>
                     <td>{r.lessons}/{TYPING_JOURNEY.length}</td>
                     <td>{r.best ? `${r.best} wpm` : "—"}</td>
                     <td>{r.accuracy == null ? "—" : `${r.accuracy}%`}</td>

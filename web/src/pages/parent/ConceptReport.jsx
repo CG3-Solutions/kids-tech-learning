@@ -4,13 +4,14 @@ import { COMPUTER_JOURNEY, conceptQuestion } from "../../content/computer.js";
 import { DEPTHS } from "../../content/computerDeep.js";
 import { conceptStatus, isOpen, STATUS_LABEL, STATUS_ORDER } from "../../lib/review.js";
 import { rightAnswer } from "../../components/concept/Question.jsx";
+import Mastery from "../../components/Mastery.jsx";
 
 const depthLabel = id => DEPTHS.find(d => d.id === id)?.label ?? "";
 
 export default function ConceptReport({ state = {}, done }) {
   const rows = conceptStatus(COMPUTER_JOURNEY, state, done);
   const started = rows.filter(r => r.status !== "new");
-  if (!started.length) return <p className="muted">No computer lessons yet. Open 💻 Inside a Computer from the child's home screen to start Chip's path.</p>;
+  if (!started.length) return <p className="muted">No computer lessons yet. Open Science → Inside a Computer from the child's home screen to start Chip's path.</p>;
   const count = st => rows.filter(r => r.status === st).length;
   const weak = rows.filter(r => r.status === "weak").sort((a, b) => b.open - a.open || b.misses - a.misses);
   const focus = weak[0] ?? null;
@@ -40,7 +41,7 @@ export default function ConceptReport({ state = {}, done }) {
             {sorted.map(r => (
               <tr key={r.step.id}>
                 <td>{r.step.emoji} {r.step.title}</td>
-                <td><span className={`status-pill ${r.status}`}>{STATUS_LABEL[r.status]}</span></td>
+                <td><Mastery level={r.status} label={STATUS_LABEL[r.status]} /></td>
                 <td>{r.best == null ? "—" : `${r.best}/3`}{r.depth ? <small className="muted"> · {depthLabel(r.depth)}</small> : null}{r.tries > 1 ? <small className="muted"> · {r.tries} tries</small> : null}</td>
                 <td>{r.open ? `${r.open} waiting` : "—"}{r.mastered ? <small className="muted"> · {r.mastered} mastered</small> : null}</td>
               </tr>
