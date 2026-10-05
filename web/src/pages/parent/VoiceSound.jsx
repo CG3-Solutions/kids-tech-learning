@@ -4,6 +4,7 @@ import { useApp } from "../../lib/AppContext.jsx";
 import { VOICES, SPEEDS, voiceOf, defaultVoiceFor, speakWith, prefetchSpeech, voiceEnabled, setVoiceEnabled, voiceSpeed, setVoiceSpeed, pickDeviceVoice, scoreVoice, voiceHistory } from "../../lib/voice.js";
 import { isMuted, setMuted, onMuteChange } from "../../lib/sfx.js";
 import { neuralAvailable, neuralEnabled, setNeuralEnabled, testNeural, neuralLastError, explain } from "../../lib/neuralVoice.js";
+import { Avatar } from "../../components/Character.jsx";
 
 // The preview line has no name in it, so it plays the real natural voice (names always use the device voice).
 const SAMPLE = "Hi! Today we'll learn about the CPU. It follows instructions EXACTLY. A mistake in a program is called a bug.";
@@ -49,7 +50,7 @@ export default function VoiceSound() {
         const cur = voiceOf(c);
         return (
           <section key={c.id} className="pc-card">
-            <h2>{c.avatar} {c.name}</h2>
+            <h2 className="who-cell"><Avatar value={c.avatar} size="sm" />{c.name}</h2>
             <div className="voice-grid" role="radiogroup" aria-label={`Voice for ${c.name}`}>
               {VOICES.map(v => (
                 <div key={v.id} className={`voice-card${cur.id === v.id ? " on" : ""}`}>

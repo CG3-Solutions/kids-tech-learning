@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { SEED } from "../content/index.js";
 import { PUZZLES } from "../content/subjects.js";
 import { CIRCUIT_PATH } from "../content/circuits.js";
-import { moduleStats, moduleItems, starCount, badgeState, nextSuggestion } from "./progress.js";
+import { moduleStats, moduleItems, starCount, badgeState, nextSuggestion, dayStreak, learnedToday } from "./progress.js";
 import { run, flatten } from "./coding.js";
 import { createDemoApi } from "./demoApi.js";
 
@@ -149,5 +149,27 @@ describe("science content (Q4)", async () => {
     expect(SEED.quiz.some(q => /think/i.test(q.question))).toBe(false);
     expect(SEED.cards.filter(c => c.module_id === "binary").length).toBeGreaterThanOrEqual(8);
     expect(SEED.cards.filter(c => c.module_id === "coding").length).toBeGreaterThanOrEqual(7);
+  });
+});
+
+describe("day streak", () => {
+  const at = (y, m, d, h = 10) => new Date(y, m - 1, d, h).toISOString();
+  const kid = days => ({ ...empty, progress: days.map((d, i) => ({ item_id: `x${i}`, module_id: "numbers", done_at: d })) });
+  const now = new Date(2026, 9, 5, 18);
+  it("counts days in a row up to today", () => {
+    expect(dayStreak(kid([at(2026, 10, 3), at(2026, 10, 4), at(2026, 10, 5), at(2026, 10, 5, 12)]), now)).toBe(3);
+  });
+  it("keeps the streak alive when only yesterday is done", () => {
+    expect(dayStreak(kid([at(2026, 10, 3), at(2026, 10, 4)]), now)).toBe(2);
+  });
+  it("breaks on a missed day", () => {
+    expect(dayStreak(kid([at(2026, 10, 1), at(2026, 10, 2), at(2026, 10, 5)]), now)).toBe(1);
+    expect(dayStreak(kid([at(2026, 10, 2)]), now)).toBe(0);
+    expect(dayStreak(empty, now)).toBe(0);
+  });
+  it("knows what was learned today", () => {
+    const c = kid([at(2026, 10, 5)]);
+    expect(learnedToday(c, "numbers", now)).toBe(true);
+    expect(learnedToday(c, "words", now)).toBe(false);
   });
 });

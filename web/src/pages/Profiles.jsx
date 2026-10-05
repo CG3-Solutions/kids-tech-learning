@@ -4,6 +4,9 @@ import TopBar from "../components/TopBar.jsx";
 import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { AVATARS } from "../content/index.js";
+import { Avatar, Guide, GUIDES } from "../components/Character.jsx";
+import Scene from "../components/Scene.jsx";
+import Icon from "../components/Icon.jsx";
 
 export const ordinal = n => `${n}${["th", "st", "nd", "rd"][(n % 100 >= 11 && n % 100 <= 13) ? 0 : Math.min(n % 10, 4) % 4] || "th"}`;
 
@@ -37,7 +40,7 @@ export function ChildForm({ initial, onSave, onCancel, saveLabel = "Add", adult:
       </div>}
       <div className="field">
         <label>{adult ? "Pick a picture" : "Pick an animal"}</label>
-        <div className="avatars">{AVATARS.map(a => <button type="button" key={a} aria-pressed={a === avatar} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}>{a}</button>)}</div>
+        <div className="avatars">{AVATARS.map(a => <button type="button" key={a} aria-pressed={a === avatar} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}><Avatar value={a} size="md" /></button>)}</div>
       </div>
       <div className="row"><button className="btn primary" type="submit" disabled={busy || !name.trim()}>{saveLabel}</button>{onCancel && <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>}</div>
     </form>
@@ -68,11 +71,11 @@ export default function Profiles() {
   const kids = children.filter(c => c.learner !== "adult"), grown = children.filter(c => c.learner === "adult");
 
   return (
-    <>
-      <TopBar variant="public"><button className="btn" onClick={toParent}>👪 Parent dashboard <span className="hide-sm">&amp; settings</span></button></TopBar>
-      <main className="wrap">
+    <div className="play-screen">
+      <Scene />
+      <TopBar variant="public"><button className="btn" onClick={toParent}><Icon name="lock" size={18} /> Grown-ups</button></TopBar>
+      <main className="wrap who-wrap">
         <div className="who">
-          <div className="mode-chip kids">🧒 Kids' mode</div>
           {adding ? (
             <div className="panel" style={{ width: "min(480px, 100%)" }}>
               <h2 className="sec" style={{ marginBottom: 10 }}>Your typing profile</h2>
@@ -80,29 +83,36 @@ export default function Profiles() {
             </div>
           ) : children.length ? (
             <>
-              <h1>Who's learning today?</h1>
+              <div className="who-head">
+                <h1>Who's learning today?</h1>
+                <p>Tap your picture to start!</p>
+              </div>
               <div className="kids">
                 {kids.map(c => (
                   <button key={c.id} className="kid" onClick={() => open(c)}>
-                    <span className="face">{c.avatar}</span>{c.name}
+                    <Avatar value={c.avatar} size="xl" /><span className="kid-name">{c.name}</span>
                   </button>
                 ))}
                 {grown.map(c => (
                   <button key={c.id} className="kid grown" onClick={() => open(c)}>
-                    <span className="face">{c.avatar}</span>{c.name}<small className="tag">Grown-up · typing</small>
+                    <Avatar value={c.avatar} size="xl" /><span className="kid-name">{c.name}</span><small className="tag">Grown-up · typing</small>
                   </button>
                 ))}
+                <button className="kid add" onClick={toParent}>
+                  <span className="add-plus" aria-hidden="true"><Icon name="lock" size={34} /></span><span className="kid-name">Add a learner</span><small className="tag">Grown-ups only</small>
+                </button>
               </div>
-              <p className="muted">To add a child, change settings or see reports, open the <button className="linklike" onClick={toParent}>Parent dashboard</button>.</p>
             </>
           ) : (
-            <div className="stack" style={{ justifyItems: "center", gap: 12 }}>
+            <div className="who-head">
+              <Guide id="ollie" size={140} />
               <h1>No learners yet</h1>
-              <p className="lead">A grown-up adds children in the Parent dashboard. It takes a minute: just a first name and an animal.</p>
-              <button className="btn primary big" onClick={toParent}>👪 Open the Parent dashboard</button>
+              <p>A grown-up adds children in the Family hub. It takes a minute: just a first name and an animal.</p>
+              <button className="btn primary big" onClick={toParent}><Icon name="lock" /> Open the Family hub</button>
             </div>
           )}
         </div>
+        <div className="crew-row" aria-hidden="true">{Object.keys(GUIDES).map(g => <Guide key={g} id={g} size={110} />)}</div>
       </main>
       {asking && (
         <div className="overlay" onClick={e => e.target === e.currentTarget && setAsking(false)}>
@@ -111,6 +121,6 @@ export default function Profiles() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

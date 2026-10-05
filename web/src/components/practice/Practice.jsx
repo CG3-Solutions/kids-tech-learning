@@ -4,13 +4,15 @@ import Guide from "../journey/Guide.jsx";
 import Visual from "./Visual.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { speak } from "../../lib/speech.js";
+import Icon from "../Icon.jsx";
+import { FeedbackBar, LessonProgress, StarsRow } from "../Feedback.jsx";
 
 const valueOf = o => (typeof o === "object" ? o.value : o);
 // Shown text uses a true minus sign: "-17" → "−17" (answers are still compared as numbers).
 export const pretty = t => String(t).replace(/(^|[\s(=:,/])-(?=\d)/g, "$1−");
 const labelOf = o => pretty(typeof o === "object" ? o.label : o);
 const sameNumber = (a, b) => Number.isFinite(a) && Math.abs(a - b) < 1e-6;
-const PRAISE = ["Yes! ⭐", "Brilliant! ⭐", "Super! ⭐", "Correct! ⭐", "Well done! ⭐", "You got it! ⭐"];
+const PRAISE = ["Yes!", "Brilliant!", "Super!", "Correct!", "Well done!", "You got it!"];
 const fmt = (q, v) => pretty(`${q.unit ?? ""}${v}`);
 // Automated browser tests read the answer from the page, only when a test-only flag is set.
 const testHook = (q, label) => { try { return localStorage.getItem("sparklab.e2e") === "1" ? { "data-answer": JSON.stringify({ type: q.type, answer: q.answer, label }) } : {}; } catch { return {}; } };
@@ -31,7 +33,7 @@ export function NumberPad({ value, setValue, onSubmit, allowNegative, disabled }
       <input id="answer" className="num-display" inputMode="decimal" autoComplete="off" value={value.replace("-", "−")} disabled={disabled}
         onChange={e => setValue(e.target.value.replace("−", "-").replace(/[^0-9.\-]/g, ""))} placeholder="?" />
       <div className="keys">{keys.map(k => <button type="button" key={k} className="key" onClick={() => press(k)} disabled={disabled}>{k}</button>)}</div>
-      <button className="btn primary big" type="submit" disabled={disabled || value === "" || value === "-"}>✓ Check</button>
+      <button className="btn primary big check-btn" type="submit" disabled={disabled || value === "" || value === "-"}>Check</button>
     </form>
   );
 }
@@ -50,8 +52,8 @@ function OrderTiles({ q, onSubmit, disabled }) {
         {q.tiles.map((t, i) => <button key={i} className="tile-btn" disabled={disabled || picked.includes(i)} onClick={() => { sfx.click(); setPicked(p => [...p, i]); }}>{t}</button>)}
       </div>
       <div className="row center-row">
-        <button className="btn ghost" disabled={disabled || !picked.length} onClick={() => setPicked([])}>Clear</button>
-        <button className="btn primary big" disabled={disabled || !full} onClick={() => onSubmit(picked.map(i => q.tiles[i]))}>✓ Check</button>
+        <button className="btn big" disabled={disabled || !picked.length} onClick={() => setPicked([])}>Clear</button>
+        <button className="btn primary big check-btn" disabled={disabled || !full} onClick={() => onSubmit(picked.map(i => q.tiles[i]))}>Check</button>
       </div>
     </div>
   );
@@ -93,8 +95,8 @@ export default function Practice({ spec, grade, onComplete, Face }) {
     return (
       <div className="step-body center">
         <Guide Face={Face} mood="cheer">{`You got ${firstTry} out of ${spec.count} right first time!`}</Guide>
-        <div className="stars-row" aria-label={`${stars} of 3 stars`}>{[1, 2, 3].map(s => <span key={s} className={s <= stars ? "on" : ""}>★</span>)}</div>
-        <div className="row center-row"><button className="btn primary big" onClick={onComplete}>Finish ⭐</button></div>
+        <StarsRow n={stars} />
+        <div className="row center-row"><button className="btn play big" onClick={onComplete}>Finish</button></div>
       </div>
     );
   }
@@ -110,15 +112,12 @@ export default function Practice({ spec, grade, onComplete, Face }) {
     : i === 0 && spec.intro ? spec.introSay ?? spec.intro : q.say ?? q.prompt;
   return (
     <div className="step-body practice">
-      <div className="practice-top">
-        <div className="progress"><i style={{ width: `${(i / spec.count) * 100}%` }} /></div>
-        <span className="muted">Question {i + 1} of {spec.count}</span>
-      </div>
+      <LessonProgress done={i + (status === "right" ? 1 : 0)} total={spec.count} label={`Question ${i + 1} of ${spec.count}`} />
       <Guide Face={Face} mood={status === "right" ? "cheer" : status ? "wow" : "happy"} say={bubbleSay}>{pretty(bubble)}</Guide>
       <div className="q-card" {...testHook(q, answerText)}>
         <div className={`q-prompt${q.bigPrompt || q.big ? " big" : ""}${String(q.prompt).length > 40 ? " long" : ""}`}>
           {pretty(q.prompt)}
-          <button className="btn ghost small hear" onClick={() => speak(q.say ?? q.prompt, { force: true })} aria-label="Read the question aloud">🔊</button>
+          <button className="btn small hear" onClick={() => speak(q.say ?? q.prompt, { force: true })} aria-label="Read the question aloud"><Icon name="speaker" size={20} /></button>
         </div>
         <Visual v={q.visual} />
         {q.type === "choice" && (
@@ -131,8 +130,11 @@ export default function Practice({ spec, grade, onComplete, Face }) {
         )}
         {q.type === "number" && <NumberPad value={num} setValue={setNum} onSubmit={() => check(num)} allowNegative={q.allowNegative} disabled={locked} />}
         {q.type === "order" && <OrderTiles q={q} onSubmit={check} disabled={locked} />}
-        {status === "reveal" && <div className="row center-row"><button className="btn primary big" onClick={next}>Next →</button></div>}
       </div>
+      <FeedbackBar kind={status}
+        title={status === "right" ? praise : status === "wrong" ? "So close!" : `The answer is ${answerText}`}
+        detail={status === "right" ? (tries === 0 ? "Right first time!" : "Got it on the second try.") : status === "wrong" ? "Have another go." : "Let's keep going!"}
+        action={status === "reveal" ? <button className="btn play big" onClick={next}>Next <Icon name="next" size={22} stroke={3} /></button> : null} />
     </div>
   );
 }
@@ -152,7 +154,7 @@ export function LearnCards({ spec, onComplete, Face }) {
           <span className="lb-letter">{open.big}<small>{open.small}</small></span>
           <span className="lb-emoji" aria-hidden="true">{open.emoji}</span>
           <span className="lb-word"><b>{open.big}</b>{open.word.slice(1)}</span>
-          <button className="btn ghost small" onClick={() => speak(open.say, { force: true })}>🔊 Hear again</button>
+          <button className="btn small hear" onClick={() => speak(open.say, { force: true })}><Icon name="speaker" size={18} /> Hear again</button>
         </div>
       )}
       <div className="learn-grid">
@@ -162,7 +164,7 @@ export function LearnCards({ spec, onComplete, Face }) {
           </button>
         ))}
       </div>
-      {all && <div className="row center-row"><button className="btn primary big" onClick={onComplete}>I know these! ⭐</button></div>}
+      {all && <div className="row center-row"><button className="btn play big" onClick={onComplete}>I know these!</button></div>}
     </div>
   );
 }

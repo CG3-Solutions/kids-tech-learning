@@ -5,6 +5,7 @@
 //   order: { type: "order", q, items: [in the right order], why }   tap the steps in order
 //   bug:   { type: "bug", q, lines: [program lines], bug: index, fix, why }   spot the bug
 // The component asks once, shows the right answer and the one-line `why`, and calls onAnswer(ok).
+import Icon from "../Icon.jsx";
 import { useState } from "react";
 import { e2e } from "./Games.jsx";
 import Guide from "../journey/Guide.jsx";
@@ -43,10 +44,13 @@ export function rightAnswer(q) {
 function Why({ ok, q }) {
   const t = typeOf(q);
   return (
-    <div className={`check-why ${ok ? "ok" : "bad"}`} role="status">
-      <b>{ok ? "✓ Right!" : t === "order" ? "✗ The right order is:" : t === "bug" ? `✗ The bug is ${rightAnswer(q)}.` : `✗ The answer is: ${rightAnswer(q)}.`}</b>
-      {!ok && t === "order" && <ol className="order-done right-order">{q.items.map(s => <li key={s}>{s}</li>)}</ol>}
-      {" "}{q.why}{t === "bug" && q.fix ? <> Fixed: <b>“{q.fix}”</b></> : null}
+    <div className={`fb-bar check-why ${ok ? "right" : "wrong"}`} role="status">
+      <span className="fb-ic" aria-hidden="true"><Icon name={ok ? "check" : "bulb"} size={30} stroke={3} /></span>
+      <span className="fb-txt">
+        <b>{ok ? "Brilliant!" : t === "order" ? "Not quite. The right order is:" : t === "bug" ? `Not quite. The bug is ${rightAnswer(q)}.` : `Not quite. The answer is: ${rightAnswer(q)}.`}</b>
+        {!ok && t === "order" && <ol className="order-done right-order">{q.items.map(s => <li key={s}>{s}</li>)}</ol>}
+        <span>{q.why}{t === "bug" && q.fix ? <> Fixed: <b>“{q.fix}”</b></> : null}</span>
+      </span>
     </div>
   );
 }

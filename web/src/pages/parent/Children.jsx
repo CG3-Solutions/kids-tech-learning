@@ -3,6 +3,7 @@ import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
 import { ChildForm, ordinal } from "../Profiles.jsx";
 import { voiceOf } from "../../lib/voice.js";
+import { Avatar } from "../../components/Character.jsx";
 
 // A teacher's join code puts a learner in their class. The teacher then sees that learner's typing results only.
 function JoinClass({ children }) {
@@ -96,13 +97,13 @@ export default function Children() {
               <tbody>
                 {children.map(c => (
                   <tr key={c.id}>
-                    <td><span className="face sm">{c.avatar}</span> <b>{c.name}</b></td>
+                    <td><span className="who-cell"><Avatar value={c.avatar} size="sm" /><b>{c.name}</b></span></td>
                     <td>{c.learner === "adult" ? "Grown-up" : c.grade ? `${ordinal(c.grade)} standard` : "—"}</td>
                     <td>
-                      <label className="lvl-switch" title="All open: every level of every subject can be opened, in any order.">
+                      <label className="lvl-switch" title="Open exploration: every level of every subject can be opened, in any order.">
                         <input type="checkbox" checked={!!levels[c.id]?.unlockAll} onChange={e => setAllOpen(c, e.target.checked)} aria-label={`Open all levels for ${c.name}`} />
                         <span className="lvl-track" aria-hidden="true"><i /></span>
-                        <span>{levels[c.id]?.unlockAll ? "🔓 All open" : "🔒 In order"}</span>
+                        <span>{levels[c.id]?.unlockAll ? "Open exploration" : "Guided path"}</span>
                       </label>
                     </td>
                     <td>{voiceOf(c).emoji} {voiceOf(c).name}</td>
@@ -115,10 +116,10 @@ export default function Children() {
             </table>
           </div>
           <div className="row">
-            <button className="btn primary" onClick={() => setEditing("new")}>＋ Add a child</button>
-            {!children.some(c => c.learner === "adult") && <button className="btn" onClick={() => setEditing("new-adult")}>⌨️ Add yourself (learn typing)</button>}
+            <button className="btn primary" onClick={() => setEditing("new")}>Add a child</button>
+            {!children.some(c => c.learner === "adult") && <button className="btn" onClick={() => setEditing("new-adult")}>Add yourself (learn typing)</button>}
           </div>
-          <p className="muted small-note"><b>Levels:</b> “In order” opens each step after the one before (older classes can jump ahead in some subjects). “All open” lets a learner try any level, in any order, including the typing games and tests. Good for testing, revision or a confident learner.</p>
+          <p className="muted small-note"><b>Levels:</b> “Guided path” opens each step after the one before (older classes can jump ahead in some subjects). “Open exploration” lets a learner try any level, in any order, including the typing games and tests. Good for testing, revision or a confident learner.</p>
           <JoinClass children={children} />
         </>
       )}

@@ -174,10 +174,12 @@ export default function ConceptLesson({ spec: base, Face, onComplete, onCheck, o
   const deeper = depths[depths.indexOf(depth) + 1];
   return (
     <div className="stack concept">
-      <ol className="lesson-dots" aria-label="Lesson steps">
+      <ol className="concept-steps" aria-label="Lesson steps">
         {SCREENS.map(([k, label], n) => (
           <li key={k} className={n === at ? "on" : n < reached || (n === 4 && checked) ? "done" : ""}>
-            <button disabled={!canGo(n) || n === at} onClick={() => go(n)} aria-current={n === at ? "step" : undefined}>{n + 1}. {label}</button>
+            <button disabled={!canGo(n) || n === at} onClick={() => go(n)} aria-current={n === at ? "step" : undefined}>
+              <span className="seg" aria-hidden="true" /><span className="lbl">{label}</span>
+            </button>
           </li>
         ))}
       </ol>

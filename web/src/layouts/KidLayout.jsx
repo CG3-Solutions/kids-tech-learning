@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "../lib/AppContext.jsx";
-import { starCount } from "../lib/progress.js";
+import { starCount, dayStreak } from "../lib/progress.js";
 import { AREAS } from "../content/areas.js";
-import { Bolt } from "../components/TopBar.jsx";
+import { Bolt, Star, Flame } from "../components/TopBar.jsx";
+import { Avatar, Guide } from "../components/Character.jsx";
+import Icon from "../components/Icon.jsx";
 import { useSmallScreen, BIG_SCREEN_AREAS } from "../lib/useSmallScreen.js";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import ParentGate, { gatePassed, passGate } from "../components/ParentGate.jsx";
 
 const fmtLeft = s => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : `${Math.ceil(s / 60)} min`);
 
+// Home and Trophies use icons; each subject area uses its guide, so even early readers can find their way.
 export const NAV = [
-  { to: "/learn", label: "Home", icon: "🏠", end: true },
-  ...AREAS.map(a => ({ to: `/learn/area/${a.id}`, label: a.id === "science" ? "Science" : a.title, icon: a.emoji, bigOnly: BIG_SCREEN_AREAS.has(a.id) })),
-  { to: "/learn/badges", label: "Badges", icon: "🏅" },
+  { to: "/learn", label: "Home", icon: "home", end: true },
+  ...AREAS.map(a => ({ to: `/learn/area/${a.id}`, label: a.id === "science" ? "Science" : a.title, guide: a.guide, c: a.color, bigOnly: BIG_SCREEN_AREAS.has(a.id) })),
+  { to: "/learn/badges", label: "Trophies", icon: "trophy" },
 ];
 
 function AccountMenu() {
@@ -38,13 +41,13 @@ function AccountMenu() {
   return (
     <div className="acct" ref={ref}>
       <button className="acct-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
-        <span className="av">{activeChild.avatar}</span><span className="nm">{activeChild.name}</span><span aria-hidden="true">▾</span>
+        <Avatar value={activeChild.avatar} size="sm" /><span className="nm">Hi, {activeChild.name}!</span><span className="caret" aria-hidden="true">▾</span>
       </button>
       {open && (
         <div className="acct-menu" role="menu">
-          <Link role="menuitem" to="/profiles" onClick={() => setOpen(false)}>🔁 Switch learner</Link>
-          <button role="menuitem" onClick={() => needGate("parent")}>👪 Parent dashboard &amp; settings</button>
-          <button role="menuitem" onClick={() => needGate("signout")}>🚪 Sign out</button>
+          <Link role="menuitem" to="/profiles" onClick={() => setOpen(false)}><Icon name="swap" /> Switch learner</Link>
+          <button role="menuitem" onClick={() => needGate("parent")}><Icon name="lock" /> Grown-ups: Family hub</button>
+          <button role="menuitem" onClick={() => needGate("signout")}><Icon name="logout" /> Sign out</button>
         </div>
       )}
       {gate && (
@@ -68,7 +71,7 @@ function TimesUp() {
           <ParentGate onPass={() => { setAsking(false); screen.grantExtra(15); }} onCancel={() => setAsking(false)} title="Add 15 more minutes?" />
         ) : (
           <div className="stack" style={{ gap: 14, textAlign: "center", padding: 24 }}>
-            <div style={{ fontSize: "4rem" }}>🌙</div>
+            <Guide id="ollie" size={120} className="tu-guide" />
             <h2 id="tu-title" style={{ fontSize: "2rem" }}>Time's up for today, {activeChild.name}!</h2>
             <p className="lead" style={{ margin: "0 auto" }}>Great learning! Your stars and badges are saved. Come back tomorrow for more.</p>
             <div className="row center-row">
@@ -97,14 +100,16 @@ export default function KidLayout({ children }) {
   }, [pathname]);
   const small = useSmallScreen();
   const low = screen.remaining != null && screen.remaining <= 300;
+  const streak = dayStreak(childData);
   return (
     <div className="kid-shell">
       {api?.mode === "demo" && <div className="mode-banner"><div className="wrap">Demo mode: saved in this browser only.</div></div>}
       <header className="kid-top">
         <Link className="brand" to="/learn" aria-label="Spark Lab home"><Bolt /><b>Spark Lab</b></Link>
         <span className="spacer" />
-        {screen.remaining != null && <span className={`pill time${low ? " low" : ""}`} title="Learning time left today">⏱ {fmtLeft(screen.remaining)}</span>}
-        <span className="pill" title="Stars earned">★ {starCount(childData)}</span>
+        {screen.remaining != null && <span className={`pill time${low ? " low" : ""}`} title="Learning time left today"><Icon name="clock" size={20} /> {fmtLeft(screen.remaining)}</span>}
+        {streak > 0 && <span className="pill" title={`${streak} ${streak === 1 ? "day" : "days"} in a row`}><Flame /> {streak}<span className="sr-only"> {streak === 1 ? "day" : "days"} in a row</span></span>}
+        <span className="pill" title="Stars earned"><Star /> {starCount(childData)}<span className="sr-only"> stars</span></span>
         {activeChild && <AccountMenu />}
       </header>
       <div className="kid-body">
@@ -112,7 +117,7 @@ export default function KidLayout({ children }) {
           {NAV.map(n => (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `kid-nav-item${isActive ? " active" : ""}${small && n.bigOnly ? " big-only" : ""}`}
               aria-label={small && n.bigOnly ? `${n.label}, needs a bigger screen` : undefined}>
-              <span className="ic" aria-hidden="true">{n.icon}</span><span className="lb">{n.label}</span>
+              <span className="ic" aria-hidden="true">{n.guide ? <Guide id={n.guide} size={40} /> : <Icon name={n.icon} size={30} />}</span><span className="lb">{n.label}</span>
             </NavLink>
           ))}
         </nav>

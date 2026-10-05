@@ -45,4 +45,5 @@ export const GLOSSARY_MODULES = new Set(["computer"]);
 // Extra activities shown on some modules alongside their main one.
 export const EXTRA_ACTIVITIES = { electricity: ["lab", "hunt", "machines"] };
 
-export const AVATARS = ["🦊", "🐯", "🐼", "🐸", "🦁", "🐵", "🐨", "🦄", "🐙", "🐧", "🦖", "🐝"];
+// The first four have drawn pictures (see components/Character.jsx); the rest show as emoji.
+export const AVATARS = ["🦊", "🐼", "🐰", "🦁", "🐯", "🐸", "🐵", "🐨", "🦄", "🐙", "🐧", "🦖", "🐝"];

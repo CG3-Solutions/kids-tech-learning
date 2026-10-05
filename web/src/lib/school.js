@@ -62,6 +62,22 @@ export function studentRow(m, assignments = []) {
   };
 }
 
+// Students a teacher may want to check on today, each with plain reasons:
+// an overdue task, accuracy under 85% over the last lessons, or nothing typed for a week.
+export const HELP_ACCURACY = 85;
+export function needsHelp(rows, assignments, now = new Date()) {
+  const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+  return rows.map(r => {
+    const why = [];
+    const late = assignments.filter((a, i) => r.statuses[i]?.overdue).map(a => a.title);
+    if (late.length) why.push(`Overdue: ${late.join(", ")}`);
+    if (r.accuracy != null && r.accuracy < HELP_ACCURACY) why.push(`Accuracy ${r.accuracy}% (aim for ${HELP_ACCURACY}%)`);
+    if (r.last && new Date(r.last) < weekAgo) why.push("No typing for over a week");
+    else if (!r.last && assignments.length) why.push("Hasn't started typing yet");
+    return { row: r, why };
+  }).filter(x => x.why.length);
+}
+
 // CSV for spreadsheets. Cells that start with = + - @ are prefixed with ' so a spreadsheet
 // never runs them as formulas (a student's name is typed by a parent, so treat it as untrusted).
 export function csvCell(v) {

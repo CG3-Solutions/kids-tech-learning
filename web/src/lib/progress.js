@@ -42,6 +42,25 @@ export function starCount(child) {
   return child.progress.length + child.attempts.reduce((s, a) => s + a.score, 0);
 }
 
+// A local calendar day, e.g. "2026-10-05".
+const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// Days in a row with something learned. Still counts if today is not done yet but yesterday was.
+export function dayStreak(child, now = new Date()) {
+  const days = new Set(child.progress.filter(p => p.done_at).map(p => dayKey(new Date(p.done_at))));
+  const d = new Date(now);
+  if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+// Did the child finish anything in this module today?
+export function learnedToday(child, moduleId, now = new Date()) {
+  const today = dayKey(now);
+  return child.progress.some(p => p.module_id === moduleId && p.done_at && dayKey(new Date(p.done_at)) === today);
+}
+
 // Circuit Lab: a badge for finishing every project in a unit.
 const labUnit = n => PROJECTS.filter(p => p.unit === n).map(p => p.id);
 const LAB_UNIT_BADGES = [

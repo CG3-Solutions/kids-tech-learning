@@ -4,7 +4,8 @@ import { Crumbs, PageLoading, BigScreenOnly } from "./kid/Home.jsx";
 import { useSmallScreen, BIG_SCREEN_AREAS } from "../lib/useSmallScreen.js";
 import { usePageTitle } from "../lib/usePageTitle.js";
 import { useUrlState, viewKey } from "../lib/useUrlState.js";
-import { areaOf } from "../content/areas.js";
+import { areaOf, areaStyle } from "../content/areas.js";
+import { Guide, guideForModule } from "../components/Character.jsx";
 import CardDetail from "../components/CardDetail.jsx";
 import CardLesson from "../components/cards/CardLesson.jsx";
 import PartArt, { hasArt } from "../components/cards/PartArt.jsx";
@@ -70,11 +71,11 @@ export default function ModulePage() {
 
   return (
     <>
-      <div className="stack page">
+      <div className="stack page" style={areaStyle(area.id)}>
         <Crumbs items={[{ to: "/learn", label: "Home" }, { to: `/learn/area/${area.id}`, label: area.title }, { label: m.title }]} />
         <div className="mod-head">
-          <span className="em" aria-hidden="true">{m.emoji}</span>
-          <div><h1>{m.title}</h1><p className="muted">{m.tagline}</p></div>
+          <Guide id={guideForModule(m)} size={92} className="mod-guide" />
+          <div><span className="eyebrow">{area.title}</span><h1>{m.title}</h1><p>{m.tagline}</p></div>
         </div>
         <nav className="tabs" aria-label="Sections">
           {tabs.map(t => (
