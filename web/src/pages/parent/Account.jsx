@@ -18,7 +18,7 @@ function ParentPassword() {
   return (
     <form className="pc-card form" style={{ maxWidth: 520 }} onSubmit={save}>
       <h2>🔒 Parent password</h2>
-      <p className="muted">Children need this password to leave Kids' mode and open the Parent dashboard. It's the same password you sign in with.
+      <p className="muted">Children need this password to leave learner mode and open the Family hub. It's the same password you sign in with.
         {api?.mode !== "demo" ? " Signed up with Google or an email link? Set one here." : " In demo mode it starts as “demo”."}</p>
       <div className="field"><label htmlFor="newpw">New password</label><input id="newpw" type="password" autoComplete="new-password" minLength={8} value={pw} onChange={e => { setPw(e.target.value); setDone(false); }} />
         {short && <small className="error-text">At least 8 characters.</small>}</div>

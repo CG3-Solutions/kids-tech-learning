@@ -42,13 +42,13 @@ export default function ParentGate({ onPass, onCancel, title = "Parent password"
   };
   const sendLink = async () => {
     setMsg(null);
-    try { await api.sendLink(user.email); setMsg({ text: `We emailed a sign-in link to ${user.email}. Open it on this device to go to the Parent dashboard.` }); }
+    try { await api.sendLink(user.email); setMsg({ text: `We emailed a sign-in link to ${user.email}. Open it on this device to go to the Family hub.` }); }
     catch (er) { setMsg({ error: true, text: er.message }); }
   };
 
   return (
     <form className="auth" onSubmit={submit}>
-      <div className="eyebrow">👪 Parent dashboard · grown-ups only</div>
+      <div className="eyebrow">Family hub · grown-ups only</div>
       <h1 style={{ fontSize: "1.8rem" }}>{title}</h1>
       <p className="muted">Enter the password you use to sign in to Spark Lab{user?.email && !demo ? <> (<b>{user.email}</b>)</> : null}.</p>
       <div className="field">
@@ -60,7 +60,7 @@ export default function ParentGate({ onPass, onCancel, title = "Parent password"
       {waiting > 0 && <div className="note error" role="status">Too many tries. Wait {waiting} seconds.</div>}
       <div className="row">
         <button className="btn primary" type="submit" disabled={busy || !value || !!waiting}>{busy ? "Checking…" : "Continue"}</button>
-        {onCancel ? <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button> : <Link className="btn ghost" to="/profiles">Back to kids' mode</Link>}
+        {onCancel ? <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button> : <Link className="btn ghost" to="/profiles">Back to learner mode</Link>}
       </div>
       {!demo && user?.email && (
         <p className="muted small-note">Signed up with Google or an email link, or forgot your password? <button type="button" className="linklike" onClick={sendLink}>Email me a sign-in link</button></p>

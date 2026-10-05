@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/AppContext.jsx";
 import { moduleStats, nextSuggestion, badgeState } from "../../lib/progress.js";
-import { AREAS } from "../../content/areas.js";
+import { todaysQuest } from "../../lib/quest.js";
+import { AREAS, areaStyle } from "../../content/areas.js";
+import { Guide, guideForModule } from "../../components/Character.jsx";
+import Icon from "../../components/Icon.jsx";
 import { usePageTitle } from "../../lib/usePageTitle.js";
 import { useSmallScreen, BIG_SCREEN_AREAS } from "../../lib/useSmallScreen.js";
 import { dueQuestions } from "../../activities/computer/Review.jsx";
@@ -50,6 +53,9 @@ function continueTarget(published, data, learner, small) {
   return s ? { module: s.module, label: last ? "Try next" : "Start here" } : null;
 }
 
+// What the guide says on the big "continue" card.
+const hello = (label, title) => label === "Continue" ? `Let's keep going with ${title}!` : label === "Start here" ? `Let's start with ${title}!` : `Ready for ${title}?`;
+
 export default function Home() {
   const { activeChild, childData, published } = useApp();
   usePageTitle("Home");
@@ -57,50 +63,66 @@ export default function Home() {
   if (!published) return <PageLoading />;
   const target = continueTarget(published, childData, activeChild, small);
   const earned = badgeState(childData, published.modules).filter(b => b.earned);
+  const live = published.modules.filter(m => !m.coming_soon && !(small && BIG_SCREEN_AREAS.has(m.area)));
+  const due = dueQuestions(childData.state?.review ?? {}).length;
+  const quest = todaysQuest({ modules: live, cards: published.cards, child: childData, learner: activeChild, first: target?.module, due });
+  const questDone = quest.length > 0 && quest.every(q => q.done);
+  const pct = target ? moduleStats(target.module, published.cards, childData).pct : 0;
   return (
-    <div className="stack page">
-      <div className="greet">
-        <span className="face">{activeChild.avatar}</span>
-        <div><h1>Hi {activeChild.name}!</h1><p className="lead">What shall we learn today?</p></div>
+    <div className="stack page home">
+      <h1 className="sr-only">Home</h1>
+      <div className="home-top">
+        {target ? (
+          <Link className="hero-go" to={`/learn/${target.module.id}${target.tab ? `/${target.tab}` : ""}`} style={areaStyle(target.module.area)}>
+            <Guide id={guideForModule(target.module)} size={200} className="hero-guide" />
+            <span className="hero-txt">
+              <span className="bubble">{hello(target.label, target.module.title)}</span>
+              <span className="eyebrow">{target.label}</span>
+              <b className="hero-title">{target.module.title}</b>
+              <span className="hero-bar" role="img" aria-label={`${pct}% done`}><i style={{ width: `${pct}%` }} /></span>
+            </span>
+            <span className="hero-play" aria-hidden="true"><Icon name="play" size={40} stroke={0} fill="currentColor" /><span>Play</span></span>
+          </Link>
+        ) : (
+          <div className="hero-go done" style={areaStyle("maths")}>
+            <Guide id="ollie" size={200} className="hero-guide" />
+            <span className="hero-txt"><span className="bubble">You've finished everything. Amazing!</span><b className="hero-title">Pick any subject to practise</b></span>
+          </div>
+        )}
+
+        <section className={`quest${questDone ? " all" : ""}`} aria-labelledby="quest-h">
+          <h2 id="quest-h">Today's quest</h2>
+          <ol>
+            {quest.map(q => (
+              <li key={q.module.id} className={q.done ? "done" : ""}>
+                <Link to={`/learn/${q.module.id}${q.review ? "/computer" : ""}`} style={areaStyle(q.module.area)}>
+                  <span className="tick" aria-hidden="true">{q.done && <Icon name="check" size={22} stroke={3.4} />}</span>
+                  <span className="q-txt">{q.review ? `Review with Chip: ${q.review} question${q.review > 1 ? "s" : ""}` : q.module.title}</span>
+                  <span className="sr-only">{q.done ? "(done today)" : ""}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+          <p className="quest-note">{questDone ? "Quest complete! You're a star." : `Finish all ${quest.length} to complete today's quest!`}</p>
+        </section>
       </div>
 
-      {(() => {
-        const due = dueQuestions(childData.state?.review ?? {}).length;
-        const comp = published.modules.find(m => m.activity === "computer" && !m.coming_soon);
-        return due > 0 && comp ? (
-          <Link className="review-banner due" to={`/learn/${comp.id}/computer`}>
-            <span className="em" aria-hidden="true">🔁</span>
-            <div><b>Review time with Chip!</b><p>{due} question{due > 1 ? "s" : ""} to try again.</p></div>
-            <span className="btn primary">Start</span>
-          </Link>
-        ) : null;
-      })()}
-
-      {target && (
-        <Link className="continue" to={`/learn/${target.module.id}${target.tab ? `/${target.tab}` : ""}`} style={{ "--c": `var(--${target.module.color})` }}>
-          <span className="em" aria-hidden="true">{target.module.emoji}</span>
-          <span className="txt"><span className="eyebrow">{target.label}</span><b>{target.module.title}</b>
-            <span className="bar"><i style={{ width: `${moduleStats(target.module, published.cards, childData).pct}%` }} /></span></span>
-          <span className="go" aria-hidden="true">▶</span>
-        </Link>
-      )}
-
-      <section className="stack" style={{ gap: 12 }}>
-        <h2 className="sec">Choose an area</h2>
-        <div className="areas">
+      <section className="stack" style={{ gap: 14 }} aria-labelledby="explore-h">
+        <h2 id="explore-h" className="sec">Explore</h2>
+        <div className="worlds">
           {AREAS.map(a => {
             const bigOnly = small && BIG_SCREEN_AREAS.has(a.id); // shown, but marked: it opens a "needs a bigger screen" page
-            const mods = published.modules.filter(m => m.area === a.id);
-            const live = mods.filter(m => !m.coming_soon);
-            const done = live.reduce((s, m) => s + moduleStats(m, published.cards, childData).done, 0);
-            const total = live.reduce((s, m) => s + moduleStats(m, published.cards, childData).total, 0);
+            const mods = published.modules.filter(m => m.area === a.id && !m.coming_soon);
+            const done = mods.reduce((s, m) => s + moduleStats(m, published.cards, childData).done, 0);
+            const total = mods.reduce((s, m) => s + moduleStats(m, published.cards, childData).total, 0);
+            const p = total ? Math.round((done / total) * 100) : 0;
             return (
-              <Link key={a.id} className={`area-card${bigOnly ? " big-only" : ""}`} to={`/learn/area/${a.id}`} style={{ "--c": `var(--${a.color})` }}>
-                {bigOnly && <span className="ribbon">💻 Needs a bigger screen</span>}
-                <span className="em" aria-hidden="true">{a.emoji}</span>
+              <Link key={a.id} className={`world${bigOnly ? " big-only" : ""}`} to={`/learn/area/${a.id}`} style={areaStyle(a.id)}>
+                <Guide id={a.guide} size={120} className="world-guide" />
                 <h3>{a.title}</h3>
-                <p>{a.tagline}</p>
-                <span className="meta">{live.length ? `${live.length} ${live.length === 1 ? "subject" : "subjects"} · ${total ? Math.round((done / total) * 100) : 0}% done` : "Coming soon"}</span>
+                <span className="world-with">{a.with}</span>
+                {bigOnly ? <span className="world-note">Needs a bigger screen</span>
+                  : <span className="world-bar" role="img" aria-label={`${p}% done`}><i style={{ width: `${p}%` }} /></span>}
               </Link>
             );
           })}
@@ -108,10 +130,10 @@ export default function Home() {
       </section>
 
       <section className="stack" style={{ gap: 10 }}>
-        <div className="row"><h2 className="sec">My badges</h2><span className="spacer" /><Link className="btn ghost" to="/learn/badges">See all</Link></div>
+        <div className="row"><h2 className="sec">My trophies</h2><span className="spacer" /><Link className="btn" to="/learn/badges">See all</Link></div>
         {earned.length
           ? <div className="badge-strip">{earned.map(b => <span key={b.id} className="badge-chip" title={b.name}>{b.emoji} {b.name}</span>)}</div>
-          : <p className="muted">Finish your first step to earn a badge!</p>}
+          : <p className="muted">Finish your first step to win a trophy!</p>}
       </section>
     </div>
   );
