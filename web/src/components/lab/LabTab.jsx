@@ -1,7 +1,7 @@
 // The Circuit Lab tab: guided projects (unit by unit) or free building.
 import { useState } from "react";
 import CircuitLab from "./CircuitLab.jsx";
-import ProjectPlayer from "./ProjectPlayer.jsx";
+import ProjectPlayer, { useLabPage } from "./ProjectPlayer.jsx";
 import { PROJECTS, UNITS } from "../../content/lab/projects.js";
 import { LAYOUTS } from "../../content/lab/layouts.js";
 import { local } from "../../lib/storage.js";
@@ -26,17 +26,7 @@ export default function LabTab({ done, onProjectDone }) {
         <button className="chip" role="tab" aria-selected={view === "projects"} aria-pressed={view === "projects"} onClick={() => pick("projects")}>🧩 Projects</button>
         <button className="chip" role="tab" aria-selected={view === "free"} aria-pressed={view === "free"} onClick={() => pick("free")}>🛠️ Free build</button>
       </div>
-      {/* Free build has the same focused page as a project: a back button, a title, then the board. */}
-      {view === "free" && (
-        <div className="stack proj">
-          <div className="proj-head">
-            <button className="btn back-btn" onClick={() => pick("projects")} aria-label="Back to projects"><Icon name="back" size={18} /><span className="lbl">Projects</span></button>
-            <span className="proj-emoji" aria-hidden="true">🛠️</span>
-            <div className="proj-title"><h2>Free build</h2><p>Build any circuit you like. Every part is in the tray.</p></div>
-          </div>
-          <CircuitLab />
-        </div>
-      )}
+      {view === "free" && <FreeBuild onBack={() => pick("projects")} />}
       {view === "projects" && project && (
         <ProjectPlayer key={project.id} project={project} done={done.has(project.id)}
           onComplete={id => onProjectDone(id)} onBack={() => setOpenId(null)}
@@ -71,6 +61,21 @@ export default function LabTab({ done, onProjectDone }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// Free build has the same focused page as a project: a back button, a title, then the lab.
+function FreeBuild({ onBack }) {
+  const { headRef, projRef } = useLabPage();
+  return (
+    <div className="stack proj proj-build" ref={projRef}>
+      <div className="proj-head" ref={headRef}>
+        <button className="btn back-btn" onClick={onBack} aria-label="Back to projects"><Icon name="back" size={18} /><span className="lbl">Projects</span></button>
+        <span className="proj-emoji" aria-hidden="true">🛠️</span>
+        <div className="proj-title"><h2>Free build</h2><p>Build any circuit you like. Every part is in the tray.</p></div>
+      </div>
+      <CircuitLab />
     </div>
   );
 }

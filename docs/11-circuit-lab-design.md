@@ -169,6 +169,32 @@ It's the **🧪 Circuit Lab** tab in Electricity & Parts. The code is `web/src/c
   - Phones vibrate when a part snaps on.
   - 🗣 reads every hint aloud: on by default for Classes 1–2, and anyone can switch it on or off.
 
+## Workspace v2: three fixed areas
+
+The lab is laid out in three areas that never move while a child builds:
+
+- **Left, the mission:**
+  - The goal and the **What it must do** checklist, always visible. The checklist ticks green or turns orange when the child tests.
+  - Predict and the test results sit here too, so nothing appears above the board.
+  - Volt's hint, with **Hear it**, plus **Show me**, **Flip it** or **Remove it** when they apply.
+  - **Test my circuit**, and **Start again…**, which asks once ("Tap again to start over") before it clears the board.
+- **Centre, the board:**
+  - **Tools above it, each with a word:** Undo, Redo, zoom, **Fit circuit**, Lock, Full screen, Read to me and Settings (sounds and the meter), plus a "Saved" tick.
+  - **Fit circuit** zooms to the part of the board the circuit uses. A finished circuit fits itself when it locks; **Change parts** unlocks it and shows the whole board again.
+  - **Right now**, under the board, says in words what the circuit is doing: "Loop closed: current is flowing · Slide switch S1 ON · Bulb L1 glowing". Tapping an item chooses that part. "Describe my circuit" is there too.
+- **Right, the parts and the chosen part:**
+  - The tray counts how many parts are placed ("3 of 3 placed").
+  - The **Chosen part** panel shows what the part does, where it is ("from C1 to C3"), what it's doing, big labelled buttons (ON/OFF, Turn, Flip ends, Move, Remove), its settings and the meter.
+
+When a test fails, **Show me where** rings the parts that did the wrong thing, using the child's own labels (`problemParts`). In guided mode the faint guide part shows the piece that's missing.
+
+**Screen sizes:**
+- **Wide screens (1280 px and up):** three columns.
+- **Tablets and small laptops:** the mission on the left, with Test pinned at its foot; the parts as a strip under the board; the chosen part beside the strip only while a part is chosen. Secondary tools show as icons with their names as tooltips.
+- **Phones:** one column. The mission folds to one line ("2 checks" / "1 of 2 work"), the toolbar is one row (Undo · Fit circuit · Lock · Settings, with Read to me and Full screen inside Settings), and the parts are docked at the bottom.
+
+The lab fills the screen height under the project's header, and the page opens scrolled to that header (`useLabPage`). The helpers behind Fit circuit, Right now and Show me where are in `web/src/lib/circuit/workspace.js`, with tests.
+
 ## Projects (built: all eleven units)
 
 The Circuit Lab tab now opens on **🧩 Projects** (with **🛠️ Free build** beside it). All eleven units (100 projects) are open. Units 1–3 have hand-made layouts; units 4–11 were laid out by `web/scripts/lab-layout.mjs`, which places each circuit, joins it with connectors and proves the result before printing it. The last project, "Your own invention", is open-ended: it has no layout, offers the whole kit, and passes when an input really changes an output.
