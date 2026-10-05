@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { KeyoFace } from "../../components/journey/Guide.jsx";
-import { isUnlocked } from "../../components/journey/Journey.jsx";
+import { isUnlocked, Trail } from "../../components/journey/Journey.jsx";
 import TypingLesson from "./TypingLesson.jsx";
 import SpeedLadder from "./SpeedLadder.jsx";
 import Games from "./Games.jsx";
@@ -144,10 +144,11 @@ export default function TypingCourse() {
   return (
     <div className="stack journey typing">
       <div className="map-head">
-        {kids && <KeyoFace mood="happy" size={80} />}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 className="sec">{kids ? "Keyo's typing course" : "Touch typing course"}</h2>
-          <p className="muted">{kids ? "Learn the keyboard finger by finger, without looking." : "Learn to touch type: home row first, then the rows above and below."} {lessonsDone} of {steps.length} lessons done.</p>
+        {kids && <KeyoFace mood="happy" size={104} />}
+        <div className="map-head-txt">
+          <h2>{kids ? "Keyo's typing course" : "Touch typing course"}</h2>
+          <p>{kids ? "Learn the keyboard finger by finger, without looking." : "Learn to touch type: home row first, then the rows above and below."}</p>
+          <div className="map-progress"><span className="bar-track" role="img" aria-label={`${lessonsDone} of ${steps.length} lessons done`}><i style={{ width: `${steps.length ? (lessonsDone / steps.length) * 100 : 0}%` }} /></span><b>{lessonsDone} of {steps.length}</b></div>
         </div>
         {muteBtn}
       </div>
@@ -209,29 +210,24 @@ export default function TypingCourse() {
       </div>
 
       {TYPING_PARTS.map(part => (
-        <section key={part.id} className="stack" style={{ gap: 10 }}>
+        <section key={part.id} className="trail-map">
           <div className="part-head">
             <h3>{part.title}</h3>
             <span className="tag">{part.who}</span>
-            <p className="muted">{part.note}</p>
+            <p>{part.note}</p>
           </div>
-          <ol className="path">
-            {steps.filter(s => s.part === part.id).map(s => {
-              const i = steps.indexOf(s);
-              const canOpen = unlocked(i);
-              const isDone = done.has(s.id);
-              const isNext = s === firstOpen;
-              return (
-                <li key={s.id} className={`stone${isDone ? " done" : ""}${canOpen ? "" : " locked"}${isNext ? " next" : ""}`}>
-                  <button disabled={!canOpen} onClick={() => go(s.id)} aria-label={`${s.title}${isDone ? ", done" : canOpen ? "" : ", locked"}`}>
-                    <span className="em">{canOpen ? s.emoji : "🔒"}</span>
-                    <span className="txt"><span className="eyebrow">Lesson {i + 1}{s.kind === "check" ? " · stage check" : ""}</span><b>{s.title}</b><small>{s.blurb}</small></span>
-                    <span className="mark">{stars[s.id] ? "⭐".repeat(stars[s.id]) : isNext ? "Start" : ""}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
+          <Trail items={steps.filter(s => s.part === part.id).map(s => {
+            const i = steps.indexOf(s);
+            const canOpen = unlocked(i);
+            const isDone = done.has(s.id);
+            const isNext = s === firstOpen;
+            return {
+              key: s.id, state: isDone ? "done" : isNext ? "next" : canOpen ? "open" : "locked",
+              emoji: s.emoji, eyebrow: `Lesson ${i + 1}${s.kind === "check" ? " · stage check" : ""}`, title: s.title, blurb: s.blurb, stars: stars[s.id] ?? 0,
+              label: `Lesson ${i + 1}: ${s.title}${isDone ? `, done, ${stars[s.id] ?? 0} stars` : isNext ? ", start here" : canOpen ? "" : ", locked"}`,
+              onClick: () => { if (canOpen) go(s.id); },
+            };
+          })} />
         </section>
       ))}
     </div>

@@ -15,7 +15,7 @@ export function Ladder({ value, rungs = 10, wobble = false, label }) {
           <rect key={i} className={`ladder-rung${i < at ? " done" : ""}`} x="20" y={H - 14 - (i + 1) * step} width="50" height="6" rx="3" />
         ))}
       </svg>
-      <span className="ladder-star" aria-hidden="true">{at >= rungs ? "🌟" : "⭐"}</span>
+      <span className={`ladder-star${at >= rungs ? " won" : ""}`} aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="var(--spark)" stroke="var(--spark-dark)" strokeWidth="1.5" strokeLinejoin="round" /></svg></span>
       {/* Keyo stands on the highest rung climbed (or the ground at the start). */}
       <div className={`ladder-keyo${wobble ? " wobble" : ""}`} style={{ bottom: `${((8 + at * step) / H) * 100}%` }}>
         <KeyoFace size={44} mood={at >= rungs ? "cheer" : "happy"} lamp={false} />

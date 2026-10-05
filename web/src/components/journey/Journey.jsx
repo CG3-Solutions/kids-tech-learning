@@ -31,6 +31,36 @@ function trailPath(n, cx, amp) {
   return d;
 }
 
+// One part of an adventure as a trail. Each item:
+// { key, state: "done" | "next" | "open" | "locked", bonus, emoji, eyebrow, title, blurb, label, onClick, hint, stars }
+export function Trail({ items }) {
+  return (
+    <ol className="trail" style={{ height: items.length * ROW }}>
+      {TRAILS.map(t => <svg key={t.cls} className={`trail-line ${t.cls}`} width="100%" height={items.length * ROW} aria-hidden="true" focusable="false"><path d={trailPath(items.length, t.cx, t.amp)} /></svg>)}
+      {items.map((it, k) => (
+        <li key={it.key} className={`stone ${it.state}${it.bonus ? " bonus" : ""}`} style={{ "--x": wave(k) }}>
+          <button aria-disabled={it.state === "locked"} onClick={it.onClick} aria-label={it.label}>
+            <span className="node" aria-hidden="true">
+              {it.state === "done" ? <Icon name="star" size={34} stroke={1.4} fill="currentColor" />
+                : it.state === "next" ? <Icon name="play" size={36} stroke={0} fill="currentColor" />
+                : it.state === "open" ? <span className="em">{it.emoji}</span>
+                : <Icon name="lock" size={28} stroke={2.6} />}
+            </span>
+            <span className="label">
+              <span className="eyebrow">{it.eyebrow}</span>
+              <b>{it.title}</b>
+              {it.blurb && <small>{it.blurb}</small>}
+            </span>
+            {it.state === "next" && <span className="here" aria-hidden="true">Start</span>}
+            {it.stars > 0 && <span className="trail-stars" aria-hidden="true">{Array.from({ length: it.stars }, (_, n) => <Icon key={n} name="star" size={20} stroke={1.4} fill="currentColor" />)}</span>}
+          </button>
+          {it.hint && <p className="lock-hint" role="status"><Icon name="lock" size={16} /> {it.hint}</p>}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function ParentNote({ step }) {
   if (!step.parent) return null;
   return (
@@ -136,35 +166,19 @@ export default function Journey({ title, intro, Face, steps, parts = [], views, 
               {part.note && <p>{part.note}</p>}
             </div>
           )}
-          <ol className="trail" style={{ height: items.length * ROW }}>
-            {TRAILS.map(t => <svg key={t.cls} className={`trail-line ${t.cls}`} width="100%" height={items.length * ROW} aria-hidden="true" focusable="false"><path d={trailPath(items.length, t.cx, t.amp)} /></svg>)}
-            {items.map((s, k) => {
-              const i = steps.indexOf(s);
-              const unlocked = open_(i);
-              const isDone = done.has(s.id);
-              const isNext = s === firstOpen;
-              const state = isDone ? "done" : isNext ? "next" : unlocked ? "open" : "locked";
-              return (
-                <li key={s.id} className={`stone ${state}${s.bonus ? " bonus" : ""}`} style={{ "--x": wave(k) }}>
-                  <button aria-disabled={!unlocked} onClick={() => (unlocked ? go(s.id) : tapLocked(s, firstOpen))} aria-label={`${s.bonus ? "Bonus" : `Step ${stepNo(s)}`}: ${s.title}${isDone ? ", done" : isNext ? ", start here" : unlocked ? "" : ", locked"}`}>
-                    <span className="node" aria-hidden="true">
-                      {isDone ? <Icon name="star" size={34} stroke={1.4} fill="currentColor" />
-                        : isNext ? <Icon name="play" size={36} stroke={0} fill="currentColor" />
-                        : unlocked ? <span className="em">{s.emoji}</span>
-                        : <Icon name="lock" size={28} stroke={2.6} />}
-                    </span>
-                    <span className="label">
-                      <span className="eyebrow">{s.bonus ? "Bonus" : `Step ${stepNo(s)}`}</span>
-                      <b>{s.title}</b>
-                      <small>{s.blurb}</small>
-                    </span>
-                    {isNext && <span className="here" aria-hidden="true">Start</span>}
-                  </button>
-                  {lockedTap === s.id && <p className="lock-hint" role="status"><Icon name="lock" size={16} /> {lockedMsg(firstOpen)}</p>}
-                </li>
-              );
-            })}
-          </ol>
+          <Trail items={items.map(s => {
+            const i = steps.indexOf(s);
+            const unlocked = open_(i);
+            const isDone = done.has(s.id);
+            const isNext = s === firstOpen;
+            return {
+              key: s.id, state: isDone ? "done" : isNext ? "next" : unlocked ? "open" : "locked", bonus: s.bonus,
+              emoji: s.emoji, eyebrow: s.bonus ? "Bonus" : `Step ${stepNo(s)}`, title: s.title, blurb: s.blurb,
+              label: `${s.bonus ? "Bonus" : `Step ${stepNo(s)}`}: ${s.title}${isDone ? ", done" : isNext ? ", start here" : unlocked ? "" : ", locked"}`,
+              onClick: () => (unlocked ? go(s.id) : tapLocked(s, firstOpen)),
+              hint: lockedTap === s.id ? lockedMsg(firstOpen) : null,
+            };
+          })} />
         </section>
       ))}
     </div>
