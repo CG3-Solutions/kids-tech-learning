@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ParentLayout from "../../layouts/ParentLayout.jsx";
 import { useApp } from "../../lib/AppContext.jsx";
-import { ASSIGNMENT_KINDS, assignmentLabel, rosterCsv, studentRow } from "../../lib/school.js";
+import { ASSIGNMENT_KINDS, assignmentLabel, needsHelp, rosterCsv, studentRow } from "../../lib/school.js";
 import { LADDER, TESTS, TYPING_JOURNEY, TYPING_PARTS } from "../../content/typing.js";
 import { fmtWhen } from "../../lib/activity.js";
-import { Avatar } from "../../components/Character.jsx";
+import { Avatar, Guide } from "../../components/Character.jsx";
+import Icon from "../../components/Icon.jsx";
+import Mastery from "../../components/Mastery.jsx";
 
 const fmtDay = d => (d ? new Date(`${d}T00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "");
 
@@ -75,25 +77,55 @@ function ClassDetail({ cls, onDeleted }) {
   const delAssign = async id => { try { await api.deleteAssignment(id); load(); } catch (e) { setError(e.message); } };
   const delClass = async () => { try { await api.deleteClass(cls.id); onDeleted(); } catch (e) { setError(e.message); } };
   const avg = rows.length ? Math.round(rows.reduce((s, r) => s + r.best, 0) / rows.length) : 0;
+  const help = needsHelp(rows, assignments);
   return (
     <>
-      <section className="pc-card">
-        <div className="pc-card-hd">
-          <h2>{cls.name}</h2><span className="spacer" />
-          <span className="join-code" aria-label={`Join code ${cls.join_code.split("").join(" ")}`}>Join code <b>{cls.join_code}</b></span>
-          <button className="btn ghost" onClick={() => navigator.clipboard?.writeText(cls.join_code)}>Copy</button>
+      <div className="class-head">
+        <Guide id="keyo" size={64} />
+        <div className="ch-txt">
+          <h2>{cls.name}</h2>
+          <span className="muted">{rows.length} {rows.length === 1 ? "student" : "students"} · typing</span>
         </div>
-        <p className="muted">Share the code with parents. They add their child under <b>Learners → Join a class</b>. You'll see only typing results: lessons, speed, accuracy and tests.</p>
-        <div className="kpis wide">
-          <div className="kpi"><span>Students</span><b>{rows.length}</b><small>joined</small></div>
-          <div className="kpi"><span>Average best speed</span><b>{avg || "—"}</b><small>words a minute</small></div>
-          <div className="kpi"><span>Tasks</span><b>{assignments.length}</b><small>set</small></div>
+        <span className="join-code" aria-label={`Join code ${cls.join_code.split("").join(" ")}`}>Join code <b>{cls.join_code}</b></span>
+        <button className="btn" onClick={() => navigator.clipboard?.writeText(cls.join_code)}>Copy code</button>
+      </div>
+      <p className="muted">Share the code with parents. They add their child under <b>Learners → Join a class</b>. You'll see only typing results: lessons, speed, accuracy and tests.</p>
+      <div className="kpis wide">
+        <div className="kpi"><span>Students</span><b>{rows.length}</b><small>joined</small></div>
+        <div className="kpi"><span>Average best speed</span><b>{avg || "—"}</b><small>words a minute</small></div>
+        <div className="kpi"><span>Tasks</span><b>{assignments.length}</b><small>set</small></div>
+        <div className="kpi"><span>Needs help</span><b>{help.length}</b><small>{help.length === 1 ? "student" : "students"} to check on</small></div>
+      </div>
+
+      {assignments.length > 0 && (
+        <div className="task-cards">
+          {assignments.map((a, i) => {
+            const n = rows.filter(r => r.statuses[i]?.done).length;
+            return (
+              <div key={a.id} className="task-card">
+                <div className="tc-top"><span className="eyebrow">{a.kind === "lesson" ? "Lesson" : a.kind === "test" ? "Typing test" : "Speed ladder"}</span>{a.due_on && <span className="muted">Due {fmtDay(a.due_on)}</span>}</div>
+                <b>{a.title}</b>
+                <div className="tc-bar"><span className="bar-track" role="img" aria-label={`${n} of ${rows.length} done`}><i style={{ width: `${rows.length ? (n / rows.length) * 100 : 0}%` }} /></span><span>{n} / {rows.length}</span></div>
+              </div>
+            );
+          })}
         </div>
-      </section>
+      )}
+
+      {help.length > 0 && (
+        <section className="pc-card help-card">
+          <h2>Needs help today</h2>
+          <ul>
+            {help.map(({ row, why }) => (
+              <li key={row.child.id}><span className="who-cell"><Avatar value={row.child.avatar} size="sm" /><b>{row.child.name}</b></span><span className="muted">{why.join(" · ")}</span></li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="pc-card">
         <div className="pc-card-hd"><h2>Students</h2><span className="spacer" />
-          {rows.length > 0 && <button className="btn" onClick={() => download(`${cls.name.replace(/[^\w-]+/g, "_")}-typing.csv`, rosterCsv(rows, assignments))}>⬇️ Download spreadsheet (CSV)</button>}
+          {rows.length > 0 && <button className="btn" onClick={() => download(`${cls.name.replace(/[^\w-]+/g, "_")}-typing.csv`, rosterCsv(rows, assignments))}><Icon name="download" size={18} /> Download spreadsheet (CSV)</button>}
         </div>
         {rows.length ? (
           <div className="pc-table-wrap">
@@ -108,7 +140,7 @@ function ClassDetail({ cls, onDeleted }) {
                     <td>{r.accuracy == null ? "—" : `${r.accuracy}%`}</td>
                     <td>{r.ladder ? `${r.ladder} wpm` : "—"}</td>
                     <td>{r.last ? fmtWhen(r.last) : "—"}</td>
-                    {r.statuses.map((s, i) => <td key={assignments[i].id}><span className={`status ${s.done ? "sent" : s.overdue ? "err" : "queued"}`}>{s.done ? "✓ Done" : s.overdue ? "Overdue" : s.detail}</span></td>)}
+                    {r.statuses.map((s, i) => <td key={assignments[i].id}><Mastery level={s.done ? "strong" : s.overdue ? "weak" : "new"} label={s.done ? "Done" : s.overdue ? "Overdue" : s.detail} /></td>)}
                     <td className="right"><button className="btn ghost small" onClick={() => remove(r.child.id)} aria-label={`Remove ${r.child.name} from the class`}>Remove</button></td>
                   </tr>
                 ))}
@@ -125,7 +157,7 @@ function ClassDetail({ cls, onDeleted }) {
           <ul className="feed">
             {assignments.map(a => (
               <li key={a.id}>
-                <span className="what">📌 {a.title}{a.due_on ? <span className="muted"> · due {fmtDay(a.due_on)}</span> : null}
+                <span className="what">{a.title}{a.due_on ? <span className="muted"> · due {fmtDay(a.due_on)}</span> : null}
                   <span className="muted"> · {rows.filter(r => r.statuses[assignments.indexOf(a)]?.done).length}/{rows.length} done</span></span>
                 <button className="btn ghost small" onClick={() => delAssign(a.id)}>Delete</button>
               </li>
@@ -171,7 +203,7 @@ export default function Classes() {
   return (
     <ParentLayout title={cls ? `Classes · ${cls.name}` : "Classes"}>
       <div className="class-tabs seg" role="tablist" aria-label="Classes">
-        {(list ?? []).map(c => <Link key={c.id} role="tab" aria-selected={c.id === classId} className={c.id === classId ? "on" : ""} to={`/parent/classes/${c.id}`}>🏫 {c.name}</Link>)}
+        {(list ?? []).map(c => <Link key={c.id} role="tab" aria-selected={c.id === classId} className={c.id === classId ? "on" : ""} to={`/parent/classes/${c.id}`}><Icon name="school" size={18} /> {c.name}</Link>)}
       </div>
       {cls ? <ClassDetail key={cls.id} cls={cls} onDeleted={() => { load(); nav("/parent/classes"); }} /> : (
         <section className="pc-card" style={{ maxWidth: 560 }}>

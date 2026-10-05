@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assignmentLabel, assignmentStatus, csvCell, rosterCsv, studentRow } from "./school.js";
+import { assignmentLabel, assignmentStatus, csvCell, needsHelp, rosterCsv, studentRow } from "./school.js";
 import { createDemoApi } from "./demoApi.js";
 import { defaultMode } from "../content/typing.js";
 import { voiceOf } from "./voice.js";
@@ -81,5 +81,25 @@ describe("grown-up learners", () => {
     expect(defaultMode({ learner: "child", grade: 7 })).toBe("pro");
     expect(voiceOf({ learner: "adult" }).id).toBe("teacher");
     expect(voiceOf({ learner: "adult", voice: "robot" }).id).toBe("robot");
+  });
+});
+
+describe("needs help", () => {
+  const now = new Date("2026-10-05T12:00:00");
+  const row = (name, o) => ({ child: { id: name, name }, accuracy: 95, last: "2026-10-04T10:00:00", statuses: [{ overdue: false }], ...o });
+  const tasks = [{ id: "a1", title: "Home row" }];
+  it("lists overdue tasks, low accuracy and inactivity, and skips students who are fine", () => {
+    const out = needsHelp([
+      row("Ana"),
+      row("Ben", { statuses: [{ overdue: true }] }),
+      row("Chidi", { accuracy: 71 }),
+      row("Divya", { last: "2026-09-20T10:00:00" }),
+      row("Elif", { last: null, accuracy: null }),
+    ], tasks, now);
+    expect(out.map(x => x.row.child.name)).toEqual(["Ben", "Chidi", "Divya", "Elif"]);
+    expect(out[0].why).toEqual(["Overdue: Home row"]);
+    expect(out[1].why[0]).toMatch(/71%/);
+    expect(out[2].why).toEqual(["No typing for over a week"]);
+    expect(out[3].why).toEqual(["Hasn't started typing yet"]);
   });
 });

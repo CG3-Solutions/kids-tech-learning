@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import ParentLayout from "../layouts/ParentLayout.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { SYMBOLS } from "../content/electricity.js";
-import { AREAS } from "../content/areas.js";
+import { AREAS, areaStyle } from "../content/areas.js";
+import { Guide, guideForModule } from "../components/Character.jsx";
+import Icon from "../components/Icon.jsx";
+import Mastery from "../components/Mastery.jsx";
+
+const LiveTag = ({ on }) => <Mastery level={on ? "strong" : "weak"} label={on ? "Live" : "Draft"} />;
 
 const COLORS = ["lv0", "lv1", "lv2", "lv3", "lv4"];
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "item";
@@ -190,12 +195,21 @@ export default function Admin() {
         )}
         <div className="admin">
           <nav className="admin-nav" aria-label="Subjects">
-            {modules.map(m => (
-              <button key={m.id} className={current?.id === m.id && sel !== "new" ? "active" : ""} onClick={() => pick(m.id)}>
-                <span>{m.emoji}</span><span style={{ flex: 1 }}>{m.title}</span>{m.published === false && <span className="tag draft">Draft</span>}
-              </button>
-            ))}
-            <button className={sel === "new" ? "active" : ""} onClick={() => pick("new")}>＋ New subject</button>
+            {AREAS.map(a => {
+              const mods = modules.filter(m => (m.area ?? "science") === a.id);
+              if (!mods.length) return null;
+              return (
+                <div key={a.id} className="admin-group">
+                  <div className="admin-group-h"><Guide id={a.guide} size={28} />{a.title}</div>
+                  {mods.map(m => (
+                    <button key={m.id} className={current?.id === m.id && sel !== "new" ? "active" : ""} onClick={() => pick(m.id)}>
+                      <span style={{ flex: 1 }}>{m.title}</span><LiveTag on={m.published !== false} />
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+            <button className={`admin-new${sel === "new" ? " active" : ""}`} onClick={() => pick("new")}><Icon name="plus" size={18} stroke={2.6} /> New subject</button>
             <div className="panel stack" style={{ gap: 8, marginTop: 10 }}>
               <b>Starter content</b>
               <small className="muted">Copies the built-in lessons into the database. Built-in cards you edited are reset; cards you added are kept.</small>
@@ -211,6 +225,13 @@ export default function Admin() {
               <ModuleForm isNew module={{ title: "", tagline: "", emoji: "📘", color: "lv4", activity: null, sort: modules.length, published: false, levels: [{ id: 0, name: "Level 0", note: "" }] }} onDone={id => pick(id)} />
             ) : current && (
               <>
+                <div className="admin-head" style={areaStyle(current.area ?? "science")}>
+                  <Guide id={guideForModule(current)} size={56} />
+                  <div><span className="eyebrow">{AREAS.find(a => a.id === (current.area ?? "science"))?.title}</span><h2>{current.title}</h2></div>
+                  <span className="spacer" />
+                  <LiveTag on={current.published !== false} />
+                  <span className="muted">{cards.length} cards · {quiz.length} questions</span>
+                </div>
                 <ModuleForm key={current.id} module={current} />
                 {editCard && (
                   <CardForm key={editCard} isNew={editCard === "new"} levels={current.levels ?? []}
@@ -218,13 +239,13 @@ export default function Admin() {
                     onDone={id => setEditCard(id)} />
                 )}
                 <section className="stack" style={{ gap: 8 }}>
-                  <div className="row"><h3 style={{ margin: 0 }}>Cards ({cards.length})</h3><span className="spacer" /><button className="btn" onClick={() => setEditCard("new")}>＋ Add card</button></div>
+                  <div className="row"><h3 style={{ margin: 0 }}>Cards ({cards.length})</h3><span className="spacer" /><button className="btn" onClick={() => setEditCard("new")}><Icon name="plus" size={18} stroke={2.6} /> Add card</button></div>
                   <div className="list">
                     {cards.map(c => (
                       <button key={c.id} className="list-row" onClick={() => { setEditCard(c.id); window.scrollTo(0, 0); }}>
                         <span className="em">{c.data.e}</span>
                         <span className="t"><b>{c.data.n}</b> <small>· {current.levels?.find(l => l.id === c.level)?.name ?? `Level ${c.level}`}</small></span>
-                        {c.published === false ? <span className="tag draft">Draft</span> : <span className="tag">Live</span>}
+                        <LiveTag on={c.published !== false} />
                       </button>
                     ))}
                   </div>
@@ -235,16 +256,16 @@ export default function Admin() {
                     onDone={id => setEditQ(id)} />
                 )}
                 <section className="stack" style={{ gap: 8 }}>
-                  <div className="row"><h3 style={{ margin: 0 }}>Quiz questions ({quiz.length})</h3><span className="spacer" /><button className="btn" onClick={() => setEditQ("new")}>＋ Add question</button></div>
+                  <div className="row"><h3 style={{ margin: 0 }}>Quiz questions ({quiz.length})</h3><span className="spacer" /><button className="btn" onClick={() => setEditQ("new")}><Icon name="plus" size={18} stroke={2.6} /> Add question</button></div>
                   <div className="list">
                     {quiz.map(q => (
                       <button key={q.id} className="list-row" onClick={() => setEditQ(q.id)}>
-                        <span className="em">❓</span><span className="t">{q.question}</span><small>{q.options[q.answer]?.label}</small>
+                        <span className="em q-mark" aria-hidden="true">?</span><span className="t">{q.question}</span><small>{q.options[q.answer]?.label}</small>
                       </button>
                     ))}
                   </div>
                 </section>
-                <section className="panel" style={{ borderColor: "var(--bad)" }}>
+                <section className="panel danger-zone">
                   {confirmDelMod
                     ? <div className="row"><span>Delete “{current.title}” with all its cards and questions?</span><button className="btn danger" onClick={() => run(() => api.deleteModule(current.id), "Deleted").then(ok => ok && pick(null))}>Delete subject</button><button className="btn ghost" onClick={() => setConfirmDelMod(false)}>Keep</button></div>
                     : <button className="btn danger" onClick={() => setConfirmDelMod(true)}>Delete this subject</button>}

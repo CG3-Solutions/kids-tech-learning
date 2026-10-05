@@ -380,11 +380,21 @@ table.hunt { border-collapse: collapse; width: 100%; min-width: 640px }
 /* Admin */
 .admin { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start }
 @media (max-width: 860px) { .admin { grid-template-columns: 1fr } }
-.admin-nav { display: grid; gap: 6px }
-.admin-nav button { text-align: left; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 12px; font-weight: 700; display: flex; gap: 8px; align-items: center }
-.admin-nav button.active { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--spark) }
+.admin-nav { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 12px }
+.admin-nav button { text-align: left; border: 0; background: none; border-radius: 12px; padding: 7px 10px; font-weight: 700; display: flex; gap: 8px; align-items: center; color: var(--ink) }
+.admin-nav button:hover { background: var(--surface-2) }
+.admin-nav button.active { background: var(--brand-tint); color: var(--brand-dark) }
+.admin-group { display: grid; gap: 2px; margin-bottom: 8px }
+.admin-group-h { display: flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px }
+.admin-nav .admin-new { color: var(--brand-dark); border: 1px dashed var(--brand); justify-content: center; margin-top: 4px }
+.admin-nav .mastery { height: 24px; font-size: .75rem }
+.admin-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--c-tint); color: var(--c-ink); border-radius: 22px; padding: 10px 18px }
+.admin-head h2 { font-size: 1.6rem; font-weight: 600 }
+.admin-head .muted { color: var(--c-ink); font-weight: 700 }
 .list { display: grid; gap: 6px }
-.list-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; text-align: left }
+.list-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; text-align: left }
+.list-row:hover { border-color: var(--brand) }
+.list-row .q-mark { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-tint); color: var(--brand-dark); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; font-size: 1.1rem }
 .list-row .em { font-size: 1.5rem }
 .list-row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .list-row small { color: var(--muted) }
@@ -2251,3 +2261,23 @@ html.lab-fullscreen .lab-board-wrap { max-height: none }
   .pc-card { break-inside: avoid; box-shadow: none }
 }
 .who-cell { display: inline-flex; align-items: center; gap: 10px }
+
+/* ───── School class workspace (Calm mode) ───── */
+.class-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 12px 18px }
+.ch-txt { flex: 1; min-width: 200px; display: grid }
+.ch-txt h2 { font-size: 1.8rem; font-weight: 600 }
+.join-code { background: var(--brand-tint); color: var(--brand-dark); border-radius: 12px; padding: 8px 12px; font-weight: 700 }
+.join-code b { font-family: ui-monospace, Menlo, monospace; letter-spacing: .08em; margin-left: 4px }
+.task-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px }
+.task-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: grid; gap: 8px }
+.task-card b { font-family: var(--f-display); font-size: 1.15rem; font-weight: 600 }
+.tc-top { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; font-weight: 700 }
+.tc-bar { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: .9rem }
+.tc-bar .bar-track { height: 10px; max-width: none; background: var(--surface-2) }
+.tc-bar .bar-track i { background: var(--brand) }
+.help-card ul { list-style: none; margin: 0; padding: 0; display: grid }
+.help-card li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 0; border-top: 1px solid var(--line) }
+.help-card li:first-child { border-top: 0 }
+.class-tabs a { display: inline-flex; align-items: center; gap: 6px }
+.class-table .mastery { max-width: 220px; overflow: hidden; text-overflow: ellipsis }
+.danger-zone.panel { border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--line)) }
