@@ -201,6 +201,36 @@ button { cursor: pointer }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px }
 .tabs a, .tabs button { flex: none; border: 0; background: var(--surface); border-radius: 999px; padding: 9px 18px; font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; text-decoration: none; box-shadow: 0 4px 0 var(--press) }
 .tabs .active { background: var(--c, var(--brand)); color: #fff; box-shadow: 0 4px 0 color-mix(in srgb, var(--c, var(--brand)) 65%, #000) }
+/* Subject menu: one tile per section, in learning order, with what it is and how far the child has got */
+.subject-menu { display: grid; grid-template-columns: repeat(var(--n-mid, 3), minmax(0, 1fr)); gap: 12px; padding-bottom: 6px }
+@media (min-width: 1100px) { .subject-menu { grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) } .subject-menu.many .sm-item { flex-direction: column; gap: 8px } .subject-menu.many .sm-about { display: none } }
+.sm-item { position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 22px; background: var(--surface); color: var(--ink); text-decoration: none; border: 3px solid transparent; box-shadow: 0 5px 0 var(--press); transition: transform .1s, box-shadow .1s, border-color .1s }
+.sm-item:hover { border-color: color-mix(in srgb, var(--c, var(--brand)) 45%, transparent) }
+.sm-item:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--press) }
+.sm-item.active { background: var(--c-tint, var(--brand-tint)); color: var(--c-ink, var(--brand-dark)); border-color: var(--c, var(--brand)); box-shadow: 0 5px 0 var(--c-edge, var(--press)) }
+.sm-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none; background: var(--c-tint, var(--brand-tint)); color: var(--c-ink, var(--brand-dark)) }
+.sm-item.active .sm-ic { background: var(--c, var(--brand)); color: #fff }
+.sm-txt { display: grid; gap: 1px; min-width: 0; flex: 1 }
+.sm-kind { display: flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--muted) }
+.sm-item.active .sm-kind { color: inherit; opacity: .85 }
+.sm-start { font-size: .68rem; letter-spacing: .02em; text-transform: none; background: var(--spark); color: var(--spark-ink); border-radius: 999px; padding: 1px 8px }
+.sm-title { font-family: var(--f-display); font-size: 1.15rem; font-weight: 600; line-height: 1.15 }
+.sm-about { font-size: .82rem; font-weight: 600; color: var(--muted); line-height: 1.3 }
+.sm-item.active .sm-about { color: inherit; opacity: .8 }
+.sm-meta { font-size: .85rem; font-weight: 800; margin-top: 2px }
+.sm-bar { height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--c, var(--brand)) 18%, var(--surface)); overflow: hidden; margin-top: 4px }
+.sm-bar i { display: block; height: 100%; background: var(--c, var(--brand)); border-radius: 99px }
+@media (max-width: 1099px) { .sm-about { display: none } }
+@media (max-width: 760px) {
+  .subject-menu { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; margin-inline: -16px; padding: 0 16px 8px }
+  .subject-menu::-webkit-scrollbar { display: none }
+  .sm-item { flex: none; width: 150px; scroll-snap-align: start; padding: 10px 12px; flex-direction: column; gap: 6px }
+  .sm-ic { width: 34px; height: 34px; border-radius: 11px }
+  .sm-ic .icon { width: 20px; height: 20px }
+  .sm-title { font-size: 1rem }
+  .sm-meta { font-size: .8rem }
+  .sm-start { position: absolute; top: 8px; right: 8px }
+}
 .lvl-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
 .lvl-h h3 { font-size: 1.25rem }
 .lvl-h span { color: var(--muted); font-size: .92rem }
@@ -1340,7 +1370,7 @@ button.kb-key { cursor: pointer }
 /* Phones: inside a step, the page header (breadcrumb, subject title, tabs) steps aside so the
    question and its answers fit on one screen. ← Map brings it all back. */
 @media (max-width: 600px) {
-  .page:has(> .in-step) > .crumbs, .page:has(> .in-step) > .mod-head, .page:has(> .in-step) > .tabs { display: none }
+  .page:has(> .in-step) > .crumbs, .page:has(> .in-step) > .mod-head, .page:has(> .in-step) > .tabs, .page:has(> .in-step) > .subject-menu { display: none }
   .page:has(> .in-step) { gap: 10px }
   .step-head { gap: 8px }
   .step-head .part-name, .sound-btn .label { display: none }
