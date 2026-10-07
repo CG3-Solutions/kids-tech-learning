@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SEED } from "../content/index.js";
-import { menuItems, startedSubject, KIND_LABEL } from "./subjectMenu.js";
+import { menuItems, startedSubject, groupItems, KIND_LABEL } from "./subjectMenu.js";
 import { JOURNEYS } from "../content/journeys.js";
 
 const elec = SEED.modules.find(m => m.id === "electricity");
@@ -36,5 +36,18 @@ describe("subject menu", () => {
     const items = menuItems({ tabs: ["cards", "computer", "quiz"], module: comp, cards: SEED.cards.filter(c => c.module_id === "computer"), glossary: true });
     expect(items.map(i => i.tab)).toEqual(["computer", "quiz", "cards"]);
     expect(items.at(-1).title).toBe("Glossary");
+  });
+  it("has a short count for every chip", () => {
+    const items = menuItems({ tabs: TABS, module: elec, cards: elecCards });
+    expect(items.every(i => typeof i.meta.short === "string" && i.meta.short.length <= 7)).toBe(true);
+    expect(items.find(i => i.tab === "cards").meta.short).toBe(`0/${elecCards.length}`);
+    expect(items.find(i => i.tab === "quiz").meta.short).toBe("New");
+  });
+  it("groups sections under headings, in order, however many there are", () => {
+    const items = menuItems({ tabs: TABS, module: elec, cards: elecCards });
+    const groups = groupItems(items);
+    expect(groups.map(g => g.label)).toEqual(["Learn", "Adventures", "Build", "Play", "Quiz"]);
+    expect(groups.find(g => g.kind === "play").items.map(i => i.tab)).toEqual(["hunt", "machines"]);
+    expect(groups.flatMap(g => g.items)).toEqual(items);
   });
 });
