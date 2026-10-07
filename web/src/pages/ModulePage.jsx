@@ -25,8 +25,8 @@ import { useApp } from "../lib/AppContext.jsx";
 import { ACTIVITIES, EXTRA_ACTIVITIES, GLOSSARY_MODULES } from "../content/index.js";
 import { hush } from "../lib/speech.js";
 import { local } from "../lib/storage.js";
-import { menuItems, startedSubject, KIND_LABEL } from "../lib/subjectMenu.js";
-import Icon from "../components/Icon.jsx";
+import { menuItems, startedSubject } from "../lib/subjectMenu.js";
+import SubjectMenu from "../components/SubjectMenu.jsx";
 
 const LV_COLORS = ["var(--lv0)", "var(--lv1)", "var(--lv2)", "var(--lv3)", "var(--lv4)"];
 
@@ -86,30 +86,8 @@ export default function ModulePage() {
           <div><span className="eyebrow">{area.title}</span><h1>{m.title}</h1><p>{m.tagline}</p></div>
         </div>
         {menu.length > 1 && (
-          <nav className={`subject-menu${menu.length >= 5 ? " many" : ""}`} aria-label="Sections" style={{ "--n": menu.length, "--n-mid": menu.length > 4 ? Math.ceil(menu.length / 2) : menu.length }}>
-            {menu.map(it => {
-              const on = it.tab === tab;
-              return (
-                <Link key={it.tab} to={`/learn/${m.id}/${it.tab}`} className={`sm-item k-${it.kind}${on ? " active" : ""}`} aria-current={on ? "page" : undefined}
-                  ref={el => {
-                    // On phones the row scrolls sideways: bring the chosen section into view once.
-                    if (!on || !el || el.dataset.shown === "1") return;
-                    el.dataset.shown = "1";
-                    requestAnimationFrame(() => { const row = el.parentElement; if (row && row.scrollWidth > row.clientWidth) row.scrollLeft += el.getBoundingClientRect().left - row.getBoundingClientRect().left - 16; });
-                  }}
-                  onClick={() => { hush(); local.set(lastKey, it.tab); }}>
-                  <span className="sm-ic" aria-hidden="true"><Icon name={it.icon} size={24} /></span>
-                  <span className="sm-txt">
-                    <span className="sm-kind">{KIND_LABEL[it.kind]}{fresh && it.tab === startTab && <b className="sm-start">Start here</b>}</span>
-                    <b className="sm-title">{it.title}</b>
-                    <span className="sm-about">{it.about}</span>
-                    <span className="sm-meta">{it.meta.text}</span>
-                    {it.meta.total > 0 && <span className="sm-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (it.meta.done / it.meta.total) * 100)}%` }} /></span>}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
+          <SubjectMenu items={menu} current={tab} moduleId={m.id} startTab={startTab} fresh={fresh}
+            onPick={t => { hush(); local.set(lastKey, t); }} />
         )}
 
         {tab === "cards" && (

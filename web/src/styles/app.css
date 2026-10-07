@@ -201,9 +201,49 @@ button { cursor: pointer }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px }
 .tabs a, .tabs button { flex: none; border: 0; background: var(--surface); border-radius: 999px; padding: 9px 18px; font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; text-decoration: none; box-shadow: 0 4px 0 var(--press) }
 .tabs .active { background: var(--c, var(--brand)); color: #fff; box-shadow: 0 4px 0 color-mix(in srgb, var(--c, var(--brand)) 65%, #000) }
+/* Section bar: always one row, however many sections; "All sections" lists them all, grouped */
+.section-bar { position: relative; display: flex; align-items: center; gap: 10px }
+.sb-row { position: relative; flex: 1; min-width: 0; display: flex; align-items: center }
+.sb-chips { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; padding: 4px 2px 8px; min-width: 0; flex: 1 }
+.sb-chips::-webkit-scrollbar { display: none }
+.sb-row.more-l .sb-chips { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 56px); mask-image: linear-gradient(90deg, transparent 0, #000 56px) }
+.sb-row.more-r .sb-chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent 100%); mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent 100%) }
+.sb-row.more-l.more-r .sb-chips { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%) }
+.sb-group { display: flex; gap: 6px; flex: none }
+.sb-group + .sb-group { padding-left: 10px; margin-left: 4px; border-left: 2px solid var(--line) }
+.sb-chip { position: relative; flex: none; display: inline-flex; align-items: center; gap: 7px; height: 48px; padding: 0 13px 0 11px; border-radius: 16px; background: var(--surface); color: var(--ink); text-decoration: none; border: 2px solid transparent; box-shadow: 0 3px 0 var(--press); font-weight: 800; white-space: nowrap }
+.sb-chip .icon { color: var(--c-ink, var(--brand-dark)) }
+.sb-chip:hover { border-color: color-mix(in srgb, var(--c, var(--brand)) 45%, transparent) }
+.sb-chip:active { transform: translateY(3px); box-shadow: none }
+.sb-chip.active { background: var(--c-tint, var(--brand-tint)); color: var(--c-ink, var(--brand-dark)); border-color: var(--c, var(--brand)); box-shadow: 0 3px 0 var(--c-edge, var(--press)) }
+.sb-name { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem }
+.sb-count { font-size: .78rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-variant-numeric: tabular-nums }
+.sb-chip.active .sb-count { background: color-mix(in srgb, var(--c, var(--brand)) 22%, transparent); color: inherit }
+.sb-prog { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--c, var(--brand)) 16%, transparent); overflow: hidden }
+.sb-prog i { display: block; height: 100%; background: var(--c, var(--brand)); border-radius: 2px }
+.sb-start { font-size: .72rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; background: var(--spark); color: var(--spark-ink) }
+.sb-arrow { position: absolute; top: calc(50% - 22px); z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink); display: grid; place-items: center; box-shadow: 0 3px 10px color-mix(in srgb, var(--ink) 18%, transparent); cursor: pointer }
+.sb-arrow.l { left: -6px } .sb-arrow.r { right: -6px }
+@media (pointer: coarse) { .sb-arrow { display: none } }
+.sb-all { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 12px 0 14px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; margin-bottom: 4px }
+.sb-all.on { border-color: var(--c, var(--brand)); background: var(--c-tint, var(--brand-tint)); color: var(--c-ink, var(--brand-dark)) }
+.sb-n { min-width: 24px; height: 24px; border-radius: 12px; display: inline-grid; place-items: center; background: var(--surface-2); font-size: .8rem; font-weight: 900 }
+.sb-scrim { display: none }
+.sb-panel { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0; max-height: min(70vh, 640px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 14px 16px 18px; box-shadow: 0 18px 44px color-mix(in srgb, var(--ink) 22%, transparent); display: grid; gap: 14px }
+.sb-panel-h { display: flex; align-items: center; justify-content: space-between }
+.sb-panel-h b { font-family: var(--f-display); font-size: 1.3rem; font-weight: 600 }
+.sb-panel-group { display: grid; gap: 8px }
+.sb-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px }
+.sb-tiles .sm-item { box-shadow: none; border-color: var(--line) }
+.sb-tiles .sm-item.active { border-color: var(--c, var(--brand)) }
+@media (max-width: 760px) {
+  .sb-all .lbl { display: none }
+  .sb-all { padding: 0 10px }
+  .sb-scrim { display: block; position: fixed; inset: 0; z-index: 90; background: var(--scrim) }
+  .sb-panel { position: fixed; z-index: 91; left: 0; right: 0; top: auto; bottom: 0; max-height: 78dvh; border-radius: 26px 26px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)) }
+  .sb-tiles { grid-template-columns: 1fr }
+}
 /* Subject menu: one tile per section, in learning order, with what it is and how far the child has got */
-.subject-menu { display: grid; grid-template-columns: repeat(var(--n-mid, 3), minmax(0, 1fr)); gap: 12px; padding-bottom: 6px }
-@media (min-width: 1100px) { .subject-menu { grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) } .subject-menu.many .sm-item { flex-direction: column; gap: 8px } .subject-menu.many .sm-about { display: none } }
 .sm-item { position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 22px; background: var(--surface); color: var(--ink); text-decoration: none; border: 3px solid transparent; box-shadow: 0 5px 0 var(--press); transition: transform .1s, box-shadow .1s, border-color .1s }
 .sm-item:hover { border-color: color-mix(in srgb, var(--c, var(--brand)) 45%, transparent) }
 .sm-item:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--press) }
@@ -220,17 +260,6 @@ button { cursor: pointer }
 .sm-meta { font-size: .85rem; font-weight: 800; margin-top: 2px }
 .sm-bar { height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--c, var(--brand)) 18%, var(--surface)); overflow: hidden; margin-top: 4px }
 .sm-bar i { display: block; height: 100%; background: var(--c, var(--brand)); border-radius: 99px }
-@media (max-width: 1099px) { .sm-about { display: none } }
-@media (max-width: 760px) {
-  .subject-menu { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; margin-inline: -16px; padding: 0 16px 8px }
-  .subject-menu::-webkit-scrollbar { display: none }
-  .sm-item { flex: none; width: 150px; scroll-snap-align: start; padding: 10px 12px; flex-direction: column; gap: 6px }
-  .sm-ic { width: 34px; height: 34px; border-radius: 11px }
-  .sm-ic .icon { width: 20px; height: 20px }
-  .sm-title { font-size: 1rem }
-  .sm-meta { font-size: .8rem }
-  .sm-start { position: absolute; top: 8px; right: 8px }
-}
 .lvl-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
 .lvl-h h3 { font-size: 1.25rem }
 .lvl-h span { color: var(--muted); font-size: .92rem }
@@ -1370,7 +1399,7 @@ button.kb-key { cursor: pointer }
 /* Phones: inside a step, the page header (breadcrumb, subject title, tabs) steps aside so the
    question and its answers fit on one screen. ← Map brings it all back. */
 @media (max-width: 600px) {
-  .page:has(> .in-step) > .crumbs, .page:has(> .in-step) > .mod-head, .page:has(> .in-step) > .tabs, .page:has(> .in-step) > .subject-menu { display: none }
+  .page:has(> .in-step) > .crumbs, .page:has(> .in-step) > .mod-head, .page:has(> .in-step) > .tabs, .page:has(> .in-step) > .section-bar { display: none }
   .page:has(> .in-step) { gap: 10px }
   .step-head { gap: 8px }
   .step-head .part-name, .sound-btn .label { display: none }
