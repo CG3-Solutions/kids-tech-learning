@@ -24,9 +24,11 @@ import Machines from "../activities/Machines.jsx";
 import { useApp } from "../lib/AppContext.jsx";
 import { ACTIVITIES, EXTRA_ACTIVITIES, GLOSSARY_MODULES } from "../content/index.js";
 import { hush } from "../lib/speech.js";
+import { local } from "../lib/storage.js";
+import { menuItems, startedSubject, KIND_LABEL } from "../lib/subjectMenu.js";
+import Icon from "../components/Icon.jsx";
 
 const LV_COLORS = ["var(--lv0)", "var(--lv1)", "var(--lv2)", "var(--lv3)", "var(--lv4)"];
-const TAB_NAMES = { ...Object.fromEntries(Object.entries(ACTIVITIES).map(([k, v]) => [k, `${v.emoji} ${v.title}`])), machines: "🏭 Machines" };
 
 export default function ModulePage() {
   const { moduleId, tab: tabParam } = useParams();
@@ -59,7 +61,13 @@ export default function ModulePage() {
   // An address with a section this subject doesn't have goes to the subject's first page.
   if (tabParam && !tabs.includes(tabParam)) return <Navigate to={`/learn/${m.id}`} replace />;
   const first = hasJourney ? m.activity : "cards";
-  const tab = tabParam ?? (tabs.includes(first) ? first : tabs[0]);
+  // Opening a subject goes back to the section the child used last (else its first one).
+  const lastKey = `sparklab.tab.${activeChild?.id ?? "guest"}.${m.id}`;
+  const remembered = local.get(lastKey, null);
+  const startTab = tabs.includes(first) ? first : tabs[0];
+  const tab = tabParam ?? (tabs.includes(remembered) ? remembered : startTab);
+  const menu = menuItems({ tabs, module: m, cards, done, attempts: childData.attempts.filter(a => a.module_id === m.id), state: childData.state ?? {}, glossary });
+  const fresh = !startedSubject(menu);
   const vk = viewKey(location);
   const open = tab === "cards" ? cards.find(c => c.id === openId) : undefined;
   const openIdx = open ? cards.indexOf(open) : -1;
@@ -77,13 +85,32 @@ export default function ModulePage() {
           <Guide id={guideForModule(m)} size={92} className="mod-guide" />
           <div><span className="eyebrow">{area.title}</span><h1>{m.title}</h1><p>{m.tagline}</p></div>
         </div>
-        <nav className="tabs" aria-label="Sections">
-          {tabs.map(t => (
-            <Link key={t} to={`/learn/${m.id}/${t}`} className={t === tab ? "active" : ""} onClick={hush}>
-              {t === "cards" ? (glossary ? "📚 Glossary" : "📚 Cards") : t === "quiz" ? "❓ Quiz" : TAB_NAMES[t]}
-            </Link>
-          ))}
-        </nav>
+        {menu.length > 1 && (
+          <nav className={`subject-menu${menu.length >= 5 ? " many" : ""}`} aria-label="Sections" style={{ "--n": menu.length, "--n-mid": menu.length > 4 ? Math.ceil(menu.length / 2) : menu.length }}>
+            {menu.map(it => {
+              const on = it.tab === tab;
+              return (
+                <Link key={it.tab} to={`/learn/${m.id}/${it.tab}`} className={`sm-item k-${it.kind}${on ? " active" : ""}`} aria-current={on ? "page" : undefined}
+                  ref={el => {
+                    // On phones the row scrolls sideways: bring the chosen section into view once.
+                    if (!on || !el || el.dataset.shown === "1") return;
+                    el.dataset.shown = "1";
+                    requestAnimationFrame(() => { const row = el.parentElement; if (row && row.scrollWidth > row.clientWidth) row.scrollLeft += el.getBoundingClientRect().left - row.getBoundingClientRect().left - 16; });
+                  }}
+                  onClick={() => { hush(); local.set(lastKey, it.tab); }}>
+                  <span className="sm-ic" aria-hidden="true"><Icon name={it.icon} size={24} /></span>
+                  <span className="sm-txt">
+                    <span className="sm-kind">{KIND_LABEL[it.kind]}{fresh && it.tab === startTab && <b className="sm-start">Start here</b>}</span>
+                    <b className="sm-title">{it.title}</b>
+                    <span className="sm-about">{it.about}</span>
+                    <span className="sm-meta">{it.meta.text}</span>
+                    {it.meta.total > 0 && <span className="sm-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (it.meta.done / it.meta.total) * 100)}%` }} /></span>}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {tab === "cards" && (
           <div className="stack">
