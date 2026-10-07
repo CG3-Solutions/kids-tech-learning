@@ -27,6 +27,7 @@ import { hush } from "../lib/speech.js";
 import { local } from "../lib/storage.js";
 import { menuItems, startedSubject } from "../lib/subjectMenu.js";
 import SubjectMenu from "../components/SubjectMenu.jsx";
+import Icon from "../components/Icon.jsx";
 
 const LV_COLORS = ["var(--lv0)", "var(--lv1)", "var(--lv2)", "var(--lv3)", "var(--lv4)"];
 
@@ -92,8 +93,8 @@ export default function ModulePage() {
 
         {tab === "cards" && (
           <div className="stack">
-            <p className="lead">{glossary ? "Every word from Chip's path, to look up any time. Stars come from passing each step's check on the path." : <>{m.id === "electricity" ? "Electricity is like water flowing through pipes. " : ""}Tap a card to learn it. Finish a card to earn a star ★</>}</p>
-            {!glossary && cards.length > 0 && <p className="collected" role="status">⭐ {cardsDone} of {cards.length} collected</p>}
+            <p className="lead">{glossary ? "Every word from Chip's path, to look up any time. Stars come from passing each step's check on the path." : <>{m.id === "electricity" ? "Electricity is like water flowing through pipes. " : ""}Tap a card to meet it, play with it and win its star.</>}</p>
+            {!glossary && cards.length > 0 && <p className="collected" role="status"><Icon name="star" size={24} stroke={1.4} fill="currentColor" /> {cardsDone} of {cards.length} collected</p>}
             {levels.length > 1 && (
               <div className="chips">
                 <button className="chip" aria-pressed={levelFilter === "all"} onClick={() => setLevelFilter("all")}>All</button>
@@ -106,7 +107,7 @@ export default function ModulePage() {
                 <div className="grid">
                   {cards.filter(c => c.level === l.id).map(c => (
                     <button key={c.id} className={`tile${done.has(c.id) && !glossary ? " done" : ""}${c === nextCard ? " next" : ""}`} style={{ "--c": color(l.id) }} onClick={() => setOpenId(c.id)} aria-label={`${c.data.n}${done.has(c.id) ? ", learned" : ""}`}>
-                      <span className="dot" aria-hidden="true">{done.has(c.id) && !glossary ? "★" : ""}</span>
+                      {done.has(c.id) && !glossary && <span className="tile-star" aria-hidden="true"><Icon name="star" size={18} stroke={1.4} fill="currentColor" /></span>}
                       {c === nextCard && <span className="next-tag">Next</span>}
                       <span className="pic" aria-hidden="true">{hasArt(c.id) ? <PartArt id={c.id} size={64} /> : c.data.e}</span><span className="nm">{c.data.n}</span><span className="sh">{c.data.sh}</span>
                     </button>

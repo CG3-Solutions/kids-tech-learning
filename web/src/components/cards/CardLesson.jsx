@@ -4,6 +4,9 @@ import LoopScene, { Gap, Emoji, Holder, Batteries } from "./LoopScene.jsx";
 import { MORE_TOYS } from "./MoreToys.jsx";
 import { speak, hush, prepareSpeech } from "../../lib/speech.js";
 import { sfx } from "../../lib/sfx.js";
+import { VoltFace } from "../journey/Crew.jsx";
+import { FeedbackBar } from "../Feedback.jsx";
+import Icon from "../Icon.jsx";
 
 // --- The toys. Each calls onGoal() once the child has done what was asked. ---
 
@@ -140,6 +143,10 @@ function MotorToy({ onGoal }) {
 
 const TOYS = { power: PowerToy, loop: LoopToy, battery: BatteryToy, wire: WireToy, switch: SwitchToy, bulb: BulbToy, buzzer: BuzzerToy, motor: MotorToy, ...MORE_TOYS };
 const SCREENS = ["Meet", "Play", "Check", "Star"];
+// Volt says each screen's line in a bubble; the same line is read aloud.
+function Volt({ mood = "happy", children }) {
+  return <div className="cl-say"><VoltFace size={68} mood={mood} /><p className="cl-bubble">{children}</p></div>;
+}
 
 // One card as a mini-lesson: meet the part, play with it, answer one question, earn the star.
 export default function CardLesson({ card, lesson, levelName, color, learned, onLearned, onClose, next, onGo }) {
@@ -172,69 +179,66 @@ export default function CardLesson({ card, lesson, levelName, color, learned, on
   };
 
   return (
-    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <article className="card lesson" role="dialog" aria-modal="true" aria-labelledby="cardTitle" style={{ "--c": color }}>
-        <div className="card-hd">
-          <PartArt id={card.id} size={56} />
-          <div><div className="eyebrow">{levelName}</div><h2 id="cardTitle">{d.n}</h2></div>
-          <div className="acts">
-            <button className="btn" onClick={() => speak(say[at], { force: true })} aria-label="Read to me">🔊</button>
-            <button className="btn" ref={closeRef} onClick={onClose}>Close</button>
-          </div>
-        </div>
-        <ol className="lesson-dots" aria-label={`Part ${at + 1} of ${SCREENS.length}: ${SCREENS[at]}`}>
-          {SCREENS.map((s, i) => <li key={s} className={i === at ? "now" : i < at ? "past" : ""} aria-hidden="true">{i === 3 ? "★" : i + 1}</li>)}
+    <div className="overlay cl-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <article className="card lesson cl" role="dialog" aria-modal="true" aria-labelledby="cardTitle" style={{ "--lc": color }}>
+        <header className="cl-head">
+          <span className="cl-pic" aria-hidden="true"><PartArt id={card.id} size={52} /></span>
+          <div className="cl-title"><span className="eyebrow">{levelName}</span><h2 id="cardTitle">{d.n}</h2></div>
+          <button className="btn cl-read" onClick={() => speak(say[at], { force: true })}><Icon name="speaker" size={20} /><span className="lbl">Read to me</span></button>
+          <button className="btn cl-close" ref={closeRef} onClick={onClose} aria-label="Close the card"><Icon name="close" size={20} stroke={2.6} /><span className="lbl">Close</span></button>
+        </header>
+        <ol className="cl-steps" aria-label={`Part ${at + 1} of ${SCREENS.length}: ${SCREENS[at]}`}>
+          {SCREENS.map((s, i) => <li key={s} className={i === at ? "now" : i < at ? "past" : ""} aria-hidden="true"><span className="seg" /><span className="lbl">{s}</span></li>)}
         </ol>
 
-        <div className="lesson-bd">
+        <div className="cl-body">
           {at === 0 && (
             <>
-              <PartArt id={card.id} size={170} label={`A picture of ${d.n}`} />
-              <p className="lesson-big">{lesson.meet}</p>
-              {d.like && <p className="like"><b>It’s like…</b> {d.like}</p>}
-              <button className="btn primary big" onClick={() => go(1)}>Let’s play →</button>
+              <div className="cl-stage"><PartArt id={card.id} size={170} label={`A picture of ${d.n}`} /></div>
+              <Volt>{lesson.meet}</Volt>
+              {d.like && <p className="cl-like"><b>It’s like…</b> {d.like}</p>}
             </>
           )}
           {at === 1 && (
             <>
-              <p className="lesson-big">{lesson.play}</p>
-              <Toy key={card.id} onGoal={goal} />
-              {played && <p className="fb-line good" role="status">You did it! 🎉</p>}
-              <div className="row center-row">
-                <button className="btn ghost" onClick={() => go(0)}>← Back</button>
-                <button className="btn primary big" disabled={!played} onClick={() => go(2)}>Next →</button>
-              </div>
+              <Volt mood={played ? "cheer" : "happy"}>{lesson.play}</Volt>
+              <div className="cl-stage toy"><Toy key={card.id} onGoal={goal} /></div>
+              <FeedbackBar kind={played ? "right" : null} title="You did it!" detail="Now one quick question." />
             </>
           )}
           {at === 2 && (
             <>
-              <p className="lesson-big">{lesson.check.q}</p>
-              <div className="lesson-opts">
+              <Volt mood={right ? "cheer" : wrong.length ? "wow" : "happy"}>{lesson.check.q}</Volt>
+              <div className="cl-opts">
                 {options.map((o, i) => (
-                  <button key={o.label} className={`opt${right && o.ok ? " right" : wrong.includes(i) ? " wrong" : ""}`} disabled={wrong.includes(i)} onClick={() => answer(o, i)}>
+                  <button key={o.label} className={`choice cl-opt${right && o.ok ? " right" : wrong.includes(i) ? " wrong" : ""}`} disabled={wrong.includes(i) || right} onClick={() => answer(o, i)}>
                     <span className="e" aria-hidden="true">{o.e}</span>{o.label}
                   </button>
                 ))}
               </div>
-              <p className={`fb-line ${right ? "good" : "bad"}`} role="status">{right ? "Yes! ⭐" : wrong.length ? "Not that one. Try again!" : " "}</p>
-              <div className="row center-row"><button className="btn ghost" onClick={() => go(1)}>← Back</button></div>
+              <FeedbackBar kind={right ? "right" : wrong.length ? "wrong" : null} title={right ? "Brilliant!" : "Not that one"} detail={right ? "You won the star!" : "Have another go."} />
             </>
           )}
           {at === 3 && (
-            <>
-              <div className="lesson-star" aria-hidden="true">⭐</div>
+            <div className="cl-win">
+              <div className="cl-star" aria-hidden="true"><Icon name="star" size={96} stroke={1.2} fill="currentColor" /></div>
+              <VoltFace size={84} mood="cheer" />
               <h3>You collected {d.n}!</h3>
-              <p className="lesson-big">{lesson.check.why}</p>
-              {d.home?.length > 0 && <div className="blk"><h4>Can you find it at home?</h4><ul className="places">{d.home.map(h => <li key={h}>{h}</li>)}</ul></div>}
+              <p className="cl-why">{lesson.check.why}</p>
+              {d.home?.length > 0 && <div className="cl-home"><h4>Can you find it at home?</h4><ul>{d.home.map(h => <li key={h}>{h}</li>)}</ul></div>}
               {d.tr && <details className="parent-note"><summary>Try it with a grown-up</summary><p>{d.tr}</p></details>}
-              <div className="row center-row">
-                <button className="btn ghost" onClick={() => go(1)}>Play again</button>
-                {next ? <button className="btn primary big" onClick={() => onGo(next.id)}>Next: {next.data.n} →</button>
-                  : <button className="btn primary big" onClick={onClose}>Back to the cards</button>}
-              </div>
-            </>
+            </div>
           )}
         </div>
+
+        <footer className="cl-foot">
+          {at === 0 && <><span /><button className="btn play big" onClick={() => go(1)}><Icon name="play" size={20} stroke={0} fill="currentColor" /> Let’s play</button></>}
+          {at === 1 && <><button className="btn big" onClick={() => go(0)}><Icon name="back" size={20} stroke={2.8} /> Back</button><button className="btn primary big" disabled={!played} onClick={() => go(2)}>{played ? "Next" : "Play first"} <Icon name="fwd" size={20} stroke={2.8} /></button></>}
+          {at === 2 && <><button className="btn big" onClick={() => go(1)}><Icon name="back" size={20} stroke={2.8} /> Back</button><span /></>}
+          {at === 3 && <><button className="btn big" onClick={() => go(1)}>Play again</button>
+            {next ? <button className="btn play big" onClick={() => onGo(next.id)}>Next: {next.data.n} <Icon name="fwd" size={20} stroke={2.8} /></button>
+              : <button className="btn primary big" onClick={onClose}>Back to the cards</button>}</>}
+        </footer>
       </article>
     </div>
   );
