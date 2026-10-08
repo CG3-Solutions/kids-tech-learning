@@ -76,6 +76,24 @@ describe("one voice at a time", () => {
     speak("Going to the map"); hush(); vi.advanceTimersByTime(500);
     expect(spoken).toHaveLength(0);
   });
+  it("the first tap unlocks the device voice with one silent line (Safari)", async () => {
+    window.speechSynthesis.speak = u => spoken.push({ text: u.text, volume: u.volume });
+    const { unlockSound } = await import("./voice.js");
+    unlockSound(); unlockSound();
+    expect(spoken).toEqual([{ text: " ", volume: 0 }]);
+  });
+  it("a refused line is noted for parents instead of failing silently", async () => {
+    const utts = [];
+    window.speechSynthesis.speak = u => utts.push(u);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { speakNow, voiceHistory, speakingText } = await import("./voice.js");
+    speakNow("Hello there"); vi.advanceTimersByTime(300);
+    utts[0].onerror({ error: "not-allowed" });
+    expect(speakingText()).toBe(null);
+    expect(voiceHistory()[0].why).toMatch(/refused/);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });
 
 describe("alphabet speech uses letter names", () => {
