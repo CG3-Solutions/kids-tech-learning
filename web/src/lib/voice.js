@@ -93,16 +93,27 @@ const getAudio = () => {
   if (!audio && typeof Audio !== "undefined") { audio = new Audio(); audio.preload = "auto"; }
   return audio;
 };
-// Phones only allow sound after a tap. The first tap anywhere "unlocks" the audio element, so later
-// lines (which start after loading) can play.
+// Phones and Safari only allow sound after a tap. The first tap anywhere "unlocks" the audio element
+// and the device voice, so later lines (which start after loading, outside the tap) can play.
+// Safari refuses device speech that wasn't started by a tap until something has been spoken in one,
+// and says nothing about it: an empty, silent line is enough.
 const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+let speechUnlocked = false;
+export function unlockSound() {
+  const a = getAudio();
+  if (a && !a.src) { try { a.src = SILENCE; Promise.resolve(a.play()).then(() => a.pause()).catch(() => {}); } catch { /* ignore */ } }
+  const ss = window.speechSynthesis;
+  if (ss && !speechUnlocked && typeof SpeechSynthesisUtterance !== "undefined") {
+    speechUnlocked = true;
+    try { if (!ss.speaking && !ss.pending) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; ss.speak(u); } } catch { /* ignore */ }
+  }
+}
 try {
   const unlock = () => {
-    const a = getAudio(); if (!a) return;
-    if (!a.src) { a.src = SILENCE; a.play().then(() => a.pause()).catch(() => {}); }
-    window.removeEventListener("pointerdown", unlock, true);
+    unlockSound();
+    ["pointerdown", "keydown"].forEach(t => window.removeEventListener(t, unlock, true));
   };
-  window.addEventListener("pointerdown", unlock, true);
+  ["pointerdown", "keydown"].forEach(t => window.addEventListener(t, unlock, true));
 } catch { /* ignore */ }
 
 // Which voice said each recent line, and why (shown to parents in Voice & sound, so "why did I
@@ -112,6 +123,7 @@ const WHY = {
   first: "The first line while the voice service was being checked.",
   slow: "The recording took too long to make. It will be natural next time.",
   blocked: "The browser hadn't allowed sound yet.",
+  refused: "The browser refused the device voice (no tap yet, or speech is turned off on this device).",
   missing: "The recording had gone missing. It will be made again.",
 };
 const history = [];
@@ -157,7 +169,13 @@ function speakDevice(preset, raw, plan, slow, mine) {
     u.rate = Math.max(0.5, rate * (c.stress ? STRESS_RATE : 1));
     u.pitch = Math.min(2, preset.pitch + (c.stress ? STRESS_PITCH : 0));
     if (i === 0) u.onstart = () => { if (mine === run) setSpeaking(raw); };
-    if (i === chunks.length - 1) u.onend = u.onerror = () => { if (mine === run) { keep = []; setSpeaking(null); } };
+    if (i === chunks.length - 1) u.onend = () => { if (mine === run) { keep = []; setSpeaking(null); } };
+    // A refused line is otherwise silent with no sign of why: keep it in the history parents see, and say so in the console.
+    u.onerror = e => {
+      if (e?.error === "interrupted" || e?.error === "canceled") { if (i === chunks.length - 1 && mine === run) { keep = []; setSpeaking(null); } return; }
+      if (mine === run) { keep = []; setSpeaking(null); }
+      if (i === 0) { note(raw, false, "refused", preset); console.warn(`Spark Lab: the device voice could not speak (${e?.error ?? "error"}).`); }
+    };
     return u; // kept so the browser doesn't drop speech when the utterance is garbage-collected
   });
   keep.forEach(u => ss.speak(u));

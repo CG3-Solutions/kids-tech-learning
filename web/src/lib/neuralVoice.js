@@ -116,6 +116,7 @@ export function explain(e) {
   if (e?.status === 503 || /GOOGLE_TTS_KEY/.test(m)) return "The Google key is missing: add the GOOGLE_TTS_KEY secret in Supabase → Edge Functions → Secrets.";
   if (e?.status === 429) return "Today's voice limit is used up. Lessons use the device voice until tomorrow.";
   if (/Google TTS 403|PERMISSION_DENIED|API_KEY|API key/i.test(m)) return "Google refused the key: enable the Cloud Text-to-Speech API and check the key is restricted to it.";
+  if (/unexpected voice file/i.test(m)) return "The voice service is an older version than the app: deploy the “tts” Edge Function again (supabase functions deploy tts --no-verify-jwt).";
   if (/bucket|not found/i.test(m)) return "The recordings storage is missing: run supabase/release-5.sql in the SQL Editor.";
   return `The voice service failed: ${m}`;
 }
