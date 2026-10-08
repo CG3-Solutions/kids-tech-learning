@@ -98,6 +98,8 @@ export function createDemoApi(storage = local) {
       if (!row) { row = { child_id: childId, day, seconds: 0, bonus_seconds: 0 }; db.usage.push(row); }
       row.seconds += Math.max(0, secs); row.bonus_seconds += Math.max(0, bonus); save();
     },
+    // Saving in this browser can't be cut off by the page closing, so this is just addUsage.
+    addUsageOnExit(childId, day, secs) { return this.addUsage(childId, day, secs); },
 
     // Schools. In demo mode you are the teacher and the parent, so you can try both sides.
     async listClasses() { need(); return db.classes.filter(c => c.teacher_id === db.user.id); },

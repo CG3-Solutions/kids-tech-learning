@@ -165,15 +165,25 @@ export function AppProvider({ children: kids }) {
     api.addUsage(activeChild.id, usage.day, secs).catch(() => { pending.current += secs; });
   }, [api, activeChild, usage.day]);
 
+  // As the page is hidden or closed, browsers (Safari especially) cancel ordinary requests, so the last
+  // save goes as a keepalive request that can finish after the page has gone. If that can't be sent,
+  // it falls back to a normal save; anything that fails is kept and sent with the next save.
+  const flushOnExit = useCallback(() => {
+    if (!api || !activeChild || pending.current <= 0) return;
+    const secs = pending.current; pending.current = 0;
+    const sent = api.addUsageOnExit?.(activeChild.id, usage.day, secs) ?? null;
+    (sent ?? api.addUsage(activeChild.id, usage.day, secs)).catch(() => { pending.current += secs; });
+  }, [api, activeChild, usage.day]);
+
   useEffect(() => {
     const touch = () => { lastInput.current = Date.now(); };
     const events = ["pointerdown", "keydown", "wheel", "touchstart"];
     events.forEach(e => window.addEventListener(e, touch, { passive: true }));
-    const onHide = () => { if (document.visibilityState === "hidden") flush(); };
+    const onHide = () => { if (document.visibilityState === "hidden") flushOnExit(); };
     document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", flush);
-    return () => { events.forEach(e => window.removeEventListener(e, touch)); document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", flush); };
-  }, [flush]);
+    window.addEventListener("pagehide", flushOnExit);
+    return () => { events.forEach(e => window.removeEventListener(e, touch)); document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", flushOnExit); };
+  }, [flushOnExit]);
 
   useEffect(() => {
     if (!kidActive || !activeChild) return;
