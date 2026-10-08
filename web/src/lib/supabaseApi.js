@@ -1,6 +1,7 @@
 // Supabase mode: real accounts and a shared database.
 import { createClient } from "@supabase/supabase-js";
 import { SEED } from "../content/index.js";
+import { sendUsageOnExit } from "./usageExit.js";
 
 const TYPING_FIELDS = "id, lesson_id, mode, input, wpm, accuracy, seconds, chars, errors, passed, keys, created_at";
 const CHILD_FIELDS = ["name", "avatar", "grade", "gender", "voice", "daily_limit_min", "learner"];
@@ -15,6 +16,10 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
   });
   const redirectTo = () => `${window.location.origin}${import.meta.env.BASE_URL}`;
   const ok = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+  // The current sign-in token, kept ready so the last screen-time save can go out at once as a page closes.
+  let accessToken = null;
+  sb.auth.getSession().then(({ data }) => { accessToken = data.session?.access_token ?? null; }).catch(() => {});
+  sb.auth.onAuthStateChange((_e, session) => { accessToken = session?.access_token ?? null; });
 
   return {
     mode: "supabase",
@@ -104,6 +109,11 @@ export function createSupabaseApi(url, anonKey, { google = false } = {}) {
       return ok(await sb.from("child_usage").select("*").in("child_id", childIds).gte("day", fromDay));
     },
     async addUsage(childId, day, secs, bonus = 0) { ok(await sb.rpc("add_usage", { cid: childId, d: day, secs, bonus })); },
+    // As a page is hidden or closed: a keepalive request the browser finishes even after the page has gone.
+    // Returns a promise, or null when it can't be sent that way (the caller then uses addUsage).
+    addUsageOnExit(childId, day, secs) {
+      return sendUsageOnExit(typeof fetch === "function" ? fetch.bind(globalThis) : undefined, url, anonKey, accessToken, { childId, day, secs });
+    },
 
     // ───────── Schools (needs release-4.sql) ─────────
     async listClasses() {
